@@ -1,9 +1,8 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FaTrash ,FaArrowRight } from "react-icons/fa";
+import { FaTrash, FaArrowRight } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../redux/features/cart/cartSlice";
 import { LuShoppingBag } from "react-icons/lu";
-
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -28,18 +27,59 @@ const Cart = () => {
       navigate("/login?redirect=/shipping");
     }
   };
+
+  // Function to calculate the discounted price
+  const calculateDiscountedPrice = (product) => {
+    if (product.discountPercentage > 0) {
+      return (
+        product.price -
+        (product.price * product.discountPercentage) / 100
+      ).toFixed(2);
+    }
+    return product.price.toFixed(2);
+  };
+
+  // Function to calculate the discount amount for each product
+  const calculateDiscountAmount = (product) => {
+    if (product.discountPercentage > 0) {
+      return ((product.price * product.discountPercentage) / 100).toFixed(2);
+    }
+    return "0.00";
+  };
+
+  // Calculate total discount for all items in the cart
+  const calculateTotalDiscount = () => {
+    return cartItems
+      .reduce((acc, item) => {
+        if (item.discountPercentage > 0) {
+          return (
+            acc + (item.qty * (item.price * item.discountPercentage)) / 100
+          );
+        }
+        return acc;
+      }, 0)
+      .toFixed(2);
+  };
+
   return (
-    <div className="pt-12 ">
+    <div className="pt-12">
       <div className="container flex justify-around items-start wrap mx-auto mt-8 pb-12">
         {cartItems.length === 0 ? (
           <div className="flex flex-col items-center gap-4">
-           <p><LuShoppingBag className="w-28 h-28"/></p>
-           <span className="text-[30px] font-medium font-sans text-center">Your cart is empty </span> 
-           <p className=" max-w-96 text-center">Add products while you shop, so they'll be ready for checkout later. </p>
-           <button className="flex items-center gap-3 bg-blue-700 text-white py-3 px-5 rounded-md hover:bg-blue-600 transition-all ease-in-out duration-300">
-           <Link to="/shop">Go To Shop</Link>
-           <FaArrowRight/>
-           </button>
+            <p>
+              <LuShoppingBag className="w-28 h-28" />
+            </p>
+            <span className="text-[30px] font-medium font-sans text-center">
+              Your cart is empty
+            </span>
+            <p className=" max-w-96 text-center">
+              Add products while you shop, so they'll be ready for checkout
+              later.
+            </p>
+            <button className="flex items-center gap-3 bg-blue-700 text-white py-3 px-5 rounded-md hover:bg-blue-600 transition-all ease-in-out duration-300">
+              <Link to="/shop">Go To Shop</Link>
+              <FaArrowRight />
+            </button>
           </div>
         ) : (
           <>
@@ -49,13 +89,14 @@ const Cart = () => {
               </h1>
 
               {/* Cart Table */}
-              <div className="overflow-x-auto ">
+              <div className="overflow-x-auto">
                 <table className="min-w-full bg-white text-black rounded-lg border  border-gray-300 ">
                   <thead>
                     <tr className="border-b border-gray-300">
                       <th className="py-4 px-6 text-left">Product</th>
                       <th className="py-4 px-6 text-left">Price</th>
                       <th className="py-4 px-6 text-left">Quantity</th>
+                      <th className="py-4 px-6 text-left">Discount</th>
                       <th className="py-4 px-6 text-left">Remove</th>
                     </tr>
                   </thead>
@@ -78,7 +119,12 @@ const Cart = () => {
                             {item.name}
                           </Link>
                         </td>
-                        <td className="py-4 px-6">BDT {item.price}</td>
+                        <td className="py-4 px-6">
+                          BDT{" "}
+                          {item.discountPercentage > 0
+                            ? calculateDiscountedPrice(item)
+                            : item.price.toFixed(2)}
+                        </td>
                         <td className="py-4 px-6">
                           <select
                             className="w-[5rem] p-1 border rounded text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -93,6 +139,18 @@ const Cart = () => {
                               </option>
                             ))}
                           </select>
+                        </td>
+                        <td className="py-4 px-6">
+                          {item.discountPercentage > 0 ? (
+                            <span className="text-green-500">
+                              BDT {calculateDiscountAmount(item)}{" "}
+                              <span className="text-sm text-gray-500">
+                                Discount
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">No Discount</span>
+                          )}
                         </td>
                         <td className="py-4 px-6">
                           <button
@@ -118,38 +176,49 @@ const Cart = () => {
                     মধ্যে হোম ডেলিভারী করা হয়।
                   </p>
                 </div>
-                <div className="mt-8 w-full lg:max-w-[40rem] p-2 md:p-4 border-2 border-gray-300 rounded-lg">
-                  <table className="min-w-full bg-white text-black rounded-lg shadow-md border border-gray-300">
+                <div className="mt-8 w-full lg:max-w-[45rem] p-4 border-2 border-gray-300 rounded-md">
+                  <table className="min-w-full bg-white text-black rounded-md  border border-gray-200">
                     <thead>
-                      <tr className="border-b border-gray-300">
-                        <th className="py-1 md:py-2 px-2 md:px-4 text-xs md:text-xl text-left  text-gray-700">
+                      <tr className="border-b border-gray-200">
+                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
                           Total Items
                         </th>
-                        <th className="py-1 md:py-2 px-2 md:px-4 text-xs md:text-xl text-left text-gray-700">
+                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
                           Total Price
                         </th>
-                        <th className="py-1 md:py-2 px-2 md:px-4 text-xs md:text-xl text-left text-gray-700">
+                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
+                          Total Discount
+                        </th>
+                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
                           Checkout
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="border-b border-gray-300 hover:bg-gray-100 transition-colors duration-200">
-                        <td className="py-1 md:py-2 px-2 md:px-4">
+                      <tr className="border-b border-gray-200">
+                        <td className="py-2 px-4 text-sm md:text-xl font-sans">
                           {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                         </td>
-                        <td className="py-1 md:py-2 px-2 md:px-4 text-[11px] md:text-2xl font-bold">
+                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-gray-800">
                           BDT{" "}
                           {cartItems
                             .reduce(
-                              (acc, item) => acc + item.qty * item.price,
+                              (acc, item) =>
+                                acc +
+                                item.qty *
+                                  (item.discountPercentage > 0
+                                    ? calculateDiscountedPrice(item)
+                                    : item.price),
                               0
                             )
                             .toFixed(2)}
                         </td>
-                        <td className="py-1 md:py-2 px-2 md:px-4">
+                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-green-500">
+                          BDT {calculateTotalDiscount()}
+                        </td>
+                        <td className="py-2 px-4">
                           <button
-                            className="bg-pink-500 py-1 px-2 md:py-2 md:px-4 rounded-md text-[12px] md:text-lg w-full hover:bg-pink-600 transition-colors duration-200 active:bg-pink-700 focus:outline-none"
+                            className="bg-gradient-to-r from-pink-400 to-pink-600 text-white py-2 px-4 rounded-md text-lg w-full shadow-md hover:from-pink-500 hover:to-pink-700 transition-all duration-200 active:bg-pink-800 focus:outline-none"
                             disabled={cartItems.length === 0}
                             onClick={checkoutHandler}
                           >

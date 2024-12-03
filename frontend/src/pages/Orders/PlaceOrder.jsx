@@ -6,6 +6,7 @@ import Message from "../../components/Message";
 import ProgressSteps from "../../components/ProgressSteps";
 import { useCreateOrderMutation } from "@redux/api/orderApiSlice";
 import { clearCartItems } from "../../redux/features/cart/cartSlice";
+import { FaSpinner } from "react-icons/fa6";
 
 const PlaceOrder = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -164,8 +165,12 @@ const PlaceOrder = () => {
               <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
                 <thead className="bg-indigo-600 text-white">
                   <tr>
-                    <th className="py-1 md:py-2 px-2 md:px-4 text-left">Item</th>
-                    <th className="py-1 md:py-2 px-2 md:px-4 text-left">Price</th>
+                    <th className="py-1 md:py-2 px-2 md:px-4 text-left">
+                      Item
+                    </th>
+                    <th className="py-1 md:py-2 px-2 md:px-4 text-left">
+                      Price
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-700">
@@ -175,7 +180,9 @@ const PlaceOrder = () => {
                         Items:
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">BDT- {cart.itemsPrice}</td>
+                    <td className="py-1 md:py-2 px-2 md:px-4">
+                      BDT- {cart.itemsPrice}
+                    </td>
                   </tr>
                   <tr className="hover:bg-gray-100 border-b">
                     <td className="py-1 md:py-2 px-2 md:px-4">
@@ -183,7 +190,9 @@ const PlaceOrder = () => {
                         Shipping:
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">BDT- {cart.shippingPrice}</td>
+                    <td className="py-1 md:py-2 px-2 md:px-4">
+                      BDT- {cart.shippingPrice}
+                    </td>
                   </tr>
                   <tr className="hover:bg-gray-100">
                     <td className="py-1 md:py-2 px-2 md:px-4">
@@ -191,7 +200,9 @@ const PlaceOrder = () => {
                         Tax:
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">BDT- {cart.taxPrice}</td>
+                    <td className="py-1 md:py-2 px-2 md:px-4">
+                      BDT- {cart.taxPrice}
+                    </td>
                   </tr>
                   {/* Highlighted Total Row */}
                   <tr className="bg-yellow-200 hover:bg-yellow-300">
@@ -219,26 +230,7 @@ const PlaceOrder = () => {
           >
             {/* Spinner for Loading State */}
             {isLoading && (
-              <svg
-                className="animate-spin h-5 w-5  text-white absolute right-2"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-              </svg>
+              <FaSpinner className="animate-spin h-5 w-5 text-white absolute right-2" />
             )}
 
             {/* Button Text */}

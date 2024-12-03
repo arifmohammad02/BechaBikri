@@ -3,7 +3,20 @@ import Product from "../models/productModel.js";
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const {
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      brand,
+      discountPercentage,
+      shippingCharge,
+      offer,
+      warranty,
+      specifications,
+      isFeatured,
+    } = req.fields;
 
     // Validation
     switch (true) {
@@ -19,6 +32,18 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
+      case !shippingCharge:
+        return res.json({ error: "Shipping Charge is required" });
+      case !offer:
+        return res.json({ error: "Offer is required" });
+      case !warranty:
+        return res.json({ error: "Warranty is required" });
+      case !discountPercentage:
+        return res.json({ error: "Discount Percentage is required" });
+      case !specifications:
+        return res.json({ error: "Specifications is required" });
+      // case !isFeatured:
+      // return res.json({ error: "Is Featured is required" });
     }
 
     const product = new Product({ ...req.fields });
@@ -32,7 +57,17 @@ const addProduct = asyncHandler(async (req, res) => {
 
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const {
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      brand,
+      discountPercentage,
+      
+      
+    } = req.fields;
 
     // Validation
     switch (true) {
@@ -48,6 +83,9 @@ const updateProductDetails = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
+      case !discountPercentage:
+        return res.json({ error: "Discount Percentage is required" });
+     
     }
 
     const product = await Product.findByIdAndUpdate(
@@ -77,7 +115,7 @@ const removeProduct = asyncHandler(async (req, res) => {
 
 const fetchProducts = asyncHandler(async (req, res) => {
   try {
-    const pageSize = 6;
+    const pageSize = 20;
 
     const keyword = req.query.keyword
       ? {
@@ -122,7 +160,7 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find({})
       .populate("category")
-      .limit(12)
+      .limit(50)
       .sort({ createAt: -1 });
 
     res.json(products);
@@ -131,7 +169,6 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 });
-
 
 const addProductReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
@@ -172,14 +209,11 @@ const addProductReview = asyncHandler(async (req, res) => {
     // Save the updated product
     await product.save();
     res.status(201).json({ message: "Review added" });
-
   } catch (error) {
     console.error("Error adding review:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
-
-
 
 const fetchTopProducts = asyncHandler(async (req, res) => {
   try {
@@ -191,7 +225,6 @@ const fetchTopProducts = asyncHandler(async (req, res) => {
   }
 });
 
-
 const fetchNewProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find().sort({ _id: -1 }).limit(5);
@@ -201,7 +234,6 @@ const fetchNewProducts = asyncHandler(async (req, res) => {
     res.status(400).json(error.message);
   }
 });
-
 
 const filterProducts = asyncHandler(async (req, res) => {
   try {

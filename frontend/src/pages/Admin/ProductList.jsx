@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateProductMutation,
@@ -7,6 +7,8 @@ import {
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
 import AdminMenu from "./AdminMenu";
+import { Button } from "@material-tailwind/react";
+import { FaSpinner } from "react-icons/fa6";
 
 const ProductList = () => {
   const [image, setImage] = useState("");
@@ -19,6 +21,13 @@ const ProductList = () => {
   const [stock, setStock] = useState(0);
   const [imageUrl, setImageUrl] = useState(null);
   const [loading, setLoading] = useState(false); // Add loading state
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [shippingCharge, setShippingCharge] = useState(0);
+  const [offer, setOffer] = useState("");
+  const [warranty, setWarranty] = useState("");
+  // const [specifications, setSpecifications] = useState("");
+  const [discountedAmount, setDiscountedAmount] = useState(0);
   const navigate = useNavigate();
 
   const [uploadProductImage] = useUploadProductImageMutation();
@@ -54,6 +63,16 @@ const ProductList = () => {
       productData.append("quantity", quantity);
       productData.append("brand", brand);
       productData.append("countInStock", stock);
+      productData.append("discountPercentage", discountPercentage);
+      productData.append("isFeatured", isFeatured);
+      productData.append("shippingCharge", shippingCharge);
+      productData.append("offer", offer);
+      productData.append("warranty", warranty);
+      // const specificationsArray = specifications
+      //   .split(",")
+      //   .map((item) => item.trim());
+      // productData.append("specifications", JSON.stringify(specificationsArray));
+      productData.append("discountedAmount", discountedAmount);
 
       const { data } = await createProduct(productData);
 
@@ -94,7 +113,7 @@ const ProductList = () => {
         {/* Admin Menu */}
         <AdminMenu />
 
-        <div className="md:w-3/4 p-8 bg-white rounded-lg shadow-xl border border-gray-200">
+        <div className="md:w-3/4 p-8 bg-white rounded-md border border-gray-400">
           <h2 className="text-3xl font-semibold text-gray-800 mb-6 border-b border-gray-300 pb-3">
             Create Product
           </h2>
@@ -124,86 +143,88 @@ const ProductList = () => {
           </div>
 
           {/* Product Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
             <div>
-              <label htmlFor="name" className="text-gray-700">Name</label>
+              <label htmlFor="name" className="text-gray-700">
+                Name
+              </label>
               <input
                 type="text"
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             <div>
-              <label htmlFor="price" className="text-gray-700">Price</label>
+              <label htmlFor="price" className="text-gray-700">
+                Price
+              </label>
               <input
                 min="0"
                 inputMode="numeric"
                 type="number"
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="quantity" className="text-gray-700">
+                Quantity
+              </label>
+              <input
+                min="0"
+                inputMode="numeric"
+                type="number"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
               />
             </div>
           </div>
 
           {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
             <div>
-              <label htmlFor="quantity" className="text-gray-700">Quantity</label>
-              <input
-                min="0"
-                inputMode="numeric"
-                type="number"
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="brand" className="text-gray-700">Brand</label>
+              <label htmlFor="brand" className="text-gray-700">
+                Brand
+              </label>
               <input
                 type="text"
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
               />
             </div>
-          </div>
-
-          {/* Product Description */}
-          <div className="mb-6">
-            <label htmlFor="description" className="text-gray-700">Description</label>
-            <textarea
-              className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            ></textarea>
-          </div>
-
-          {/* Stock & Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label htmlFor="stock" className="text-gray-700">Count In Stock</label>
+              <label htmlFor="stock" className="text-gray-700">
+                Count In Stock
+              </label>
               <input
                 type="text"
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
               />
             </div>
-
             <div>
-              <label htmlFor="category" className="text-gray-700">Category</label>
+              <label htmlFor="category" className="text-gray-700">
+                Category
+              </label>
               <select
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 onChange={(e) => setCategory(e.target.value)}
               >
-                <option value="">Choose Category</option>
+                <option value="" className="text-gray-600 text-xl">
+                  Choose Category
+                </option>
                 {categories?.map((c) => (
-                  <option key={c._id} value={c._id}>
+                  <option
+                    key={c._id}
+                    value={c._id}
+                    className="text-gray-600 text-xl"
+                  >
                     {c.name}
                   </option>
                 ))}
@@ -211,44 +232,126 @@ const ProductList = () => {
             </div>
           </div>
 
+          {/* Additional Fields for New Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
+            <div>
+              <label htmlFor="discountPercentage" className="text-gray-700">
+                Discount Percentage
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={discountPercentage}
+                onChange={(e) => setDiscountPercentage(e.target.value)}
+              />
+            </div>
 
-          <button
+            <div>
+              <label htmlFor="isFeatured" className="text-gray-700">
+                Is Featured
+              </label>
+              <input
+                type="checkbox"
+                className="px-4 py-2 flex justify-start mt-2"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+              />
+            </div>
+            <div>
+              <label htmlFor="shippingCharge" className="text-gray-700">
+                Shipping Charge
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={shippingCharge}
+                onChange={(e) => setShippingCharge(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label htmlFor="offer" className="text-gray-700">
+                Offer
+              </label>
+              <input
+                type="text"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={offer}
+                onChange={(e) => setOffer(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="warranty" className="text-gray-700">
+                Warranty
+              </label>
+              <input
+                type="text"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={warranty}
+                onChange={(e) => setWarranty(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="discountedAmount" className="text-gray-700">
+                Discounted Amount
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="px-4 py-2 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={discountedAmount}
+                onChange={(e) => setDiscountedAmount(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            {/* <div className="mb-6">
+              <label htmlFor="specifications" className="text-gray-700">
+                Specifications (comma separated)
+              </label>
+              <textarea
+                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={specifications}
+                onChange={(e) => setSpecifications(e.target.value)}
+              />
+            </div> */}
+            <div className="">
+              <label htmlFor="description" className="text-gray-700">
+                Description
+              </label>
+              <textarea
+                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              ></textarea>
+            </div>
+          </div>
+
+          <Button
             onClick={handleSubmit}
             disabled={loading} // Disable button while loading
-            className={`py-2 px-5 mt-5 rounded-lg text-lg font-semibold text-white shadow-md transition-all w-fit
-              duration-300  ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-black/80 hover:bg-black active:bg-pink-800"
+            className={` text-lg font-semibold text-white  w-fit
+              duration-300  ${
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-black hover:bg-black active:bg-pink-800"
               } ${loading ? "" : "hover:shadow-lg active:shadow-xl"}`}
           >
             {loading ? (
-              <svg
-                className="animate-spin h-5 w-5 mr-2 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C6.268 0 2 4.268 2 9s4.268 9 9 9v-4a5 5 0 01-5-5z"
-                ></path>
-              </svg>
+              <FaSpinner className="animate-spin h-5 w-5 text-white" />
             ) : (
               "Submit"
             )}
-          </button>
-
+          </Button>
         </div>
       </div>
     </div>
-
   );
 };
 

@@ -98,6 +98,9 @@ const Shop = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  console.log(products);
+  
+
   return (
     <div className="container mx-auto">
       <div className="flex gap-8 py-20">

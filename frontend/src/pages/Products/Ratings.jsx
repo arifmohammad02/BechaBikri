@@ -6,7 +6,7 @@ const Ratings = ({ value, text, color = "yellow-400" }) => {
   const emptyStar = 5 - fullStars - halfStars;
 
   return (
-    <div className="flex items-center bg-gray-800 p-3 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out">
+    <div className="flex items-center bg-gray-800 p-3 rounded-lg">
       {[...Array(fullStars)].map((_, index) => (
         <FaStar
           key={index}

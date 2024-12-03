@@ -17,7 +17,7 @@ const OrderList = () => {
           {error?.data?.message || error.error}
         </Message>
       ) : (
-        <div className="container mx-auto px-3 md:px-0 ">
+        <div className="container mx-auto px-3 md:px-0">
           {/* Horizontal Scroll Container with Arrows */}
           <div className="relative overflow-x-auto max-w-full">
             {/* Left Arrow */}
@@ -28,14 +28,17 @@ const OrderList = () => {
               }
             ></button>
 
+            {/* Admin Menu (Move Outside the Table) */}
+            <div className="mb-4">
+              <AdminMenu />
+            </div>
+
             {/* Table */}
             <div id="scrollable-table" className="overflow-x-auto">
               <table className="w-full bg-white overflow-hidden">
-                <AdminMenu />
-
                 {/* Table Header */}
                 <thead className="border bg-pink-100 text-black">
-                  <tr >
+                  <tr>
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg border-r">
                       ITEMS
                     </th>

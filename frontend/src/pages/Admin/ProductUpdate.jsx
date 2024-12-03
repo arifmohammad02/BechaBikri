@@ -9,6 +9,7 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
+import { Button } from "@material-tailwind/react";
 
 const ProductUpdate = () => {
   const params = useParams();
@@ -16,12 +17,31 @@ const ProductUpdate = () => {
 
   const [image, setImage] = useState(productData?.image || "");
   const [name, setName] = useState(productData?.name || "");
-  const [description, setDescription] = useState(productData?.description || "");
+  const [description, setDescription] = useState(
+    productData?.description || ""
+  );
   const [price, setPrice] = useState(productData?.price || "");
   const [category, setCategory] = useState(productData?.category || "");
   const [quantity, setQuantity] = useState(productData?.quantity || "");
   const [brand, setBrand] = useState(productData?.brand || "");
   const [stock, setStock] = useState(productData?.countInStock);
+  const [discountPercentage, setDiscountPercentage] = useState(
+    productData?.discountPercentage || 0
+  );
+  const [isFeatured, setIsFeatured] = useState(
+    productData?.isFeatured || false
+  );
+  const [shippingCharge, setShippingCharge] = useState(
+    productData?.shippingCharge || 0
+  );
+  const [offer, setOffer] = useState(productData?.offer || "");
+  const [warranty, setWarranty] = useState(productData?.warranty || "");
+  // const [specifications, setSpecifications] = useState(
+  //   productData?.specifications || []
+  // );
+  const [discountedAmount, setDiscountedAmount] = useState(
+    productData?.discountedAmount || 0
+  );
   const [uploadLoading, setUploadLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -42,6 +62,13 @@ const ProductUpdate = () => {
       setQuantity(productData.quantity);
       setBrand(productData.brand);
       setImage(productData.image);
+      setDiscountPercentage(productData.discountPercentage);
+      setIsFeatured(productData.isFeatured);
+      setShippingCharge(productData.shippingCharge);
+      setOffer(productData.offer);
+      setWarranty(productData.warranty);
+      // setSpecifications(productData.specifications);
+      setDiscountedAmount(productData.discountedAmount);
     }
   }, [productData]);
 
@@ -108,6 +135,14 @@ const ProductUpdate = () => {
       formData.append("quantity", quantity);
       formData.append("brand", brand);
       formData.append("countInStock", stock);
+      formData.append("countInStock", stock);
+      formData.append("discountPercentage", discountPercentage);
+      formData.append("isFeatured", isFeatured);
+      formData.append("shippingCharge", shippingCharge);
+      formData.append("offer", offer);
+      formData.append("warranty", warranty);
+      // formData.append("specifications", JSON.stringify(specifications));
+      formData.append("discountedAmount", discountedAmount);
 
       const data = await updateProduct({ productId: params._id, formData });
 
@@ -125,9 +160,10 @@ const ProductUpdate = () => {
     }
   };
 
-
   const handleDelete = async () => {
-    let answer = window.confirm("Are you sure you want to delete this product?");
+    let answer = window.confirm(
+      "Are you sure you want to delete this product?"
+    );
     if (!answer) return;
 
     setDeleteLoading(true);
@@ -144,13 +180,13 @@ const ProductUpdate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-5 mt-10">
-      <div className="flex flex-col lg:flex-row gap-8 w-full max-w-6xl">
+    <div className="min-h-screen bg-gray-50 flex flex-col py-10 mt-10">
+      <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Admin Menu */}
         <AdminMenu />
 
         {/* Product Update/Delete Section */}
-        <div className="w-full bg-white rounded-md p-8 border">
+        <div className="w-full bg-white rounded-md p-4 border container mx-auto">
           <h1 className="text-2xl font-bold text-gray-800 mb-5 border-b pb-3">
             Update / Delete Product
           </h1>
@@ -181,14 +217,14 @@ const ProductUpdate = () => {
           </div>
 
           {/* Product Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
             <div>
               <label htmlFor="name" className="text-gray-600 font-medium">
                 Name
               </label>
               <input
                 type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -199,22 +235,19 @@ const ProductUpdate = () => {
               </label>
               <input
                 type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 min="0"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label htmlFor="quantity" className="text-gray-600 font-medium">
                 Quantity
               </label>
               <input
                 type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 min="0"
@@ -226,32 +259,18 @@ const ProductUpdate = () => {
               </label>
               <input
                 type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="mb-6">
-            <label htmlFor="description" className="text-gray-600 font-medium">
-              Description
-            </label>
-            <textarea
-              className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label htmlFor="stock" className="text-gray-600 font-medium">
                 Count In Stock
               </label>
               <input
                 type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
                 min="0"
@@ -262,7 +281,7 @@ const ProductUpdate = () => {
                 Category
               </label>
               <select
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                 onChange={(e) => setCategory(e.target.value)}
                 value={category}
               >
@@ -274,27 +293,133 @@ const ProductUpdate = () => {
                 ))}
               </select>
             </div>
+            <div>
+              <label
+                htmlFor="discountPercentage"
+                className="text-gray-600 font-medium"
+              >
+                Discount Percentage
+              </label>
+              <input
+                type="number"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={discountPercentage}
+                onChange={(e) => setDiscountPercentage(e.target.value)}
+                min="0"
+                max="100"
+              />
+            </div>
+            <div>
+              <label htmlFor="isFeatured" className="text-gray-600 font-medium">
+                Featured
+              </label>
+              <input
+                type="checkbox"
+                className="px-4 py-2 flex justify-start mt-2"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="shippingCharge"
+                className="text-gray-600 font-medium"
+              >
+                Shipping Charge
+              </label>
+              <input
+                type="number"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={shippingCharge}
+                onChange={(e) => setShippingCharge(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="offer" className="text-gray-600 font-medium">
+                Offer
+              </label>
+              <input
+                type="text"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={offer}
+                onChange={(e) => setOffer(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="warranty" className="text-gray-600 font-medium">
+                Warranty
+              </label>
+              <input
+                type="text"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={warranty}
+                onChange={(e) => setWarranty(e.target.value)}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="discountedAmount"
+                className="text-gray-600 font-medium"
+              >
+                Discounted Amount
+              </label>
+              <input
+                type="number"
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={discountedAmount}
+                onChange={(e) => setDiscountedAmount(e.target.value)}
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="mb-6">
+              <label
+                htmlFor="description"
+                className="text-gray-600 font-medium"
+              >
+                Description
+              </label>
+              <textarea
+                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+            {/* <div>
+              <label
+                htmlFor="specifications"
+                className="text-gray-600 font-medium"
+              >
+                Specifications
+              </label>
+              <textarea
+                className="w-full mt-2 p-3 border rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
+                value={specifications}
+                onChange={(e) => setSpecifications(e.target.value)}
+              ></textarea>
+            </div> */}
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-4">
-            <button
-              className="w-full p-3 text-white bg-pink-500 rounded-lg hover:bg-pink-600 transition shadow-lg"
+          <div className="flex justify-between items-center gap-4">
+            <Button variant="gradient"
+              className="text-white bg-black"
               onClick={handleSubmit}
             >
               {updateLoading ? "Updating..." : "Update Product"}
-            </button>
-            <button
-              className="w-full p-3 text-white bg-red-500 rounded-lg hover:bg-red-600 transition shadow-lg"
+            </Button>
+            <Button color="red"
+              className="text-white"
               onClick={handleDelete}
             >
               {deleteLoading ? "Deleting..." : "Delete Product"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     </div>
-
   );
 };
 

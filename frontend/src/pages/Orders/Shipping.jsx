@@ -9,6 +9,8 @@ import {
 } from "../../redux/features/cart/cartSlice";
 import ProgressSteps from "../../components/ProgressSteps";
 
+import { FaArrowRight } from "react-icons/fa";
+
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
   const { shippingAddress } = cart;
@@ -36,26 +38,25 @@ const Shipping = () => {
 
     // Input validations
 
-      toast.success("All inputs are valid! Proceeding...", {
-        position: "bottom-right",
-        theme: "colored",
-      });
+    toast.success("All inputs are valid! Proceeding...", {
+      position: "bottom-right",
+      theme: "colored",
+    });
 
-      // Dispatch actions
-      dispatch(
-        saveShippingAddress({
-          address,
-          city,
-          postalCode,
-          country,
-          phoneNumber,
-          alternatePhoneNumber,
-          email,
-        })
-      );
-      dispatch(savePaymentMethod(paymentMethod));
-      navigate("/placeorder");
-   
+    // Dispatch actions
+    dispatch(
+      saveShippingAddress({
+        address,
+        city,
+        postalCode,
+        country,
+        phoneNumber,
+        alternatePhoneNumber,
+        email,
+      })
+    );
+    dispatch(savePaymentMethod(paymentMethod));
+    navigate("/placeorder");
   };
 
   useEffect(() => {
@@ -181,16 +182,30 @@ const Shipping = () => {
                       checked={paymentMethod === "Cash on Delivery"}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                     />
-                    <span className="ml-2 text-gray-700">Cash on Delivery</span>
+                    <div>
+                      <span className="ml-2 text-gray-700">
+                        Cash on Delivery
+                      </span>
+                    </div>
                   </label>
+                  <p>Pay after receiving the product</p>
                 </div>
               </div>
 
               <button
-                className="bg-pink-500 text-white py-3 px-6 rounded-full text-lg w-full hover:bg-pink-600 active:bg-pink-700 transition-all"
                 type="submit"
+                className="relative inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-indigo-600 transition-all duration-150 ease-in-out rounded hover:pl-10 hover:pr-6 bg-gray-50 group"
               >
-                Continue
+                <span className="absolute bottom-0 left-0 w-full h-1 transition-all duration-150 ease-in-out bg-indigo-600 group-hover:h-full"></span>
+                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-12">
+                  <FaArrowRight />
+                </span>
+                <span className="absolute left-0 pl-2.5 -translate-x-12 group-hover:translate-x-0 ease-out duration-200">
+                  <FaArrowRight className="text-white" />
+                </span>
+                <span className="relative w-full text-left transition-colors duration-200 ease-in-out group-hover:text-white">
+                  Button Text
+                </span>
               </button>
             </div>
           </div>

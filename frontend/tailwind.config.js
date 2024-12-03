@@ -15,6 +15,10 @@ export default {
         'xs': '420px',
         // => @media (min-width: 640px) { ... }
       },
+      fontFamily: {
+        'poppins': ['Poppins', 'sans-serif'],
+        "inter": ["Inter", "sans-serif"],
+      }
     },
   },
   plugins: [],
