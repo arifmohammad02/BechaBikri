@@ -7,7 +7,6 @@ import {
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
 import AdminMenu from "./AdminMenu";
-import { Button } from "@material-tailwind/react";
 import { FaSpinner } from "react-icons/fa6";
 
 const ProductList = () => {
@@ -333,7 +332,7 @@ const ProductList = () => {
             </div>
           </div>
 
-          <Button
+          <button
             onClick={handleSubmit}
             disabled={loading} // Disable button while loading
             className={` text-lg font-semibold text-white  w-fit
@@ -348,7 +347,7 @@ const ProductList = () => {
             ) : (
               "Submit"
             )}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

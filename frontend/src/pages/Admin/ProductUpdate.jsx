@@ -9,7 +9,7 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
-import { Button } from "@material-tailwind/react";
+
 
 const ProductUpdate = () => {
   const params = useParams();
@@ -404,18 +404,18 @@ const ProductUpdate = () => {
 
           {/* Buttons */}
           <div className="flex justify-between items-center gap-4">
-            <Button variant="gradient"
+            <button 
               className="text-white bg-black"
               onClick={handleSubmit}
             >
               {updateLoading ? "Updating..." : "Update Product"}
-            </Button>
-            <Button color="red"
-              className="text-white"
+            </button>
+            <button 
+              className="text-white bg-red-500"
               onClick={handleDelete}
             >
               {deleteLoading ? "Deleting..." : "Delete Product"}
-            </Button>
+            </button>
           </div>
         </div>
       </div>
