@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import React, { useState } from "react";
 import HeartIcon from "./HeartIcon";
-import AddToCartButton from "../../components/AddToCartButton";
+import { FaArrowRight } from "react-icons/fa6";
+// import AddToCartButton from "../../components/AddToCartButton";
 
 const SmallProduct = ({ product }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -31,7 +32,7 @@ const SmallProduct = ({ product }) => {
       <Link to={`/product/${product._id}`}>
         <div className="relative">
           <img className="p-5" src={product.image} alt={product.name} />
-          
+
           {/* Discount Badge */}
           {product.discountPercentage > 0 && (
             <span className="absolute top-2 left-2 bg-pink-600 text-white text-xs font-semibold px-2 py-1 rounded">
@@ -72,19 +73,33 @@ const SmallProduct = ({ product }) => {
               BDT {discountedPrice.toFixed(2)}
             </span>
             {product.discountPercentage > 0 && (
-              <>
-                <span className="text-sm text-gray-500 line-through ml-2">
+              <div className="flex flex-col items-start">
+                <span className="text-sm text-gray-500 line-through">
                   BDT {product.price}
                 </span>
-                <br />
+               
                 <span className="text-sm text-green-600">
                   You Save: BDT {discountAmount.toFixed(2)}
                 </span>
-              </>
+              </div>
             )}
           </div>
 
-          <AddToCartButton product={product} />
+          {/* <AddToCartButton product={product} /> */}
+          <Link to={`/product/${product._id}`}>
+            <div
+              
+              className="relative inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-purple-500 rounded-md shadow-md group"
+            >
+              <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
+              <FaArrowRight className="w-3 h-3 text-current" />
+              </span>
+              <span className="absolute flex items-center justify-center w-full h-full text-purple-500 transition-all duration-300 transform group-hover:translate-x-full ease text-xs">
+                View Details
+              </span>
+              <span className="relative invisible">View Details</span>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

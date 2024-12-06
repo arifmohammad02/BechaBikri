@@ -12,8 +12,9 @@ import Message from "../../components/Message";
 import HeartIcon from "./HeartIcon";
 import ProductTabs from "./ProductTabs";
 import Ratings from "./Ratings";
-import AddToCartButton from "../../components/AddToCartButton";
+// import AddToCartButton from "../../components/AddToCartButton";
 import { FaCheck } from "react-icons/fa";
+import OrderNowButton from "../../components/OrderNowButton";
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
@@ -148,13 +149,19 @@ const ProductDetails = () => {
 
                   {/* Actions */}
                   <div className="mt-6 flex items-center space-x-4">
-                    <AddToCartButton
+                    {/* <AddToCartButton
                       product={product}
                       qty={1}
                       buttonText="Add to Cart"
                       addedText="Added to Cart"
                       isOrderNow={true} // This enables the "Order Now" button
                      
+                    /> */}
+
+                    <OrderNowButton
+                      product={product}
+                      qty={1}
+                      customStyles="my-custom-class"
                     />
 
                     <button

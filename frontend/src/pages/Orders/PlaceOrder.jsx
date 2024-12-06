@@ -46,6 +46,9 @@ const PlaceOrder = () => {
     }
   };
 
+  console.log(cart);
+  
+
   return (
     <div className="container mx-auto py-12">
       <ProgressSteps step1 step2 step3 />

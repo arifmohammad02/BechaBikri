@@ -10,6 +10,8 @@ const orderSchema = mongoose.Schema(
         image: { type: String, required: true },
         price: { type: Number, required: true },
         shippingCharge: { type: Number, default: 0},
+        discountPercentage: { type: Number, default: 0},
+        offer: { type: String, default: "" },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,

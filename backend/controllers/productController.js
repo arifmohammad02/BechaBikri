@@ -10,12 +10,6 @@ const addProduct = asyncHandler(async (req, res) => {
       category,
       quantity,
       brand,
-      discountPercentage,
-      shippingCharge,
-      offer,
-      warranty,
-      specifications,
-      isFeatured,
     } = req.fields;
 
     // Validation
@@ -32,16 +26,16 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
-      case !shippingCharge:
-        return res.json({ error: "Shipping Charge is required" });
-      case !offer:
-        return res.json({ error: "Offer is required" });
-      case !warranty:
-        return res.json({ error: "Warranty is required" });
-      case !discountPercentage:
-        return res.json({ error: "Discount Percentage is required" });
-      case !specifications:
-        return res.json({ error: "Specifications is required" });
+      // case !shippingCharge:
+      //   return res.json({ error: "Shipping Charge is required" });
+      // case !offer:
+      //   return res.json({ error: "Offer is required" });
+      // case !warranty:
+      //   return res.json({ error: "Warranty is required" });
+      // case !discountPercentage:
+      //   return res.json({ error: "Discount Percentage is required" });
+      // case !specifications:
+      //   return res.json({ error: "Specifications is required" });
       // case !isFeatured:
       // return res.json({ error: "Is Featured is required" });
     }
@@ -64,7 +58,7 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       category,
       quantity,
       brand,
-      discountPercentage,
+      
       
       
     } = req.fields;
@@ -83,8 +77,7 @@ const updateProductDetails = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
-      case !discountPercentage:
-        return res.json({ error: "Discount Percentage is required" });
+      
      
     }
 

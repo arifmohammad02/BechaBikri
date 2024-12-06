@@ -125,28 +125,44 @@ const Cart = () => {
                             ? calculateDiscountedPrice(item)
                             : item.price.toFixed(2)}
                         </td>
-                        <td className="py-4 px-6">
-                          <select
-                            className="w-[5rem] p-1 border rounded text-black focus:outline-none focus:ring-2 focus:ring-pink-500"
-                            value={item.qty}
-                            onChange={(e) =>
-                              addToCartHandler(item, Number(e.target.value))
-                            }
-                          >
-                            {[...Array(item.countInStock).keys()].map((x) => (
-                              <option key={x + 1} value={x + 1}>
-                                {x + 1}
-                              </option>
-                            ))}
-                          </select>
+                        <td className="px-6 py-3 border border-gray-200 text-center">
+                          <div className="flex items-center justify-center space-x-4">
+                            {/* Decrease Quantity Button */}
+                            <button
+                              className={`w-10 h-10 border rounded-full flex items-center justify-center bg-gradient-to-r from-red-500 to-pink-500 text-white ${
+                                item.qty > 1
+                                  ? "hover:shadow-md hover:scale-102 transition-transform"
+                                  : "opacity-50 cursor-not-allowed"
+                              }`}
+                              onClick={() =>
+                                item.qty > 1 &&
+                                addToCartHandler(item, item.qty - 1)
+                              }
+                              disabled={item.qty === 1}
+                            >
+                              -
+                            </button>
+
+                            {/* Quantity Display */}
+                            <span className="px-6 py-2 border rounded-full bg-gray-200 text-lg font-semibold shadow-md">
+                              {item.qty}
+                            </span>
+
+                            {/* Increase Quantity Button */}
+                            <button
+                              className="w-10 h-10 border rounded-full flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:scale-105 transition-transform"
+                              onClick={() =>
+                                addToCartHandler(item, item.qty + 1)
+                              }
+                            >
+                              +
+                            </button>
+                          </div>
                         </td>
                         <td className="py-4 px-6">
                           {item.discountPercentage > 0 ? (
                             <span className="text-green-500">
                               BDT {calculateDiscountAmount(item)}{" "}
-                              <span className="text-sm text-gray-500">
-                                Discount
-                              </span>
                             </span>
                           ) : (
                             <span className="text-gray-500">No Discount</span>
@@ -216,9 +232,9 @@ const Cart = () => {
                         <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-green-500">
                           BDT {calculateTotalDiscount()}
                         </td>
-                        <td className="py-2 px-4">
+                        <td className="py-2">
                           <button
-                            className="bg-gradient-to-r from-pink-400 to-pink-600 text-white py-2 px-4 rounded-md text-lg w-full shadow-md hover:from-pink-500 hover:to-pink-700 transition-all duration-200 active:bg-pink-800 focus:outline-none"
+                            className="nline-flex items-center justify-center w-full px-3 py-2 mb-2 text-[14px] text-white bg-green-500 rounded-md hover:bg-green-400 sm:w-auto sm:mb-0" data-primary="green-400" data-rounded="rounded-2xl" data-primary-reset="{}"
                             disabled={cartItems.length === 0}
                             onClick={checkoutHandler}
                           >
