@@ -18,7 +18,10 @@ const AddToCartButton = ({
 
   // Access cart items from Redux store
   const cartItems = useSelector((state) => state.cart.cartItems);
-  const isAdded = cartItems.some((item) => item._id === product._id);
+  const isAdded = Array.isArray(cartItems) && cartItems.some((item) => item._id === product._id);
+
+  console.log("Cart Items:", cartItems);
+  console.log("Checking for product:", product);
 
   const handleAddToCart = () => {
     if (!isAdded) {

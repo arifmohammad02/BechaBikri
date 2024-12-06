@@ -99,8 +99,8 @@ const cartSlice = createSlice({
         state.cartItems.push(item);
       }
 
-      // Update the cart in localStorage and return updated state
-      return updateCart(state, item);
+      // Ensure `item` is passed correctly to update the cart
+      return updateCart(state, item); // Ensure item is defined and passed here
     },
 
     removeFromCart: (state, action) => {
@@ -108,7 +108,7 @@ const cartSlice = createSlice({
       state.cartItems = state.cartItems.filter((x) => x._id !== action.payload);
 
       // Update the cart in localStorage
-      return updateCart(state);
+      return updateCart(state); // Ensure updateCart is called correctly without 'item'
     },
 
     saveShippingAddress: (state, action) => {
@@ -149,3 +149,4 @@ export const {
 } = cartSlice.actions;
 
 export default cartSlice.reducer;
+
