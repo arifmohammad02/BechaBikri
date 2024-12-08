@@ -16,8 +16,21 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+    // addToCart: (state, action) => {
+    //   const { user, rating, numReviews, reviews, ...item} = action.payload;
+    //   const existItem = state.cartItems.find((x) => x._id === item._id);
+
+    //   if (existItem) {
+    //     state.cartItems = state.cartItems.map((x) =>
+    //       x._id === existItem._id ? item : x
+    //     );
+    //   } else {
+    //     state.cartItems = [...state.cartItems, item];
+    //   }
+    //   return updateCart(state, item);
+    // },
     addToCart: (state, action) => {
-      const { user, rating, numReviews, reviews, ...item} = action.payload;
+      const { user, rating, numReviews, reviews, ...item } = action.payload;
       const existItem = state.cartItems.find((x) => x._id === item._id);
 
       if (existItem) {
@@ -30,6 +43,8 @@ const cartSlice = createSlice({
       return updateCart(state, item);
     },
 
+    
+    
     removeFromCart: (state, action) => {
       state.cartItems = state.cartItems.filter((x) => x._id !== action.payload);
       return updateCart(state);
@@ -66,7 +81,7 @@ export const {
 export default cartSlice.reducer;
 
 
-// import { createSlice } from "@reduxjs/toolkit";
+
 // import { updateCart } from "../../../Utils/cart";
 
 // // Load initial state from localStorage or fallback to default values
