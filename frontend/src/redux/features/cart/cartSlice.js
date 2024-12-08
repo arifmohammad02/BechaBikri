@@ -18,7 +18,6 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (state, action) => {
       const { user, rating, numReviews, reviews, ...item } = action.payload;
-      
       const existItem = state.cartItems.find((x) => x._id === item._id);
 
       if (existItem) {
@@ -65,4 +64,3 @@ export const {
 } = cartSlice.actions;
 
 export default cartSlice.reducer;
-
