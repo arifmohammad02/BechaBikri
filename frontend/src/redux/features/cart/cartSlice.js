@@ -25,9 +25,10 @@ const cartSlice = createSlice({
           x._id === existItem._id ? item : x
         );
       } else {
-        state.cartItems = [...state.cartItems, item];
+        state.cartItems.push(item);
       }
-      return updateCart(state, item);
+    
+      updateCart(state);
     },
 
     removeFromCart: (state, action) => {

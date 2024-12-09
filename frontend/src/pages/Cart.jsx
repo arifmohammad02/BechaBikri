@@ -12,6 +12,9 @@ const Cart = () => {
   const cart = useSelector((state) => state.cart);
   const { cartItems } = cart;
 
+
+  
+
   const addToCartHandler = (product, qty) => {
     dispatch(addToCart({ ...product, qty }));
   };
@@ -57,8 +60,10 @@ const Cart = () => {
           );
         }
         return acc;
+        
       }, 0)
       .toFixed(2);
+      
   };
 
   return (
