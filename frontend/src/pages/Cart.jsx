@@ -50,21 +50,25 @@ const Cart = () => {
     return "0.00";
   };
 
-  // Calculate total discount for all items in the cart
   const calculateTotalDiscount = () => {
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      console.warn("cartItems is either not an array or empty");
+      return "0.00";
+    }
+  
     return cartItems
       .reduce((acc, item) => {
-        if (item.discountPercentage > 0) {
-          return (
-            acc + (item.qty * (item.price * item.discountPercentage)) / 100
-          );
+        if (item && item.price > 0 && item.qty > 0 && item.discountPercentage > 0) {
+          const discount = (item.qty * (item.price * item.discountPercentage)) / 100;
+          return acc + discount;
         }
-        return acc;
-        
+        return acc; // Ignore invalid items
       }, 0)
       .toFixed(2);
-      
   };
+  
+
+
 
   return (
     <div className="pt-12">
