@@ -50,22 +50,22 @@ const Cart = () => {
     return "0.00";
   };
 
-  const calculateTotalDiscount = () => {
-    if (!Array.isArray(cartItems) || cartItems.length === 0) {
-      console.warn("cartItems is either not an array or empty");
-      return "0.00";
-    }
+  // const calculateTotalDiscount = () => {
+  //   if (!Array.isArray(cartItems) || cartItems.length === 0) {
+  //     console.warn("cartItems is either not an array or empty");
+  //     return "0.00";
+  //   }
   
-    return cartItems
-      .reduce((acc, item) => {
-        if (item && item.price > 0 && item.qty > 0 && item.discountPercentage > 0) {
-          const discount = (item.qty * (item.price * item.discountPercentage)) / 100;
-          return acc + discount;
-        }
-        return acc; // Ignore invalid items
-      }, 0)
-      .toFixed(2);
-  };
+  //   return cartItems
+  //     .reduce((acc, item) => {
+  //       if (item && item.price > 0 && item.qty > 0 && item.discountPercentage > 0) {
+  //         const discount = (item.qty * (item.price * item.discountPercentage)) / 100;
+  //         return acc + discount;
+  //       }
+  //       return acc; // Ignore invalid items
+  //     }, 0)
+  //     .toFixed(2);
+  // };
   
 
 
@@ -168,7 +168,7 @@ const Cart = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="py-4 px-6">
+                        {/* <td className="py-4 px-6">
                           {item.discountPercentage > 0 ? (
                             <span className="text-green-500">
                               BDT {calculateDiscountAmount(item)}{" "}
@@ -176,7 +176,7 @@ const Cart = () => {
                           ) : (
                             <span className="text-gray-500">No Discount</span>
                           )}
-                        </td>
+                        </td> */}
                         <td className="py-4 px-6">
                           <button
                             className="text-red-500 hover:text-red-700 transition-colors duration-200"
@@ -224,7 +224,7 @@ const Cart = () => {
                         <td className="py-2 px-4 text-sm md:text-xl font-sans">
                           {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                         </td>
-                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-gray-800">
+                        {/* <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-gray-800">
                           BDT{" "}
                           {cartItems
                             .reduce(
@@ -237,10 +237,10 @@ const Cart = () => {
                               0
                             )
                             .toFixed(2)}
-                        </td>
-                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-green-500">
+                        </td> */}
+                        {/* <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-green-500">
                           BDT {calculateTotalDiscount()}
-                        </td>
+                        </td> */}
                         <td className="py-2">
                           <button
                             className="nline-flex items-center justify-center w-full px-3 py-2 mb-2 text-[14px] text-white bg-green-500 rounded-md hover:bg-green-400 sm:w-auto sm:mb-0" data-primary="green-400" data-rounded="rounded-2xl" data-primary-reset="{}"
