@@ -6,6 +6,7 @@ import Loader from "./components/Loader";
 import { useEffect, useState } from "react";
 import Footer from "./components/Footer";
 import ServiceTag from "./components/ServiceTag";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -50,6 +51,9 @@ function App() {
   const shouldShowFooter = !["/login", "/register"].includes(location.pathname);
 
   return (
+
+    <ErrorBoundary>
+
     <div>
       <ToastContainer />
       <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
@@ -57,6 +61,7 @@ function App() {
       {shouldShowFooter && <ServiceTag />}
       {shouldShowFooter && <Footer />}
     </div>
+    </ErrorBoundary>
   );
 }
 
