@@ -6,6 +6,7 @@ const initialState = localStorage.getItem("cart")
   : {
       cartItems: [],
       shippingAddress: {},
+     
       paymentMethod:
         localStorage.getItem("defaultPaymentMethod") === "COD"
           ? "Cash on Delivery"
