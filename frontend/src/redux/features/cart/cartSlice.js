@@ -19,6 +19,10 @@ const initialState = localStorage.getItem("cart")
       reducers: {
         addToCart: (state, action) => {
           const { user, rating, numReviews, reviews, ...item } = action.payload;
+          if (!item || Object.keys(item).length === 0) {
+            console.error("Item is not defined or empty in payload", action.payload);
+            return state;  // Return the existing state to prevent the crash
+          }
           const existItem = state.cartItems.find((x) => x._id === item._id);
     
           if (existItem) {
