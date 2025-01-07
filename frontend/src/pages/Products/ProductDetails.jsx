@@ -55,22 +55,34 @@ const ProductDetails = () => {
     }
   };
 
-  // Calculate discounted price safely
   const discountedPrice =
-    product?.discountPercentage > 0
-      ? product.price - (product.price * product.discountPercentage) / 100
-      : product?.price;
+  product?.price && product?.discountPercentage
+    ? product.price - (product.price * product.discountPercentage) / 100
+    : product?.price || 0;
 
-  const discountAmount =
-    product?.discountPercentage > 0
-      ? (product.price * product.discountPercentage) / 100
-      : 0;
+const discountAmount =
+  product?.price && product?.discountPercentage
+    ? (product.price * product.discountPercentage) / 100
+    : 0;
 
-  // Determine shipping charge safely
-  const shipping =
-    product?.shippingCharge === 0
+// Determine shipping charge safely
+const shipping =
+  product?.shippingCharge !== undefined
+    ? product.shippingCharge === 0
       ? "Free Shipping"
-      : `৳${product?.shippingCharge}`;
+      : `৳${product.shippingCharge}`
+    : "Shipping not available";
+
+// Guard against undefined product data
+if (isLoading) return <Loader />;
+if (error) {
+  return (
+    <Message variant="danger">
+      {error?.data?.message || "Failed to load product details"}
+    </Message>
+  );
+}
+
 
   // Guard against undefined product data
   if (isLoading) return <Loader />;
