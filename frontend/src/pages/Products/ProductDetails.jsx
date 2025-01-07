@@ -160,6 +160,7 @@ const ProductDetails = () => {
 
                     <OrderNowButton
                       product={product}
+                      item={product}
                       qty={1}
                       customStyles="my-custom-class"
                     />
