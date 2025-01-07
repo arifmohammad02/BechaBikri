@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import {
   useGetProductDetailsQuery,
@@ -14,13 +14,17 @@ import ProductTabs from "./ProductTabs";
 import Ratings from "./Ratings";
 // import AddToCartButton from "../../components/AddToCartButton";
 import { FaCheck } from "react-icons/fa";
-import OrderNowButton from "../../components/OrderNowButton";
+import { addToCart } from "../../redux/features/cart/cartSlice";
+// import OrderNowButton from "../../components/OrderNowButton";
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [qty, setQty] = useState(1);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const {
     data: product,
@@ -82,7 +86,12 @@ const ProductDetails = () => {
     return <Message variant="danger">Product not found.</Message>;
   }
 
-  console.log(product);
+  // console.log(product);
+
+  const addToCartHandler = () => {
+    dispatch(addToCart({ ...product, qty }));
+    navigate("/cart");
+  };
 
   return (
     <div className="bg-white min-h-screen h-full pt-12 px-3 xs:px-0 container mx-auto">
@@ -158,12 +167,22 @@ const ProductDetails = () => {
                      
                     /> */}
 
-                    <OrderNowButton
+                    {/* <OrderNowButton
                       product={product}
                       item={product}
                       qty={1}
                       customStyles="my-custom-class"
-                    />
+                    /> */}
+
+                    <div className="btn-container">
+                      <button
+                        onClick={addToCartHandler}
+                        disabled={product.countInStock === 0}
+                        className="bg-pink-600 text-white py-2 px-4 rounded-lg mt-4 md:mt-0"
+                      >
+                        Add To Cart
+                      </button>
+                    </div>
 
                     <button
                       className="text-gray-500 hover:text-red-500 transition-colors"
