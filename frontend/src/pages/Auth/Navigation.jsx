@@ -34,6 +34,9 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   const [tabOpen, setTabOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  console.log(cartItems);
+  
+
   // Menu toggle function
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -118,11 +121,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     />
                     <div className="absolute -top-2 left-5">
                       <span className="text-sm font-semibold">
-                        {cartItems?.length > 0 && (
+                        {/* {cartItems?.length > 0 && (
                           <span className="px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                             {cartItems.reduce((acc,) => acc + item.qty, 0)}
                           </span>
-                        )}
+                        )} */}
                       </span>
                     </div>
                   </div>
@@ -156,11 +159,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     />
                     <div className="absolute -top-2 left-5">
                       <span className="text-sm font-semibold">
-                        {cartItems?.length > 0 && (
+                        {/* {cartItems?.length > 0 && (
                           <span className="px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                             {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                           </span>
-                        )}
+                        )} */}
                       </span>
                     </div>
                   </div>
@@ -243,11 +246,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               </span>
               <div className="absolute -top-2 left-5">
                 <span className="text-sm font-semibold">
-                  {cartItems?.length > 0 && (
+                  {/* {cartItems?.length > 0 && (
                     <span className="px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                       {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                     </span>
-                  )}
+                  )} */}
                 </span>
               </div>
             </div>
@@ -472,13 +475,13 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 className="relative flex items-center hover:text-yellow-500 transition-all duration-300 ease-in-out"
               >
                 <AiOutlineShoppingCart size={24} />
-                {cartItems?.length > 0 && (
+                {/* {cartItems?.length > 0 && (
                   <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                     {cartItems && cartItems.length > 0
                       ? cartItems.reduce((acc, item) => acc + item.qty, 0)
                       : 0}
                   </span>
-                )}
+                )} */}
               </Link>
             </>
           ) : (
@@ -500,11 +503,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 className="relative flex items-center hover:text-yellow-500 transition-all duration-300 ease-in-out"
               >
                 <AiOutlineShoppingCart size={24} />
-                {cartItems?.length > 0 && (
+                {/* {cartItems?.length > 0 && (
                   <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
                     {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                   </span>
-                )}
+                )} */}
               </Link>
 
               {/* Profile */}
