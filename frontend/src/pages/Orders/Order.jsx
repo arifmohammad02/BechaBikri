@@ -50,11 +50,26 @@ const Order = () => {
     }
   };
 
-  console.log(order);
-  
+  // Calculate Discount and Final Total
+  const itemsPrice = order?.orderItems.reduce(
+    (acc, item) => acc + item.qty * item.price,
+    0
+  );
 
- 
-  
+  const discount = order?.orderItems.reduce(
+    (acc, item) =>
+      acc + (item.discountPercentage / 100) * item.qty * item.price,
+    0
+  );
+
+  const shippingCharge = order?.orderItems.reduce(
+    (acc, item) => acc + item.shippingCharge,
+    0
+  );
+
+  const totalPrice = itemsPrice - discount + shippingCharge;
+
+  // console.log(order);
 
   return isLoading ? (
     <Loader />
@@ -157,15 +172,19 @@ const Order = () => {
           </h2>
           <div className="flex justify-between mb-2 text-gray-600">
             <span>Items</span>
-            <span>BDT-{order.itemsPrice}</span>
+            <span>BDT-{itemsPrice.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between mb-2 text-gray-600">
+            <span>Discount</span>
+            <span>-BDT-{discount.toFixed(2)}</span>
           </div>
           <div className="flex justify-between mb-2 text-gray-600">
             <span>Shipping</span>
-            <span>BDT-{order.shippingPrice}</span>
+            <span>BDT-{shippingCharge.toFixed(2)}</span>
           </div>
           <div className="flex justify-between mb-4 text-gray-600 font-semibold">
             <span>Total</span>
-            <span>BDT-{order.totalPrice}</span>
+            <span>BDT-{totalPrice.toFixed(2)}</span>
           </div>
 
           {!order.isPaid && (

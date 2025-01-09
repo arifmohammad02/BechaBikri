@@ -75,7 +75,7 @@ const ProductList = () => {
 
       const { data } = await createProduct(productData);
 
-      console.log(data);
+      // console.log(data);
       
 
       if (data.error) {

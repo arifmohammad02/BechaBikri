@@ -14,6 +14,28 @@ const PlaceOrder = () => {
   const navigate = useNavigate();
 
   const cart = useSelector((state) => state.cart);
+  // console.log(cart);
+
+  const calculateDiscountedPrice = (cartItems) => {
+    return cartItems.reduce((total, item) => {
+      const discountedPrice =
+        item.price - (item.price * item.discountPercentage) / 100;
+      return total + discountedPrice * item.qty;
+    }, 0);
+  };
+
+  // Shipping Charge Calculation Function
+  const calculateShippingCharge = (cartItems) => {
+    return cartItems.reduce(
+      (total, item) => total + item.shippingCharge * item.qty,
+      0
+    );
+  };
+
+  const discountedPrice = calculateDiscountedPrice(cart.cartItems);
+  const shippingCharge = calculateShippingCharge(cart.cartItems);
+
+  const finalTotal = discountedPrice + shippingCharge;
 
   const [createOrder, { error }] = useCreateOrderMutation();
 
@@ -32,10 +54,10 @@ const PlaceOrder = () => {
         orderItems: cart.cartItems,
         shippingAddress: cart.shippingAddress,
         paymentMethod: cart.paymentMethod,
-        itemsPrice: cart.itemsPrice,
-        shippingPrice: cart.shippingPrice,
-        taxPrice: cart.taxPrice,
-        totalPrice: cart.totalPrice,
+        // itemsPrice: cart.itemsPrice,
+        // shippingPrice: cart.shippingPrice,
+        // taxPrice: cart.taxPrice,
+        // totalPrice: cart.totalPrice,
       }).unwrap();
       dispatch(clearCartItems());
       navigate(`/order/${res._id}`);
@@ -46,8 +68,7 @@ const PlaceOrder = () => {
     }
   };
 
-  console.log(cart);
-  
+  // console.log(cart);
 
   return (
     <div className="container mx-auto py-12">
@@ -190,21 +211,21 @@ const PlaceOrder = () => {
                   <tr className="hover:bg-gray-100 border-b">
                     <td className="py-1 md:py-2 px-2 md:px-4">
                       <span className="font-semibold text-indigo-600">
-                        Shipping:
+                        Discounted Price
                       </span>
                     </td>
                     <td className="py-1 md:py-2 px-2 md:px-4">
-                      BDT- {cart.shippingPrice}
+                      BDT- {discountedPrice.toFixed(2)}
                     </td>
                   </tr>
                   <tr className="hover:bg-gray-100">
                     <td className="py-1 md:py-2 px-2 md:px-4">
                       <span className="font-semibold text-indigo-600">
-                        Tax:
+                        Shipping Charge:
                       </span>
                     </td>
                     <td className="py-1 md:py-2 px-2 md:px-4">
-                      BDT- {cart.taxPrice}
+                      BDT- {shippingCharge.toFixed(2)}
                     </td>
                   </tr>
                   {/* Highlighted Total Row */}
@@ -213,7 +234,7 @@ const PlaceOrder = () => {
                       <span className="font-extrabold">Total:</span>
                     </td>
                     <td className="py-1 md:py-2 px-2 md:px-4 font-bold text-indigo-800">
-                      BDT- {cart.totalPrice}
+                      BDT- {finalTotal.toFixed(2)}
                     </td>
                   </tr>
                 </tbody>

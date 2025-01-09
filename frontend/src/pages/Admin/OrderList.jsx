@@ -6,7 +6,7 @@ import AdminMenu from "./AdminMenu";
 
 const OrderList = () => {
   const { data: orders, isLoading, error } = useGetOrdersQuery();
-  console.log(orders);
+  // console.log(orders);
 
   return (
     <div className="container mx-auto py-12">

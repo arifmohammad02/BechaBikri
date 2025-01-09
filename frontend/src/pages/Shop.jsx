@@ -98,7 +98,7 @@ const Shop = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  console.log(products);
+  // console.log(products);
   
 
   return (

@@ -34,7 +34,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   const [tabOpen, setTabOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  console.log(cartItems);
+  // console.log(cartItems);
 
   // Menu toggle function
   const toggleMenu = () => {
