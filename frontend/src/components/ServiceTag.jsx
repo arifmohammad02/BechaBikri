@@ -12,7 +12,7 @@ const services = [
   },
   {
     title: "Returns",
-    subtitle: "Back guarantee under 7 days",
+    subtitle: "Back guarantee under 21 days",
     icon: <HiOutlineCurrencyDollar />,
   },
   {
@@ -29,14 +29,16 @@ const services = [
 
 const ServiceTag = () => {
   return (
-    <div className="bg-[#f4f4f4] ">
+    <div className="bg-[#FAF3EA] ">
       <div className="container mx-auto px-3 py-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 place-items-center md:place-items-start">
         {services?.map((item, index) => (
           <div key={index} className="flex items-center gap-2">
-            <span className="text-5xl text-blue-600 ">{item?.icon}</span>
+            <span className="text-5xl text-[#242424]  ">{item?.icon}</span>
             <div>
-              <h3 className="text-base uppercase font-bold ">{item?.title}</h3>
-              <p className="text-sm font-medium max-w-[160px] tracking-wide">
+              <h3 className="text-base text-[#242424] font-poppins uppercase font-bold ">
+                {item?.title}
+              </h3>
+              <p className="text-sm font-poppins text-[#898989] font-medium max-w-[150px] lg:max-w-none tracking-wide">
                 {item?.subtitle}
               </p>
             </div>

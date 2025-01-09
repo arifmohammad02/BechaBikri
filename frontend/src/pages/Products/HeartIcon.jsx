@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { FaHeart, FaRegHeart, FaVaadin } from "react-icons/fa";
+
 import { useSelector, useDispatch } from "react-redux";
 import {
   addToFavorites,
@@ -36,15 +37,8 @@ const HeartIcon = ({ product }) => {
   };
 
   return (
-    <div
-      className="text-pink-600 cursor-pointer"
-      onClick={toggleFavorites}
-    >
-      {isFavorite ? (
-       "Remove From Favorites"
-      ) : (
-       " Add To Favorites"
-      )}
+    <div className="text-[#B88E2F] cursor-pointer" onClick={toggleFavorites}>
+      {isFavorite ? <FaHeart /> : <FaRegHeart />}
     </div>
   );
 };

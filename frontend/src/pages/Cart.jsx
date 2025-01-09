@@ -55,8 +55,14 @@ const Cart = () => {
 
     return cartItems
       .reduce((acc, item) => {
-        if (item && item.price > 0 && item.qty > 0 && item.discountPercentage > 0) {
-          const discount = (item.qty * (item.price * item.discountPercentage)) / 100;
+        if (
+          item &&
+          item.price > 0 &&
+          item.qty > 0 &&
+          item.discountPercentage > 0
+        ) {
+          const discount =
+            (item.qty * (item.price * item.discountPercentage)) / 100;
           return acc + discount;
         }
         return acc; // Ignore invalid items
@@ -79,7 +85,7 @@ const Cart = () => {
               Add products while you shop, so they'll be ready for checkout
               later.
             </p>
-            <button className="flex items-center gap-3 bg-blue-700 text-white py-3 px-5 rounded-md hover:bg-blue-600 transition-all ease-in-out duration-300">
+            <button className="flex items-center gap-3 bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#a1926d] transition-all ease-in-out duration-300">
               <Link to="/shop">Go To Shop</Link>
               <FaArrowRight />
             </button>
@@ -237,7 +243,10 @@ const Cart = () => {
                         </td>
                         <td className="py-2">
                           <button
-                            className="nline-flex items-center justify-center w-full px-3 py-2 mb-2 text-[14px] text-white bg-green-500 rounded-md hover:bg-green-400 sm:w-auto sm:mb-0" data-primary="green-400" data-rounded="rounded-2xl" data-primary-reset="{}"
+                            className="nline-flex items-center justify-center w-full px-3 py-2 mb-2 text-[14px] text-white bg-green-500 rounded-md hover:bg-green-400 sm:w-auto sm:mb-0"
+                            data-primary="green-400"
+                            data-rounded="rounded-2xl"
+                            data-primary-reset="{}"
                             disabled={cartItems.length === 0}
                             onClick={checkoutHandler}
                           >

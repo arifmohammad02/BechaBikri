@@ -23,10 +23,13 @@ const Header = () => {
       <div className="container mx-auto flex justify-between gap-5">
         <div className="w-full">
           <div className="flex justify-between items-center py-2 md:py-5 px-3 md:px-0 mb-5">
-            <h1 className="text-xl font-bold lg:text-[40px] text-black">
-              Best Products
+            <h1 className="text-xl font-bold font-poppins lg:text-[30px] text-[#3A3A3A]">
+              Our Products
             </h1>
-            <Link to="/shop" className="text-pink-600 cursor-pointer">
+            <Link
+              to="/shop"
+              className="bg-[#B88E2F] font-poppins font-medium text-lg rounded-md py-1 px-3 md:px-5 text-white cursor-pointer"
+            >
               All Products
             </Link>
           </div>

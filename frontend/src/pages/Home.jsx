@@ -23,13 +23,13 @@ const Home = () => {
           ) : (
             <>
               <div className="flex justify-between items-center mb-5">
-                <h1 className="mt-[10rem] text-xl font-bold lg:text-[40px] text-black">
+                <h1 className="mt-[10rem] text-xl font-poppins font-bold lg:text-[30px] text-[#3A3A3A]">
                   Special Products
                 </h1>
 
                 <Link
                   to="/shop"
-                  className="bg-pink-600 font-bold rounded-md py-1 px-3 md:px-5 text-white mt-[10rem]"
+                  className="bg-[#B88E2F] font-poppins font-medium text-lg rounded-md py-1 px-3 md:px-5 text-white mt-[10rem]"
                 >
                   Shop
                 </Link>

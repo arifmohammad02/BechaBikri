@@ -26,15 +26,22 @@ const Favorites = () => {
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="min-h-screen text-white w-full container mx-auto flex items-center justify-center">
+        <div className="min-h-screen font-poppins text-white w-full container mx-auto flex items-center justify-center">
           <div className="">
             {/* Check if the 'favorites' array is empty */}
             {favorites.length === 0 ? (
               <div className="flex flex-col items-center gap-4">
-                <p><LuShoppingBag className="w-28 h-28 text-black" /></p>
-                <span className="text-[30px] font-medium font-sans text-center text-black">Your Favorite is empty </span>
-                <p className=" max-w-96 text-center text-black">Add products while you shop, so they'll be ready for checkout later. </p>
-                <button className="flex items-center gap-3 bg-blue-700 text-white py-3 px-5 rounded-md hover:bg-blue-600 transition-all ease-in-out duration-300">
+                <p>
+                  <LuShoppingBag className="w-28 h-28 text-black" />
+                </p>
+                <span className="text-[30px] font-medium font-sans text-center text-black">
+                  Your Favorite is empty{" "}
+                </span>
+                <p className=" max-w-96 text-center text-black">
+                  Add products while you shop, so they'll be ready for checkout
+                  later.{" "}
+                </p>
+                <button className="flex items-center gap-3 font-poppins bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#8b784c] transition-all ease-in-out duration-300">
                   <Link to="/shop">Go To Shop</Link>
                   <FaArrowRight />
                 </button>
@@ -52,7 +59,6 @@ const Favorites = () => {
         </div>
       )}
     </div>
-
   );
 };
 

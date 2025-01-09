@@ -1,15 +1,14 @@
-
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
 
 const Footer = () => {
   return (
-    <footer className="bg-[#181C14]">
+    <footer className="bg-[#FFFFFF]">
       <div className="container py-12 mx-auto space-y-8 overflow-hidden">
         <nav className="flex flex-wrap justify-center -mx-5 -my-2">
           <div className="px-5 py-2">
             <a
               href="#"
-              className="text-base leading-6 text-[#fafafa] hover:text-gray-300 "
+              className="text-base leading-6 text-[##000000] hover:text-[#242424] "
             >
               Home
             </a>
@@ -17,7 +16,7 @@ const Footer = () => {
           <div className="px-5 py-2">
             <a
               href="#"
-              className="text-base leading-6 text-[#fafafa] hover:text-gray-300"
+              className="text-base leading-6 text-[##000000] hover:text-[#242424]"
             >
               Shop
             </a>
@@ -25,7 +24,7 @@ const Footer = () => {
           <div className="px-5 py-2">
             <a
               href="#"
-              className="text-base leading-6 text-[#fafafa] hover:text-gray-300 "
+              className="text-base leading-6 text-[##000000] hover:text-[#242424] "
             >
               About Us
             </a>
@@ -33,7 +32,7 @@ const Footer = () => {
           <div className="px-5 py-2">
             <a
               href="#"
-              className="text-base leading-6 text-[#fafafa] hover:text-gray-300"
+              className="text-base leading-6 text-[##000000] hover:text-[#242424]"
             >
               Contact Us
             </a>
@@ -44,18 +43,18 @@ const Footer = () => {
             // eslint-disable-next-line react/no-unknown-property
             _blank="true"
             href="https://www.facebook.com/eonlinesolution1?mibextid=ZbWKwL"
-            className="text-gray-400 hover:text-gray-500"
+            className="text-[#242424]"
           >
             <span className="sr-only">Facebook</span>
             <FaFacebook className="text-3xl hover:text-[#316FF6]" />
           </a>
 
-          <a href="#" className="text-gray-400">
+          <a href="#" className="text-[#242424]">
             <span className="sr-only">Whatsapp</span>
             <FaWhatsapp className="text-3xl hover:text-[#075E54]" />
           </a>
         </div>
-        <p className="mt-8 text-base leading-6 text-center text-gray-400">
+        <p className="mt-8 text-base leading-6 text-center text-[#242424]">
           © 2024 E-online-solution. All rights reserved.
         </p>
       </div>

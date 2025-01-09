@@ -36,20 +36,20 @@ const Product = ({ product }) => {
           <img className="p-5" src={product.image} alt={product.name} />
           {/* Discount Badge */}
           {product.discountPercentage > 0 && (
-            <span className="absolute top-2 left-2 bg-pink-600 text-white text-xs font-semibold px-2 py-1 rounded">
+            <span className="absolute top-2 left-2 bg-[#B88E2F] font-poppins text-white text-xs font-semibold px-2 py-1 rounded">
               -{product.discountPercentage}% Off
             </span>
           )}
         </div>
       </Link>
       {/* Heart Icon */}
-      <div className="px-5">
+      <div className="ml-4 pb-3 text-xl">
         <HeartIcon product={product} />
       </div>
       <div className="px-5 pb-5">
         <div className="flex items-center gap-1">
           <Link to={`/product/${product._id}`}>
-            <h5 className="text-xl font-semibold tracking-tight text-gray-900">
+            <h5 className="text-xl font-semibold tracking-tight text-[#3A3A3A]">
               {truncateName(product.name)}
             </h5>
           </Link>
@@ -58,17 +58,17 @@ const Product = ({ product }) => {
         <div className="flex items-center justify-between">
           {/* Discounted Price and Original Price */}
           <div>
-            <span className="text-xl font-bold text-gray-900">
-              BDT {discountedPrice.toFixed(2)}
+            <span className="text-lg font-poppins font-bold text-[#3A3A3A]">
+              ₹{discountedPrice.toFixed(2)}
             </span>
             {product.discountPercentage > 0 && (
               <div className="flex flex-col items-start">
-                <span className="text-sm text-gray-500 line-through">
-                  BDT {product.price}
+                <span className="text-sm text-purple-500 font-poppins line-through">
+                  ₹{product.price}
                 </span>
-              
-                <span className="text-sm text-green-600">
-                  You Save: BDT {discountAmount.toFixed(2)}
+
+                <span className="text-sm font-poppins text-[#B88E2F]">
+                  You save: ₹{discountAmount.toFixed(2)}
                 </span>
               </div>
             )}
@@ -76,7 +76,7 @@ const Product = ({ product }) => {
 
           {/* <AddToCartButton product={product} /> */}
           <Link to={`/product/${product._id}`}>
-            <div className="relative inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-purple-500 rounded-md shadow-md group">
+            <div className="relative font-poppins  inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-purple-500 rounded-md shadow-md group">
               <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
                 <FaArrowRight className="w-3 h-3 text-current" />
               </span>
