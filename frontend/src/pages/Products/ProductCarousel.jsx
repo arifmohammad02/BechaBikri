@@ -1,10 +1,8 @@
-
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { bannerData } from "../../static";
 import "slick-carousel/slick/slick.css";
 import Slider from "react-slick";
-
 
 const ProductCarousel = () => {
   const navigate = useNavigate();
@@ -90,7 +88,7 @@ const ProductCarousel = () => {
             />
             <div className="absolute top-0 left-0 w-full h-full bg-black/10 pl-2 md:pl-10">
               <div className="container mx-auto flex flex-col justify-center gap-2 md:gap-3 h-full">
-                <p className=" w-24 py-1 bg-red-600 text-white text-xs uppercase text-center font-medium tracking-wide rounded-md  ">
+                <p className=" w-24 py-1 mt-3 bg-red-600 text-white text-xs uppercase text-center font-medium tracking-wide rounded-md  ">
                   {item?.sale}
                 </p>
                 <h2 className="text-xl md:text-5xl max-w-sm md:max-w-xl  font-bold md:leading-[55px] capitalize">
@@ -107,7 +105,7 @@ const ProductCarousel = () => {
                 </p>
                 <button
                   onClick={() => navigate("/shop")}
-                  className="w-24 md:w-44 py-2 md:py-3 bg-black/80  text-white text-xs rounded-md md:text-sm uppercase font-semibold hover:bg-black hoverEffect"
+                  className="w-24 md:w-44 py-2 md:py-3 bg-black/80 font-poppins  text-white text-xs rounded-md md:text-sm uppercase font-semibold hover:bg-black hoverEffect"
                 >
                   Shop Now
                 </button>

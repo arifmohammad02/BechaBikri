@@ -56,33 +56,32 @@ const ProductDetails = () => {
   };
 
   const discountedPrice =
-  product?.price && product?.discountPercentage
-    ? product.price - (product.price * product.discountPercentage) / 100
-    : product?.price || 0;
+    product?.price && product?.discountPercentage
+      ? product.price - (product.price * product.discountPercentage) / 100
+      : product?.price || 0;
 
-const discountAmount =
-  product?.price && product?.discountPercentage
-    ? (product.price * product.discountPercentage) / 100
-    : 0;
+  const discountAmount =
+    product?.price && product?.discountPercentage
+      ? (product.price * product.discountPercentage) / 100
+      : 0;
 
-// Determine shipping charge safely
-const shipping =
-  product?.shippingCharge !== undefined
-    ? product.shippingCharge === 0
-      ? "Free Shipping"
-      : `৳${product.shippingCharge}`
-    : "Shipping not available";
+  // Determine shipping charge safely
+  const shipping =
+    product?.shippingCharge !== undefined
+      ? product.shippingCharge === 0
+        ? "Free Shipping"
+        : `৳${product.shippingCharge}`
+      : "Shipping not available";
 
-// Guard against undefined product data
-if (isLoading) return <Loader />;
-if (error) {
-  return (
-    <Message variant="danger">
-      {error?.data?.message || "Failed to load product details"}
-    </Message>
-  );
-}
-
+  // Guard against undefined product data
+  if (isLoading) return <Loader />;
+  if (error) {
+    return (
+      <Message variant="danger">
+        {error?.data?.message || "Failed to load product details"}
+      </Message>
+    );
+  }
 
   // Guard against undefined product data
   if (isLoading) return <Loader />;
@@ -109,10 +108,10 @@ if (error) {
     <div className="bg-white min-h-screen h-full pt-12 px-3 xs:px-0 container mx-auto">
       <div className="pb-10">
         {/* Go Back Link */}
-        <div className="py-4">
+        <div className="py-10">
           <Link
             to="/"
-            className="text-gray-800 font-semibold hover:underline hover:text-pink-600 transition-all"
+            class="text-gray-900 bg-white border border-[#B88E2F] focus:outline-none  font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
           >
             Go Back
           </Link>
@@ -132,31 +131,31 @@ if (error) {
                 </div>
 
                 <div>
-                  <h5 className="text-sm text-pink-600 font-semibold font-inter">
+                  <h5 className="text-base text-[#B88E2F] font-medium font-poppins">
                     {product.isFeatured ? "Sale!" : "New!"}
                   </h5>
-                  <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                  <h1 className="text-2xl font-normal text-[#242424] mb-2">
                     {product.name}
                   </h1>
                   <div className="flex items-center space-x-3 mb-4">
-                    <span className="text-2xl text-pink-600 font-semibold">
-                      ৳{discountedPrice?.toFixed(2)}
+                    <span className="text-2xl text-[#B88E2F] font-medium font-poppins">
+                      ₹{discountedPrice?.toFixed(2)}
                     </span>
                     {product.discountPercentage > 0 && (
                       <>
-                        <span className="text-sm text-gray-500 line-through">
-                          ৳{product.price}
+                        <span className="text-sm text-[#9F9F9F] font-medium font-poppins line-through">
+                          ₹{product.price}
                         </span>
-                        <span className="bg-pink-100 text-pink-600 text-xs font-semibold px-2 py-1 rounded">
+                        <span className="bg-[#B88E2F] text-white text-xs font-semibold px-2 py-1 rounded">
                           -{product.discountPercentage}% Off
                         </span>
-                        <span className="text-sm text-green-600">
-                          You Save: ৳{discountAmount.toFixed(2)}
+                        <span className="text-sm font-medium font-poppins text-[#B88E2F]">
+                          You save: ₹{discountAmount.toFixed(2)}
                         </span>
                       </>
                     )}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-base font-normal font-poppins text-[#9F9F9F]">
                     <p>Brand: {product.brand}</p>
                     <p>
                       Stock:{" "}
@@ -190,24 +189,26 @@ if (error) {
                       <button
                         onClick={addToCartHandler}
                         disabled={product.countInStock === 0}
-                        className="bg-pink-600 text-white py-2 px-4 rounded-lg mt-4 md:mt-0"
+                        className="bg-[#B88E2F] text-lg font-poppins font-medium text-white py-2 px-4 rounded-lg mt-4 md:mt-0"
                       >
                         Add To Cart
                       </button>
                     </div>
 
-                    <button
+                    {/* <button
                       className="text-gray-500 hover:text-red-500 transition-colors"
                       title="Add to Wishlist"
                     >
+                    </button> */}
+                    <div className="flex items-center space-x-2 text-xl">
                       <HeartIcon product={product} />
-                    </button>
+                    </div>
                   </div>
 
                   {/* Review Rating and Count */}
                   <div className="mt-6 flex items-center space-x-2">
                     <Ratings value={product.rating} />
-                    <span className="text-gray-500 text-sm">
+                    <span className="text-[#9F9F9F] text-base font-medium font-poppins">
                       ({product.numReviews}{" "}
                       {product.numReviews === 1 ? "review" : "reviews"})
                     </span>
@@ -215,10 +216,10 @@ if (error) {
 
                   {/* Description */}
                   <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-gray-800">
+                    <h3 className="text-xl  mb-3 font-medium font-poppins text-black/80">
                       Description
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 font-medium font-poppins">
                       {isExpanded
                         ? product.description
                         : `${product.description.substring(0, 150)}${
@@ -227,7 +228,7 @@ if (error) {
                     </p>
                     {product.description.length > 150 && (
                       <button
-                        className="text-pink-600 text-sm hover:underline mt-2"
+                        className="text-purple-500 text-sm font-poppins mt-2"
                         onClick={() => setIsExpanded(!isExpanded)}
                       >
                         {isExpanded ? "See Less" : "Read More"}
@@ -239,30 +240,36 @@ if (error) {
             </div>
           </div>
           <div className="container mx-auto mt-8 py-4">
-            <div className="space-y-4">
+            <div className="space-y-4 font-poppins font-normal">
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm">
+                <label className="text-sm text-[#9F9F9F]">
                   পন্যটি কিনতে “অর্ডার করুন” বাটনে চাপুন
                 </label>
               </div>
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm">
+                <label className="text-sm text-[#9F9F9F]">
                   পুরো বাংলাদেশে হোম ডেলিভিরি মাধ্যমে পণ্য পৌঁছানো হয়
                 </label>
               </div>
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm">১টাকাও এডভান্স নেওয়া হয় না</label>
+                <label className="text-sm text-[#9F9F9F]">
+                  ১টাকাও এডভান্স নেওয়া হয় না
+                </label>
               </div>
             </div>
 
             <div className="flex justify-between items-center mt-10 p-4 bg-gray-100 rounded-lg shadow-md">
               <div className="text-sm text-gray-600">
-                <span className="font-bold">Guaranteed Delivery</span>
+                <span className="text-xl text-[#242424] font-normal font-poppins">
+                  Guaranteed Delivery
+                </span>
                 <span className="mx-2">|</span>
-                <span className="font-bold">No Advance</span>
+                <span className="text-base text-[#242424] font-medium font-poppins">
+                  No Advance
+                </span>
               </div>
 
               <div className="flex items-center space-x-4">
@@ -271,8 +278,8 @@ if (error) {
                   alt="COD Delivery"
                   className="h-12 w-12 rounded-lg"
                 />
-                <span className="text-xl text-red-600 font-bold font-bangla">
-                  ক্যাশ অন ডেলিভারী
+                <span className="text-xl text-[#B88E2F] font-bold font-inter">
+                  Cash On Delivery
                 </span>
               </div>
             </div>

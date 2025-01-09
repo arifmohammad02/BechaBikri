@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
-import { AiOutlineArrowRight, AiOutlineShoppingCart } from "react-icons/ai";
+import { AiOutlineArrowRight } from "react-icons/ai";
+import { FaCartShopping } from "react-icons/fa6";
+
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/features/cart/cartSlice";
 import { toast } from "react-toastify";
@@ -22,12 +24,12 @@ const ProductCard = ({ p }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg border hover:border-pink-500 transition-all duration-300">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg border hover:border-[#B88E2F] transition-all duration-300">
       <div className="p-2 sm:p-4">
         <section className="relative overflow-hidden rounded-lg">
           <div className="w-full">
             <Link to={`/product/${p._id}`}>
-              <span className="absolute bottom-3 right-3 bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+              <span className="absolute bottom-10 right-3 bg-purple-100 text-[#B88E2F] text-xs font-medium px-2 py-0.5 rounded-full">
                 {p?.brand}
               </span>
               <img
@@ -37,21 +39,23 @@ const ProductCard = ({ p }) => {
               />
             </Link>
           </div>
-          <HeartIcon product={p} />
+          <div className="pt-5 text-xl">
+            <HeartIcon product={p} />
+          </div>
         </section>
 
         <div className="pt-4">
           <div>
-            <h5 className="text-lg font-semibold text-gray-800 mb-2 truncate">
+            <h5 className="text-xl font-semibold text-[#242424] mb-1 truncate">
               {isExpanded ? p?.name : `${p?.name.substring(0, 20)}...`}
               <button
-                className="text-blue-500 text-xs ml-2"
+                className="text-purple-500 text-xs ml-2"
                 onClick={toggleName}
               >
                 {isExpanded ? "See Less" : "See More"}
               </button>
             </h5>
-            <p className="text-xl font-bold text-gradient">
+            <p className="text-lg  font-medium font-poppins text-[#242424">
               {p?.price?.toLocaleString("en-US", {
                 style: "currency",
                 currency: "BDT",
@@ -64,17 +68,17 @@ const ProductCard = ({ p }) => {
           <section className="flex justify-between items-center">
             <Link
               to={`/product/${p._id}`}
-              className="px-2 py-2 inline-flex items-center xs:text-sm xs:py-2 xs:px-2 sm:px-4 sm:py-2 sm:text-base font-medium text-white bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg hover:opacity-90 focus:outline-none"
+              className="px-2  font-poppins font-medium py-2 inline-flex items-center xs:text-sm xs:py-2 xs:px-2 sm:px-4 sm:py-2 sm:text-base bg-[#B88E2F]  text-white bg-gradient-to-r outline-none"
             >
               Read More
               <AiOutlineArrowRight className="ml-2 w-4 h-4" />
             </Link>
 
             <button
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+              className="px-2 py-2 inline-flex items-center bg-[#FAF3EA] rounded-full hover:bg-gray-200"
               onClick={() => addToCartHandler(p, 1)}
             >
-              <AiOutlineShoppingCart size={25} className="text-gray-600" />
+              <FaCartShopping size={25} className="text-[#B88E2F]" />
             </button>
           </section>
         </div>

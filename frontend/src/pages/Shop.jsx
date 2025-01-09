@@ -99,24 +99,23 @@ const Shop = () => {
   }, []);
 
   // console.log(products);
-  
 
   return (
     <div className="container mx-auto">
       <div className="flex gap-8 py-20">
         {/* Filter Sidebar */}
         <div
-          className={`w-64 h-full bg-gray-500 p-5 fixed top-0 right-0 transform transition-transform duration-300 ease-in-out z-50 pt-16 lg:pt-0 lg:z-0 rounded-md ${
+          className={`w-64 h-full bg-[#F9F1E7] p-5 fixed top-0 right-0 transform transition-transform duration-300 ease-in-out z-50 pt-16 lg:pt-0 lg:z-0 rounded-md ${
             isSidebarOpen ? "translate-x-0" : "translate-x-full"
           } lg:static lg:block lg:w-1/5 lg:h-auto lg:translate-x-0`}
         >
           <button
             onClick={toggleSidebar}
-            className="absolute top-4 right-4 text-white text-2xl lg:hidden"
+            className="absolute top-4 right-4 text-[#B88E2F] text-2xl lg:hidden"
           >
             <FaTimes /> {/* Close icon */}
           </button>
-          <h2 className="h4 text-center py-2 bg-black rounded-full mb-2 text-white mt-5">
+          <h2 className="h4 text-center py-2 font-inter bg-black/80 rounded-full mb-2 text-white mt-5">
             Filter by Categories
           </h2>
           {categories?.map((c) => (
@@ -130,7 +129,7 @@ const Shop = () => {
                 />
                 <label
                   htmlFor={`category-${c._id}`}
-                  className="ml-2 text-sm font-medium text-white"
+                  className="ml-2 text-sm font-medium text-[#242424]"
                 >
                   {c.name}
                 </label>
@@ -138,7 +137,7 @@ const Shop = () => {
             </div>
           ))}
 
-          <h2 className="h4 text-center py-2 bg-black text-white rounded-full mb-2">
+          <h2 className="h4 text-center py-2 font-inter bg-black/80 text-white rounded-full mb-2">
             Filter by Brands
           </h2>
           {uniqueBrands?.map((brand) => (
@@ -153,7 +152,7 @@ const Shop = () => {
                 />
                 <label
                   htmlFor={brand}
-                  className="ml-2 text-sm font-medium text-white"
+                  className="ml-2 text-sm font-medium text-[#242424]"
                 >
                   {brand}
                 </label>
@@ -161,7 +160,7 @@ const Shop = () => {
             </div>
           ))}
 
-          <h2 className="h4 text-center py-2 bg-black text-white rounded-full mb-2">
+          <h2 className="h4 text-center font-inter py-2 bg-black/80 text-white rounded-full mb-2">
             Filter by Price
           </h2>
           <input
@@ -169,10 +168,10 @@ const Shop = () => {
             placeholder="Enter Price"
             value={priceFilter}
             onChange={handlePriceChange}
-            className="w-full px-3 py-2 placeholder-gray-400 border rounded-lg focus:outline-none focus:ring focus:border-pink-300"
+            className="w-full px-3 py-2 placeholder-gray-400 border border-black/50 rounded-lg outline-none  "
           />
           <button
-            className="w-full border my-4 px-3 py-2 text-white bg-pink-600 hover:bg-pink-700 rounded-lg"
+            className="w-full font-inter font-medium border my-4 px-3 py-2 text-white bg-[#B88E2F] hover:bg-[#B88E2F]/80 rounded-lg"
             onClick={handleResetFilters}
           >
             Reset
@@ -182,12 +181,12 @@ const Shop = () => {
         {/* Products Section */}
         <div className="flex-1 max-h-[calc(100vh-70px)] overflow-y-auto scrollbar-hide">
           <div className="flex items-center justify-between px-3 md:px-0">
-            <h2 className="h4 text-center mb-2 text-black">
+            <h2 className="text-xl font-semibold  text-center mb-2 text-[#242424]">
               {products?.length} Products
             </h2>
             <div className="lg:hidden">
               <button
-                className="  p-3 rounded-full text-black hover:bg-pink-600"
+                className="  p-3 rounded-full text-black hover:bg-[#B88E2F]"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               >
                 <FaFilter />

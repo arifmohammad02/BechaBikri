@@ -37,7 +37,7 @@ const ProductTabs = ({
               key={index}
               className={`cursor-pointer text-lg py-2 px-4 rounded-lg transition duration-200 ${
                 activeTab === index + 1
-                  ? "font-semibold bg-yellow-300 text-gray-900 border-2 border-yellow-500"
+                  ? "font-semibold bg-[#B88E2F] text-white border-2 border-[#B88E2F]"
                   : "hover:bg-gray-100 hover:text-gray-800 text-gray-600"
               }`}
               onClick={() => handleTabClick(index + 1)}
@@ -67,7 +67,7 @@ const ProductTabs = ({
                     required
                     value={rating}
                     onChange={(e) => setRating(e.target.value)}
-                    className="p-2 border rounded-lg w-full lg:w-2/3 text-gray-900 focus:ring-2 focus:ring-yellow-500"
+                    className="p-2 border rounded-lg w-full lg:w-2/3 text-gray-900 outline-none"
                   >
                     <option value="">Select</option>
                     <option value="1">Inferior</option>
@@ -91,22 +91,22 @@ const ProductTabs = ({
                     required
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="p-2 border rounded-lg w-full lg:w-2/3 text-gray-900 focus:ring-2 focus:ring-yellow-500"
+                    className="p-2 border rounded-lg w-full lg:w-2/3 text-gray-900 outline-none "
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loadingProductReview}
-                  className="bg-pink-600 text-white py-2 px-4 rounded-lg hover:bg-pink-700 transition duration-300 w-full lg:w-1/3 mx-auto"
+                  className="bg-[#B88E2F] outline-none text-white py-2 px-4 rounded-lg transition duration-300 w-full lg:w-1/3 mx-auto"
                 >
                   Submit
                 </button>
               </form>
             ) : (
-              <p className="text-gray-800">
+              <p className="text-gray-800 font-poppins text-base">
                 Please{" "}
-                <Link to="/login" className="text-yellow-400 underline">
+                <Link to="/login" className="text-[#B88E2F] underline">
                   sign in
                 </Link>{" "}
                 to write a review.
@@ -124,10 +124,12 @@ const ProductTabs = ({
               product.reviews.map((review) => (
                 <div
                   key={review._id}
-                  className="bg-gray-800 p-4 rounded-lg shadow-md transition hover:shadow-xl hover:bg-gray-700"
+                  className="bg-[#242424] font-poppins font-normal p-4 rounded-lg "
                 >
                   <div className="flex justify-between text-gray-300 ">
-                    <strong className="ml-5">{review.name}</strong>
+                    <strong className="ml-5 font-poppins font-normal">
+                      {review.name}
+                    </strong>
                     <span>{review.createdAt.substring(0, 10)}</span>
                   </div>
                   <p className="ml-5 text-gray-300">{review.comment}</p>
