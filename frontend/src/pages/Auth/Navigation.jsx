@@ -6,6 +6,9 @@ import {
   AiOutlineUserAdd,
   AiOutlineShoppingCart,
 } from "react-icons/ai";
+import { FaCartShopping } from "react-icons/fa6";
+import { MdHome } from "react-icons/md";
+
 import {
   FaTachometerAlt,
   FaBox,
@@ -87,26 +90,28 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
     <div>
       {/* Mobile Header */}
       {isMobile && (
-        <div className="w-full fixed top-0 left-0 z-50 bg-black px-3 sm:px-0">
-          <div className="flex justify-between items-center py-4 container mx-auto text-white">
+        <div className="w-full fixed top-0 left-0 z-50 bg-white border-b mb-1 px-3 sm:px-0">
+          <div className="flex justify-between items-center py-4 container mx-auto text-black">
             <Link to="/">
-              <span className="font-semibold">MySite</span>
+              <span className="font-normal text-[#B88E2F] font-poppins text-base">
+                OnlineSolution
+              </span>
             </Link>
             {/* User Login / Cart / Favorites */}
             {!userInfo ? (
               <div className="flex gap-4">
                 <Link
                   to="/login"
-                  className="text-white hover:text-blue-500 transition-all duration-300 ease-in-out"
+                  className="text-[#242424] hover:text-[#B88E2F] font-poppins font-normal transition-all duration-300 ease-in-out"
                 >
                   Login
                 </Link>
                 <Link
                   to="/"
-                  className="flex items-center group hover:text-blue-500 transition-all duration-300 ease-in-out"
+                  className="flex items-center font-poppins font-normal text-[#242424] group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
                   onClick={handleItemClick}
                 >
-                  <AiOutlineHome className="flex-none text-white" size={26} />
+                  Home
                 </Link>
                 <Link
                   to="/cart"
@@ -114,9 +119,9 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   onClick={handleItemClick}
                 >
                   <div className="relative flex">
-                    <AiOutlineShoppingCart
-                      className="flex-none text-white"
-                      size={26}
+                    <FaCartShopping
+                      className="flex-none text-black"
+                      size={20}
                     />
                     <div className="absolute -top-2 left-5">
                       <span className="text-sm font-semibold">
@@ -136,7 +141,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     onClick={handleItemClick}
                   >
                     <div className="relative flex">
-                      <FaHeart className="flex-none text-white" size={26} />
+                      <FaHeart className="flex-none text-[#242424]" size={20} />
                       <div className="absolute -top-[42px] left-2">
                         <FavoritesCount />
                       </div>
@@ -194,7 +199,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         className={`${
           isMobile
             ? isMenuOpen
-              ? "fixed top-0 left-0 bottom-0 w-64 bg-black z-50 p-4 h-full flex flex-col justify-between"
+              ? "fixed top-0 left-0 bottom-0 w-64 bg-[#F9F1E7] z-50 p-4 h-full flex flex-col justify-between"
               : "hidden"
             : "lg:hidden fixed top-0 left-0 h-screen transition-all duration-300 ease-in-out bg-black text-white p-4 w-16 lg:w-20 xl:w-24 flex flex-col justify-between z-50"
         }`}
@@ -203,7 +208,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         {isMenuOpen && (
           <button
             onClick={toggleMenu}
-            className="absolute top-4 right-4 text-white"
+            className="absolute top-4 right-4 text-[#242424]"
           >
             <FaTimes size={24} />
           </button>
@@ -216,8 +221,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             className="flex items-center group hover:text-blue-500 transition-all duration-300 ease-in-out"
             onClick={handleItemClick}
           >
-            <AiOutlineHome className="flex-none text-white" size={26} />
-            <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-semibold text-white">
+            <MdHome className="flex-none text-[#242424]" size={26} />
+            <span className="ml-4 opacity-100 text-[#242424] transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins ">
               Home
             </span>
           </Link>
@@ -226,8 +231,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             className="flex items-center group hover:text-green-500 transition-all duration-300 ease-in-out"
             onClick={handleItemClick}
           >
-            <AiOutlineShopping className="flex-none text-white" size={26} />
-            <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-semibold text-white">
+            <AiOutlineShopping className="flex-none text-[#242424]" size={26} />
+            <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
               Shop
             </span>
           </Link>
@@ -237,11 +242,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             onClick={handleItemClick}
           >
             <div className="relative flex">
-              <AiOutlineShoppingCart
-                className="flex-none text-white"
-                size={26}
-              />
-              <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-semibold text-white">
+              <FaCartShopping className="flex-none text-[#242424]" size={26} />
+              <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
                 Cart
               </span>
               <div className="absolute -top-2 left-5">
@@ -262,8 +264,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               onClick={handleItemClick}
             >
               <div className="relative flex">
-                <FaHeart className="flex-none text-white" size={26} />
-                <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-semibold text-white">
+                <FaHeart className="flex-none text-[#242424]" size={26} />
+                <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
                   Favorites
                 </span>
                 <div className="absolute -top-[42px] left-2">
@@ -283,14 +285,14 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 className="flex items-center gap-2 hover:text-purple-500 transition-all duration-300 ease-in-out"
               >
                 <div className="flex items-center">
-                  <FaUser className="flex-none text-white" size={26} />
-                  <span className="ml-4 text-sm font-semibold flex text-white">
+                  <FaUser className="flex-none text-[#242424]" size={26} />
+                  <span className="ml-4 text-sm  flex  font-normal font-poppins ">
                     {userInfo?.username}
                     <div className="ml-1 flex items-center">
                       {tabOpen ? (
-                        <FaAngleUp className="text-white" size={16} />
+                        <FaAngleUp className="text-[#242424]" size={16} />
                       ) : (
-                        <FaAngleDown className="text-white" size={16} />
+                        <FaAngleDown className="text-[#242424]" size={16} />
                       )}
                     </div>
                   </span>
@@ -349,8 +351,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                         className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
                         onClick={handleItemClick}
                       >
-                        <FaUsers className="flex-none" size={26} />
-                        <span className="ml-4 text-sm font-semibold">
+                        <FaUsers
+                          className="flex-none text-[#242424]"
+                          size={26}
+                        />
+                        <span className="ml-4 text-sm text-[#242424]">
                           Users
                         </span>
                       </Link>
@@ -361,15 +366,25 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     className="flex items-center hover:text-emerald-500 transition-all duration-300 ease-in-out"
                     onClick={handleItemClick}
                   >
-                    <FaUserCircle className="flex-none " size={26} />
-                    <span className="ml-4 text-sm font-semibold">Profile</span>
+                    <FaUserCircle
+                      className="flex-none text-[#242424]"
+                      size={26}
+                    />
+                    <span className="ml-4 text-sm font-normal text-[#242424] font-poppins">
+                      Profile
+                    </span>
                   </Link>
                   <button
                     onClick={logoutHandler}
                     className="flex items-center hover:text-fuchsia-400 transition-all duration-300 ease-in-out"
                   >
-                    <FaSignOutAlt className="flex-none" size={26} />
-                    <span className="ml-4 text-sm font-semibold">Logout</span>
+                    <FaSignOutAlt
+                      className="flex-none text-[#242424]"
+                      size={26}
+                    />
+                    <span className="ml-4 text-[#242424] text-sm font-normal font-poppins">
+                      Logout
+                    </span>
                   </button>
                 </div>
               )}
@@ -587,7 +602,9 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                       className="flex items-center hover:text-fuchsia-400 transition-all duration-300 ease-in-out"
                     >
                       <FaSignOutAlt className="flex-none" size={26} />
-                      <span className="ml-4 text-sm font-semibold">Logout</span>
+                      <span className="ml-4  text-sm font-semibold">
+                        Logout
+                      </span>
                     </button>
                   </div>
                 )}

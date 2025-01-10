@@ -92,16 +92,16 @@ const Cart = () => {
           </div>
         ) : (
           <>
-            <div className="w-full mx-auto mt-8 bg-white p-6 rounded-lg shadow-lg border border-gray-300 transition-shadow duration-300">
-              <h1 className="text-2xl font-semibold mb-6 text-center text-gray-800">
+            <div className="w-full mx-auto mt-8 bg-white p-6 rounded-lg  border border-gray-300 transition-shadow duration-300">
+              <h1 className="text-xl font-medium mb-6 text-center text-[#242424]">
                 Shopping Cart
               </h1>
 
               {/* Cart Table */}
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white text-black rounded-lg border  border-gray-300 ">
+                <table className="min-w-full  text-black rounded-lg border  border-gray-300 ">
                   <thead>
-                    <tr className="border-b border-gray-300">
+                    <tr className="border-b text-base font-poppins bg-[#F9F1E7] font-medium border-gray-300">
                       <th className="py-4 px-6 text-left">Product</th>
                       <th className="py-4 px-6 text-left">Price</th>
                       <th className="py-4 px-6 text-left">Quantity</th>
@@ -113,23 +113,23 @@ const Cart = () => {
                     {cartItems.map((item) => (
                       <tr
                         key={item._id}
-                        className="border-b border-gray-300 hover:bg-gray-100 transition-colors duration-200"
+                        className="border-b border-gray-300  transition-colors duration-200"
                       >
                         <td className="py-4 px-6 flex items-center">
                           <img
                             src={item.image}
                             alt={item.name}
-                            className="w-[5rem] h-[5rem] object-cover rounded-lg border border-gray-200 shadow-sm"
+                            className="w-[5rem] h-[5rem] object-cover rounded-lg border border-gray-200 "
                           />
                           <Link
                             to={`/product/${item._id}`}
-                            className="hidden lg:block ml-4 text-pink-500 hover:text-pink-700 transition-colors duration-200 max-w-[500px]"
+                            className="hidden lg:block ml-4 text-[#9F9F9F] text-base font-poppins font-normal  max-w-[500px]"
                           >
                             {item.name}
                           </Link>
                         </td>
-                        <td className="py-4 px-6">
-                          BDT{" "}
+                        <td className="py-4 text-[#9F9F9F] text-base font-poppins font-normal  px-6">
+                          ₹{" "}
                           {item.discountPercentage > 0
                             ? calculateDiscountedPrice(item)
                             : item.price.toFixed(2)}
@@ -138,10 +138,8 @@ const Cart = () => {
                           <div className="flex items-center justify-center space-x-4">
                             {/* Decrease Quantity Button */}
                             <button
-                              className={`w-10 h-10 border rounded-full flex items-center justify-center bg-gradient-to-r from-red-500 to-pink-500 text-white ${
+                              className={`w-8 h-8 font-medium inline-flex text-lg  border border-[#B88E2F] rounded-full  items-center justify-center text-black ${
                                 item.qty > 1
-                                  ? "hover:shadow-md hover:scale-102 transition-transform"
-                                  : "opacity-50 cursor-not-allowed"
                               }`}
                               onClick={() =>
                                 item.qty > 1 &&
@@ -153,13 +151,13 @@ const Cart = () => {
                             </button>
 
                             {/* Quantity Display */}
-                            <span className="px-6 py-2 border rounded-full bg-gray-200 text-lg font-semibold shadow-md">
+                            <span className="w-12 h-12 inline-flex items-center justify-center border rounded-full bg-[#F9F1E7] text-lg font-normal font-poppins">
                               {item.qty}
                             </span>
 
                             {/* Increase Quantity Button */}
                             <button
-                              className="w-10 h-10 border rounded-full flex items-center justify-center bg-gradient-to-r from-green-400 to-blue-500 text-white hover:shadow-lg hover:scale-105 transition-transform"
+                              className=" w-8 h-8 font-medium inline-flex text-lg  border border-[#B88E2F] rounded-full  items-center justify-center text-black "
                               onClick={() =>
                                 addToCartHandler(item, item.qty + 1)
                               }
@@ -170,8 +168,8 @@ const Cart = () => {
                         </td>
                         <td className="py-4 px-6">
                           {item.discountPercentage > 0 ? (
-                            <span className="text-green-500">
-                              BDT {calculateDiscountAmount(item)}{" "}
+                            <span className="text-[#242424] font-poppins font-normal text-base">
+                              ₹{calculateDiscountAmount(item)}{" "}
                             </span>
                           ) : (
                             <span className="text-gray-500">No Discount</span>
@@ -179,7 +177,7 @@ const Cart = () => {
                         </td>
                         <td className="py-4 px-6">
                           <button
-                            className="text-red-500 hover:text-red-700 transition-colors duration-200"
+                            className="text-[#B88E2F] transition-colors duration-200"
                             onClick={() => removeFromCartHandler(item._id)}
                           >
                             <FaTrash className="ml-2" />
@@ -194,38 +192,39 @@ const Cart = () => {
               {/* Summary Section as Table */}
               <div className="flex flex-col pt-5 lg:pt-0 lg:flex-row items-center justify-between">
                 <div className="w-full lg:max-w-[40rem]">
-                  <p className="text-lg font-bold pb-2">Cash on delivery</p>
-                  <p>
+                  <p className="text-lg text-[#242424]  font-normal font-poppins pb-2">
+                    Cash on delivery
+                  </p>
+                  <p className="text-xl text-[#242424]  font-normal font-poppins">
                     {" "}
-                    সর্বোচ্চ ৪-৫ দিন (ঢাকায়) এবং ৫-৭ দিন (ঢাকার বাহিরে) সময়ের
-                    মধ্যে হোম ডেলিভারী করা হয়।
+                    সর্বোচ্চ ৫ দিন সময়ের মধ্যে হোম ডেলিভারী করা হয়।
                   </p>
                 </div>
-                <div className="mt-8 w-full lg:max-w-[45rem] p-4 border-2 border-gray-300 rounded-md">
-                  <table className="min-w-full bg-white text-black rounded-md  border border-gray-200">
+                <div className="mt-8 w-full bg-[#F9F1E7] lg:max-w-[45rem] p-4 border-2 border-gray-300 rounded-md">
+                  <table className="min-w-full bg-[#F9F1E7] text-black rounded-md  ">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
+                        <th className="py-3 px-4 text-sm md:text-lg text-left text-[#242424] font-semibold font-sans">
                           Total Items
                         </th>
-                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
+                        <th className="py-3 px-3 text-sm md:text-lg text-left text-[#242424] font-semibold font-sans">
                           Total Price
                         </th>
-                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
+                        <th className="py-3 px-3 text-sm md:text-lg text-left text-[#242424] font-semibold font-sans">
                           Total Discount
                         </th>
-                        <th className="py-3 px-4 text-sm md:text-lg text-left text-gray-700 font-semibold font-sans">
+                        <th className="py-3 px-1 text-sm md:text-lg text-left text-[#242424] font-semibold font-sans">
                           Checkout
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr className="border-b border-gray-200">
-                        <td className="py-2 px-4 text-sm md:text-xl font-sans">
+                        <td className="py-2 px-5 text-sm md:text-xl font-sans">
                           {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                         </td>
-                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-gray-800">
-                          BDT{" "}
+                        <td className="py-2 lg:px-4 px-4 text-sm md:text-xl font-sans font-semibold  text-[#B88E2F]">
+                          ₹{" "}
                           {cartItems
                             .reduce(
                               (acc, item) =>
@@ -238,19 +237,19 @@ const Cart = () => {
                             )
                             .toFixed(2)}
                         </td>
-                        <td className="py-2 px-4 text-sm md:text-xl font-sans font-semibold text-green-500">
-                          BDT {calculateTotalDiscount()}
+                        <td className="py-2 lg:px-4 px-4 text-sm md:text-xl font-sans font-semibold text-[#242424]">
+                          ₹{calculateTotalDiscount()}
                         </td>
                         <td className="py-2">
                           <button
-                            className="nline-flex items-center justify-center w-full px-3 py-2 mb-2 text-[14px] text-white bg-green-500 rounded-md hover:bg-green-400 sm:w-auto sm:mb-0"
+                            className="inline-flex items-center justify-center w-full lg:px-4 px-1 py-1 mb-2 text-[14px] rounded-md text-base font-sans font-semibold text-[#242424]  sm:w-auto  sm:mb-0 border border-[#242424]"
                             data-primary="green-400"
                             data-rounded="rounded-2xl"
                             data-primary-reset="{}"
                             disabled={cartItems.length === 0}
                             onClick={checkoutHandler}
                           >
-                            Proceed To Checkout
+                            Checkout
                           </button>
                         </td>
                       </tr>

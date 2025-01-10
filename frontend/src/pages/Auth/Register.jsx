@@ -85,15 +85,15 @@ const Register = () => {
         theme="dark"
       />
       <div className="flex justify-center items-center flex-col w-full px-4 mx-auto ">
-        <div className="w-full max-w-md bg-white rounded-lg shadow dark:border dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-2 border border-gray-300 rounded-md">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
+        <div className="w-full max-w-md bg-[#F9F1E7] rounded-lg ">
+          <div className="p-6 space-y-2 border  rounded-md">
+            <h1 className="text-xl font-medium font-poppins leading-tight tracking-tight text-[#242424] md:text-2xl dark:text-white text-center">
               Create an Account
             </h1>
             <form onSubmit={submitHandler} className="space-y-2" action="#">
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                  Your Name
+                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424] ">
+                  Your name
                 </label>
                 <input
                   type="text"
@@ -102,13 +102,13 @@ const Register = () => {
                   value={username}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your Name"
-                  className="w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400 "
                   required
                 />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                  Your Email
+                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424]">
+                  Your email
                 </label>
                 <input
                   type="email"
@@ -117,12 +117,12 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@gmail.com"
-                  className="w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400"
                   required
                 />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424]">
                   Set Password
                 </label>
                 <div className="relative">
@@ -133,11 +133,11 @@ const Register = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400"
                     required
                   />
                   <div
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-black"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#9F9F9F]"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -145,7 +145,7 @@ const Register = () => {
                 </div>
               </div>
               <div>
-                <label className="block mb-2 text-sm font-medium text-gray-900">
+                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424]">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -156,11 +156,11 @@ const Register = () => {
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400"
                     required
                   />
                   <div
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-black"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#9F9F9F]"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
@@ -178,10 +178,10 @@ const Register = () => {
                   />
                 </div>
                 <div className="ml-3 text-sm">
-                  <label className="font-light text-gray-500 dark:text-gray-300">
+                  <label className="font-poppins font-normal text-[#9F9F9F">
                     I accept the{" "}
                     <Link
-                      className="font-medium text-primary-600 hover:underline dark:text-primary-500"
+                      className="font-medium text-base font-poppins text-[#B88E2F]"
                       to="/termsCondition"
                     >
                       Terms and Conditions
@@ -191,15 +191,18 @@ const Register = () => {
               </div>
               <button
                 type="submit"
-                className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                className="w-full text-white outline-none font-semibold font-sans rounded-md text-base px-5 py-2.5 bg-[#B88E2F]"
               >
                 Create an Account
               </button>
             </form>
             <div className="mt-4 text-center">
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-[#9F9F9F] font-normal font-poppins">
                 Already have an account?{" "}
-                <Link to="/login" className="text-pink-500 hover:underline">
+                <Link
+                  to="/login"
+                  className="text-[#B88E2F] font-poppins text-sm"
+                >
                   Login
                 </Link>
               </p>
