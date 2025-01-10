@@ -8,7 +8,6 @@ import {
 } from "react-icons/ai";
 import { FaCartShopping } from "react-icons/fa6";
 import { MdHome } from "react-icons/md";
-
 import {
   FaTachometerAlt,
   FaBox,
@@ -94,7 +93,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
           <div className="flex justify-between items-center py-4 container mx-auto text-black">
             <Link to="/">
               <span className="font-normal text-[#B88E2F] font-poppins text-base">
-                OnlineSolution
+                OnlineESolution
               </span>
             </Link>
             {/* User Login / Cart / Favorites */}
@@ -126,7 +125,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     <div className="absolute -top-2 left-5">
                       <span className="text-sm font-semibold">
                         {cartItems?.length > 0 && (
-                          <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
+                          <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-[#B88E2F] rounded-full">
                             {cartItems.length}
                           </span>
                         )}
@@ -157,14 +156,14 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   onClick={handleItemClick}
                 >
                   <div className="relative flex">
-                    <AiOutlineShoppingCart
-                      className="flex-none text-white"
-                      size={26}
+                    <FaCartShopping
+                      className="flex-none text-[#242424] hover:text-[#B88E2F]"
+                      size={20}
                     />
                     <div className="absolute -top-2 left-5">
                       <span className="text-sm font-semibold">
                         {cartItems?.length > 0 && (
-                          <span className="absolute top-1 1left-2 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
+                          <span className="relative bottom-2  right-1 px-1.5 py-0    inline-flex items-center justify-center mx-auto font-semibold bg-[#B88E2F] text-sm text-white rounded-full">
                             {cartItems.length}
                           </span>
                         )}
@@ -179,14 +178,20 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     onClick={handleItemClick}
                   >
                     <div className="relative flex">
-                      <FaHeart className="flex-none text-white" size={26} />
+                      <FaHeart
+                        className="flex-none text-[#242424] hover:text-[#B88E2F] "
+                        size={20}
+                      />
                       <div className="absolute -top-[42px] left-2">
                         <FavoritesCount />
                       </div>
                     </div>
                   </Link>
                 </div>
-                <button onClick={toggleMenu} className="text-white">
+                <button
+                  onClick={toggleMenu}
+                  className="text-[#242424] hover:text-[#B88E2F] "
+                >
                   {isMenuOpen ? <FaBarsStaggered /> : <FaBarsStaggered />}
                 </button>
               </div>
@@ -208,17 +213,17 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         {isMenuOpen && (
           <button
             onClick={toggleMenu}
-            className="absolute top-4 right-4 text-[#242424]"
+            className="absolute top-4 right-4 text-[#242424] hover:text-[#B88E2F]"
           >
             <FaTimes size={24} />
           </button>
         )}
 
         {/* Sidebar Items */}
-        <div className="flex flex-col space-y-6 mt-8">
+        <div className="flex flex-col bg space-y-6 mt-8">
           <Link
             to="/"
-            className="flex items-center group hover:text-blue-500 transition-all duration-300 ease-in-out"
+            className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
             onClick={handleItemClick}
           >
             <MdHome className="flex-none text-[#242424]" size={26} />
@@ -228,7 +233,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
           </Link>
           <Link
             to="/shop"
-            className="flex items-center group hover:text-green-500 transition-all duration-300 ease-in-out"
+            className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
             onClick={handleItemClick}
           >
             <AiOutlineShopping className="flex-none text-[#242424]" size={26} />
@@ -249,7 +254,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               <div className="absolute -top-2 left-5">
                 <span className="text-sm font-semibold">
                   {cartItems?.length > 0 && (
-                    <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
+                    <span className="relative py-0 px-1.5 text-sm text-white bg-[#B88E2F] rounded-full">
                       {cartItems.length}
                     </span>
                   )}
@@ -282,7 +287,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             <>
               <button
                 onClick={toggleTab}
-                className="flex items-center gap-2 hover:text-purple-500 transition-all duration-300 ease-in-out"
+                className="flex items-center gap-2 hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
               >
                 <div className="flex items-center">
                   <FaUser className="flex-none text-[#242424]" size={26} />
@@ -299,7 +304,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 </div>
               </button>
               {tabOpen && userInfo && (
-                <div className="space-y-2 text-white rounded-b-md shadow-lg mt-1 py-2">
+                <div className="space-y-2 text-white rounded-b-md  mt-1 py-2">
                   <button
                     onClick={toggleTab} // Close tab when clicked
                     className="absolute top-2 right-2 text-white"
@@ -376,7 +381,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   </Link>
                   <button
                     onClick={logoutHandler}
-                    className="flex items-center hover:text-fuchsia-400 transition-all duration-300 ease-in-out"
+                    className="flex items-center hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
                   >
                     <FaSignOutAlt
                       className="flex-none text-[#242424]"
@@ -424,12 +429,15 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   );
 
   const DesktopHeader = (
-    <div className="w-full fixed top-0 left-0 z-50 bg-white text-black shadow-md">
+    <div className="w-full fixed top-0 left-0 z-50 bg-white text-black border-b">
       <div className="container mx-auto flex justify-between items-center py-4">
         {/* Logo */}
         <div>
-          <Link to="/" className="font-bold text-lg text-black">
-            MySite
+          <Link
+            to="/"
+            className="font-normal text-[#B88E2F] font-poppins text-lg"
+          >
+            OnlineESolution
           </Link>
         </div>
 
@@ -437,25 +445,25 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         <div className="flex gap-6">
           <Link
             to="/"
-            className="hover:text-blue-500 transition-all duration-300 ease-in-out"
+            className="hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
           >
             Home
           </Link>
           <Link
             to="/shop"
-            className="hover:text-green-500 transition-all duration-300 ease-in-out"
+            className="hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
           >
             Shop
           </Link>
           <Link
             to="/about"
-            className="hover:text-purple-500 transition-all duration-300 ease-in-out"
+            className="hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
           >
             About Us
           </Link>
           <Link
             to="/contact"
-            className="hover:text-yellow-500 transition-all duration-300 ease-in-out"
+            className="hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
           >
             Contact Us
           </Link>
@@ -468,7 +476,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               {/* Login */}
               <Link
                 to="/login"
-                className="hover:text-blue-500 transition-all duration-300 ease-in-out"
+                className="hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
               >
                 <AiOutlineLogin size={24} />
               </Link>
@@ -476,7 +484,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               {/* Favorites */}
               <Link
                 to="/favorite"
-                className="relative flex items-center hover:text-red-500 transition-all duration-300 ease-in-out"
+                className="relative flex items-center hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
               >
                 <FaHeart size={24} />
                 <div className="absolute -top-[42px] left-2">
@@ -487,11 +495,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               {/* Cart */}
               <Link
                 to="/cart"
-                className="relative flex items-center hover:text-yellow-500 transition-all duration-300 ease-in-out"
+                className="relative flex items-center hover:text-[#B88E2F] text-[#242424] text-base font-poppins font-normal transition-all duration-300 ease-in-out"
               >
-                <AiOutlineShoppingCart size={24} />
+                <FaCartShopping size={24} />
                 {cartItems?.length > 0 && (
-                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
+                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-red-500 rounded-full">
                     {cartItems.length}
                   </span>
                 )}
@@ -502,7 +510,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               {/* Favorites */}
               <Link
                 to="/favorite"
-                className="relative flex items-center hover:text-red-500 transition-all duration-300 ease-in-out"
+                className="relative flex items-center hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
               >
                 <FaHeart size={24} />
                 <div className="absolute -top-[42px] left-2">
@@ -515,9 +523,9 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 to="/cart"
                 className="relative flex items-center hover:text-yellow-500 transition-all duration-300 ease-in-out"
               >
-                <AiOutlineShoppingCart size={24} />
+                <FaCartShopping size={24} />
                 {cartItems?.length > 0 && (
-                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-pink-500 rounded-full">
+                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-red-500 rounded-full">
                     {cartItems.length}
                   </span>
                 )}
@@ -532,7 +540,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   <FaUserCircle size={24} />
                 </button>
                 {tabOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-md p-2 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md p-2 z-50">
                     <Link
                       to="/profile"
                       className="flex items-center hover:text-emerald-500 transition-all duration-300 ease-in-out pb-3"
