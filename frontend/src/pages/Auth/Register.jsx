@@ -87,7 +87,7 @@ const Register = () => {
       <div className="flex justify-center items-center flex-col w-full px-4 mx-auto ">
         <div className="w-full max-w-md bg-[#F9F1E7] rounded-lg ">
           <div className="p-6 space-y-2 border  rounded-md">
-            <h1 className="text-xl font-medium font-poppins leading-tight tracking-tight text-[#242424] md:text-2xl dark:text-white text-center">
+            <h1 className="text-xl font-medium font-poppins leading-tight tracking-tight text-[#242424] md:text-2xl text-center">
               Create an Account
             </h1>
             <form onSubmit={submitHandler} className="space-y-2" action="#">
