@@ -66,7 +66,7 @@ const Login = () => {
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 flex justify-center items-center h-screen">
+    <section className="bg-gray-50  flex justify-center items-center h-screen">
       <div className="flex justify-center items-center flex-col w-full px-4 py-8 mx-auto lg:py-0">
         <div className="w-full bg-[#F9F1E7] rounded-md  max-w-md">
           <div className="p-6 space-y-2  rounded-md">

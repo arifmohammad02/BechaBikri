@@ -77,7 +77,7 @@ const Register = () => {
   };
 
   return (
-    <section className="bg-gray-50 dark:bg-gray-900 h-screen flex items-center my-10 justify-center">
+    <section className="bg-gray-50  h-screen flex items-center my-10 justify-center">
       <ToastContainer
         position="top-center"
         closeOnClick
