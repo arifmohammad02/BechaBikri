@@ -1,6 +1,7 @@
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
 import { MdOutlineEmail } from "react-icons/md";
-
+import { IoCallOutline } from "react-icons/io5";
+import Whatsapp from "./Whatsapp";
 const Footer = () => {
   return (
     <footer className="bg-[#FFFFFF]">
@@ -49,11 +50,10 @@ const Footer = () => {
             <span className="sr-only">Facebook</span>
             <FaFacebook className="text-3xl hover:text-[#316FF6]" />
           </a>
-
-          <a href="https://wa.me/+8801793-766634" className="text-[#242424]">
+          {/* <a href="https://wa.me/+8801793-766634" className="text-[#242424]">
             <span className="sr-only">Whatsapp</span>
             <FaWhatsapp className="text-3xl hover:text-[#075E54]" />
-          </a>
+          </a> */}
           <a
             href="mailto:eonlinesolution18@gmail.com"
             className="text-[#242424]"
@@ -61,11 +61,16 @@ const Footer = () => {
             <span className="sr-only">Email</span>
             <MdOutlineEmail className="text-3xl hover:text-[#B88E2F]" />
           </a>
+          <a href="tel:+880 1793-766634" className="text-[#242424]">
+            <span className="sr-only">Phone</span>
+            <IoCallOutline className="text-3xl hover:text-[#B88E2F]" />
+          </a>
         </div>
         <p className="mt-8 text-base leading-6 text-center text-[#242424]">
-          © 2024 E-online-solution. All rights reserved.
+          © 2024 EonlineSolution All rights reserved.
         </p>
       </div>
+      <Whatsapp />
     </footer>
   );
 };
