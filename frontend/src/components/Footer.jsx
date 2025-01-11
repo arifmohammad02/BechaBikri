@@ -1,5 +1,6 @@
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
-// import { Link } from "react-router-dom";
+import { MdOutlineEmail } from "react-icons/md";
+
 const Footer = () => {
   return (
     <footer className="bg-[#FFFFFF]">
@@ -49,9 +50,16 @@ const Footer = () => {
             <FaFacebook className="text-3xl hover:text-[#316FF6]" />
           </a>
 
-          <a href="#" className="text-[#242424]">
+          <a href="https://wa.me/+8801793-766634" className="text-[#242424]">
             <span className="sr-only">Whatsapp</span>
             <FaWhatsapp className="text-3xl hover:text-[#075E54]" />
+          </a>
+          <a
+            href="mailto:eonlinesolution18@gmail.com"
+            className="text-[#242424]"
+          >
+            <span className="sr-only">Email</span>
+            <MdOutlineEmail className="text-3xl hover:text-[#B88E2F]" />
           </a>
         </div>
         <p className="mt-8 text-base leading-6 text-center text-[#242424]">
@@ -59,7 +67,6 @@ const Footer = () => {
         </p>
       </div>
     </footer>
-    
   );
 };
 

@@ -17,7 +17,7 @@ const UserOrder = () => {
       ) : (
         <div className=" overflow-x-auto">
           <table className="w-full bg-white rounded-lg shadow-md">
-            <thead className="bg-gray-100 border">
+            <thead className="bg-[#F9F1E7] text-base font-poppins font-normal border">
               <tr className="text-left">
                 <th className="px-4 py-3 text-gray-700 border">IMAGE</th>
                 <th className="px-4 py-3 text-gray-700 border">ID</th>
@@ -33,7 +33,7 @@ const UserOrder = () => {
               {orders.map((order) => (
                 <tr
                   key={order._id}
-                  className="border-b border-l border-r border-gray-200 hover:bg-pink-50 hover:shadow-md transition duration-200"
+                  className="border-b border-l border-r border-gray-200 hover:bg-[#F9F1E7] hover:shadow-md transition duration-200"
                 >
                   <td className="px-4 py-3">
                     <img
@@ -42,38 +42,40 @@ const UserOrder = () => {
                       className="w-16 h-16 rounded-lg border border-gray-300"
                     />
                   </td>
-                  <td className="px-4 py-3 text-gray-700 text-sm">{order._id}</td>
-                  <td className="px-4 py-3 text-gray-700 text-sm">
+                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
+                    {order._id}
+                  </td>
+                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
                     {order.createdAt.substring(0, 10)}
                   </td>
-                  <td className="px-4 py-3 text-gray-700 text-sm">
-                    BDT {order.totalPrice}
+                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
+                    ₹{order.totalPrice}
                   </td>
                   <td className="px-4 py-3">
                     {order.isPaid ? (
-                      <span className="px-3 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">
+                      <span className="px-3 py-1 text-xs text-center font-medium  font-sans text-white bg-[#B88E2F] rounded-full">
                         Completed
                       </span>
                     ) : (
-                      <span className="px-3 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">
+                      <span className="px-3 py-1 text-xs font-medium font-poppins text-white bg-[#242424] rounded-full">
                         Pending
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {order.isDelivered ? (
-                      <span className="px-3 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-full">
+                      <span className="px-3 py-1 text-xs text-center font-medium  font-sans text-white bg-[#B88E2F] rounded-full">
                         Completed
                       </span>
                     ) : (
-                      <span className="px-3 py-1 text-xs font-semibold text-red-800 bg-red-200 rounded-full">
+                      <span className="px-3 py-1 text-xs  font-medium font-poppins text-white bg-[#242424]   rounded-full">
                         Pending
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <Link to={`/order/${order._id}`}>
-                      <button className="px-4 py-2 text-sm font-medium text-white bg-pink-500 rounded-lg shadow hover:bg-pink-600 transition duration-200">
+                      <button className="px-4 py-2 text-sm font-medium font-sans text-white bg-[#B88E2F] rounded-md  transition duration-200">
                         View Details
                       </button>
                     </Link>
@@ -83,7 +85,6 @@ const UserOrder = () => {
             </tbody>
           </table>
         </div>
-
       )}
     </div>
   );
