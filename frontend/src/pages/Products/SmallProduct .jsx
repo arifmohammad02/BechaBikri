@@ -59,7 +59,7 @@ const SmallProduct = ({ product }) => {
           {product.name.split(" ").length > 4 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-purple-500 font-poppins text-xs hover:underline"
+              className="text-[#B88E2F] font-sans text-xs "
             >
               {isExpanded ? "See Less" : "See More"}
             </button>
@@ -74,7 +74,7 @@ const SmallProduct = ({ product }) => {
             </span>
             {product.discountPercentage > 0 && (
               <div className="flex flex-col items-start">
-                <span className="text-sm font-poppins text-purple-500 line-through">
+                <span className="text-sm font-poppins text-[#9F9F9F] line-through">
                   ₹{product.price}
                 </span>
 
@@ -87,11 +87,11 @@ const SmallProduct = ({ product }) => {
 
           {/* <AddToCartButton product={product} /> */}
           <Link to={`/product/${product._id}`}>
-            <div className="relative font-poppins inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-indigo-600 transition duration-300 ease-out border-2 border-purple-500 rounded-md shadow-md group">
-              <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-purple-500 group-hover:translate-x-0 ease">
+            <div className="relative font-poppins inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-[#B88E2F] transition duration-300 ease-out border-2 border-[#B88E2F] rounded-md shadow-md group">
+              <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#B88E2F] group-hover:translate-x-0 ease">
                 <FaArrowRight className="w-3 h-3 text-current" />
               </span>
-              <span className="absolute flex items-center justify-center w-full h-full text-purple-500 transition-all duration-300 transform group-hover:translate-x-full ease text-xs">
+              <span className="absolute flex items-center font-sans font-semibold justify-center w-full h-full text-[#B88E2F] transition-all duration-300 transform group-hover:translate-x-full ease text-xs">
                 View Details
               </span>
               <span className="relative invisible">View Details</span>

@@ -93,7 +93,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
           <div className="flex justify-between items-center py-4 container mx-auto text-black">
             <Link to="/">
               <span className="font-normal text-[#B88E2F] font-poppins text-base">
-                OnlineESolution
+                EonlineSolution
               </span>
             </Link>
             {/* User Login / Cart / Favorites */}
@@ -136,7 +136,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 <div>
                   <Link
                     to="/favorite"
-                    className="flex items-center group hover:text-red-500 transition-all duration-300 ease-in-out"
+                    className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
                     onClick={handleItemClick}
                   >
                     <div className="relative flex">
@@ -152,7 +152,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               <div className="flex gap-4">
                 <Link
                   to="/cart"
-                  className="flex items-center group hover:text-yellow-500 transition-all duration-300 ease-in-out"
+                  className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
                   onClick={handleItemClick}
                 >
                   <div className="relative flex">
@@ -174,7 +174,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 <div>
                   <Link
                     to="/favorite"
-                    className="flex items-center group hover:text-red-500 transition-all duration-300 ease-in-out"
+                    className="flex items-center group hover:text-[#B88E2F]transition-all duration-300 ease-in-out"
                     onClick={handleItemClick}
                   >
                     <div className="relative flex">
@@ -265,7 +265,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
           <div>
             <Link
               to="/favorite"
-              className="flex items-center group hover:text-red-500 transition-all duration-300 ease-in-out"
+              className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
               onClick={handleItemClick}
             >
               <div className="relative flex">
@@ -437,7 +437,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             to="/"
             className="font-normal text-[#B88E2F] font-poppins text-lg"
           >
-            OnlineESolution
+            EonlineSolution
           </Link>
         </div>
 
@@ -499,7 +499,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               >
                 <FaCartShopping size={24} />
                 {cartItems?.length > 0 && (
-                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-red-500 rounded-full">
+                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-purple-500 rounded-full">
                     {cartItems.length}
                   </span>
                 )}
@@ -521,11 +521,14 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               {/* Cart */}
               <Link
                 to="/cart"
-                className="relative flex items-center hover:text-yellow-500 transition-all duration-300 ease-in-out"
+                className="relative flex items-center hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
               >
                 <FaCartShopping size={24} />
                 {cartItems?.length > 0 && (
-                  <span className="absolute -top-2 left-5 px-1 py-0 text-sm text-white bg-red-500 rounded-full">
+                  <span
+                    className="absolute -top-2 left-5  font-normal font-poppins py-0 px-1.5  text-sm text-white bg-[#B88E2F]
+                  rounded-full"
+                  >
                     {cartItems.length}
                   </span>
                 )}
@@ -535,7 +538,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               <div className="relative">
                 <button
                   onClick={toggleTab}
-                  className="hover:text-purple-500 transition-all duration-300 ease-in-out"
+                  className="hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out"
                 >
                   <FaUserCircle size={24} />
                 </button>
@@ -543,11 +546,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md p-2 z-50">
                     <Link
                       to="/profile"
-                      className="flex items-center hover:text-emerald-500 transition-all duration-300 ease-in-out pb-3"
+                      className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out pb-3"
                       onClick={handleItemClick}
                     >
                       <FaUserCircle className="flex-none " size={26} />
-                      <span className="ml-4 text-sm font-semibold">
+                      <span className="ml-4 text-sm font-poppins font-normal">
                         Profile
                       </span>
                     </Link>
@@ -607,10 +610,10 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     )}
                     <button
                       onClick={logoutHandler}
-                      className="flex items-center hover:text-fuchsia-400 transition-all duration-300 ease-in-out"
+                      className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out"
                     >
                       <FaSignOutAlt className="flex-none" size={26} />
-                      <span className="ml-4  text-sm font-semibold">
+                      <span className="ml-4  text-sm font-poppins font-normal">
                         Logout
                       </span>
                     </button>

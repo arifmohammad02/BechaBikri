@@ -1,5 +1,5 @@
 import { FaFacebook, FaWhatsapp } from "react-icons/fa6";
-
+// import { Link } from "react-router-dom";
 const Footer = () => {
   return (
     <footer className="bg-[#FFFFFF]">
@@ -59,6 +59,7 @@ const Footer = () => {
         </p>
       </div>
     </footer>
+    
   );
 };
 

@@ -79,14 +79,14 @@ const Order = () => {
     <div className="container mx-auto flex flex-col lg:flex-row gap-6 px-4 mt-8 py-16">
       {/* Left Section */}
       <div className="w-full ">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-5">
+        <div className="bg-white border border-gray-200 rounded-lg  p-5">
           {order.orderItems.length === 0 ? (
             <Message>Order is empty</Message>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b">
-                  <tr className="text-gray-600">
+                <thead>
+                  <tr className="text-[#242424]  bg-[#F9F1E7] font-normal font-poppins">
                     <th className="p-3">Image</th>
                     <th className="p-3">Product</th>
                     <th className="p-3 text-center">Quantity</th>
@@ -96,7 +96,10 @@ const Order = () => {
                 </thead>
                 <tbody>
                   {order.orderItems.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-100">
+                    <tr
+                      key={index}
+                      className="border-b border-[#B88E2F] hover:bg-[#F9F1E7]"
+                    >
                       <td className="p-3">
                         <img
                           src={item.image}
@@ -104,18 +107,22 @@ const Order = () => {
                           className="w-16 h-16 object-cover rounded-md border border-gray-300"
                         />
                       </td>
-                      <td className="p-3">
+                      <td className="p-1 ">
                         <Link
                           to={`/product/${item.product}`}
-                          className="text-pink-500 hover:underline"
+                          className="text-[#9F9F9F] font-poppins font-normal text-base"
                         >
                           {item.name}
                         </Link>
                       </td>
-                      <td className="p-3 text-center">{item.qty}</td>
-                      <td className="p-3 text-center">BDT-{item.price}</td>
-                      <td className="p-3 text-center">
-                        BDT-{(item.qty * item.price).toFixed(2)}
+                      <td className="p-3 text-center text-[#9F9F9F] text-base font-semibold font-poppins">
+                        {item.qty}
+                      </td>
+                      <td className="p-3 text-center text-[#9F9F9F] text-base font-semibold font-poppins">
+                        ₹{item.price}
+                      </td>
+                      <td className="p-3 text-center text-[#B88E2F] text-base font-semibold font-poppins">
+                        ₹{(item.qty * item.price).toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -128,33 +135,51 @@ const Order = () => {
 
       {/* Right Section */}
       <div className="w-full lg:w-1/2 flex flex-col gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-5">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">Shipping</h2>
-          <p className="mb-2">
-            <strong className="text-pink-500">Order:</strong> {order._id}
+        <div className="bg-[#F9F1E7] border border-gray-200 rounded-md p-5">
+          <h2 className="text-2xl font-semibold font-sans text-[#242424] mb-4 ">
+            Shipping
+          </h2>
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Order:
+            </strong>{" "}
+            {order._id}
           </p>
-          <p className="mb-2">
-            <strong className="text-pink-500">Name:</strong>{" "}
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Name:
+            </strong>{" "}
             {order.user.username}
           </p>
-          <p className="mb-2">
-            <strong className="text-pink-500">Email:</strong> {order.user.email}
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Email:
+            </strong>{" "}
+            {order.user.email}
           </p>
-          <p className="mb-2">
-            <strong className="text-pink-500">Address:</strong>{" "}
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Address:
+            </strong>{" "}
             {order.shippingAddress.address}, {order.shippingAddress.city}{" "}
             {order.shippingAddress.postalCode}, {order.shippingAddress.country}
           </p>
-          <p className="mb-2">
-            <strong className="text-pink-500">Phone:</strong>{" "}
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Phone:
+            </strong>{" "}
             {order.shippingAddress.phoneNumber}
           </p>
-          <p className="mb-2">
-            <strong className="text-pink-500">Emergency Contact:</strong>{" "}
+          <p className="mb-2 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#242424] font-sans">
+              Emergency Contact:
+            </strong>{" "}
             {order.shippingAddress.alternatePhoneNumber}
           </p>
-          <p className="mb-4">
-            <strong className="text-pink-500">Method:</strong>{" "}
+          <p className="mb-4 text-[#9F9F9F] font-poppins font-medium">
+            <strong className="font-semibold text-[#B88E2F] font-sans">
+              Method:
+            </strong>{" "}
             {order.paymentMethod}
           </p>
 
@@ -166,30 +191,46 @@ const Order = () => {
         </div>
 
         {/* Order Summary */}
-        <div className="mt-6 bg-white border border-gray-200 rounded-lg shadow-lg p-5">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">
+        <div className="mt-6 bg-white border border-gray-200 rounded-md p-5">
+          <h2 className="text-xl  mb-4 font-poppins font-semibold text-[#242424]">
             Order Summary
           </h2>
           <div className="flex justify-between mb-2 text-gray-600">
-            <span>Items</span>
-            <span>BDT-{itemsPrice.toFixed(2)}</span>
+            <span className="font-semibold text-[#242424] font-sans">
+              Items
+            </span>
+            <span className="text-[#9F9F9F] font-poppins font-medium">
+              ₹{itemsPrice.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between mb-2 text-gray-600">
-            <span>Discount</span>
-            <span>-BDT-{discount.toFixed(2)}</span>
+            <span className="font-semibold text-[#242424] font-sans">
+              Discount
+            </span>
+            <span className="text-[#9F9F9F] font-poppins font-medium">
+              ₹{discount.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between mb-2 text-gray-600">
-            <span>Shipping</span>
-            <span>BDT-{shippingCharge.toFixed(2)}</span>
+            <span className="font-semibold text-[#242424] font-sans">
+              Shipping
+            </span>
+            <span className="text-[#9F9F9F] font-poppins font-medium">
+              ₹{shippingCharge.toFixed(2)}
+            </span>
           </div>
           <div className="flex justify-between mb-4 text-gray-600 font-semibold">
-            <span>Total</span>
-            <span>BDT-{totalPrice.toFixed(2)}</span>
+            <span className="font-semibold text-[#242424] font-sans">
+              Total
+            </span>
+            <span className="text-[#B88E2F] font-sans font-semibold">
+              ₹{totalPrice.toFixed(2)}
+            </span>
           </div>
 
           {!order.isPaid && (
             <button
-              className="w-full py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              className="w-full py-2 font-sans font-semibold text-base bg-[#B88E2F] text-white rounded-md"
               onClick={handleCODPayment}
             >
               Pay with Cash on Delivery

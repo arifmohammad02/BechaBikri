@@ -49,7 +49,7 @@ const ProductCard = ({ p }) => {
             <h5 className="text-xl font-semibold text-[#242424] mb-1 truncate">
               {isExpanded ? p?.name : `${p?.name.substring(0, 20)}...`}
               <button
-                className="text-purple-500 text-xs ml-2"
+                className="text-[#B88E2F] text-xs ml-2"
                 onClick={toggleName}
               >
                 {isExpanded ? "See Less" : "See More"}

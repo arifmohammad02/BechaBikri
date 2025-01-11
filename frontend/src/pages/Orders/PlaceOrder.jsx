@@ -81,7 +81,7 @@ const PlaceOrder = () => {
           <div className="overflow-x-auto">
             <table className="w-full border table-auto">
               <thead>
-                <tr className="bg-gray-100">
+                <tr className="bg-[#F9F1E7] font-normal font-poppins text-[#242424]">
                   <th className="px-4 py-2 text-left border-b border-gray-300">
                     Image
                   </th>
@@ -104,30 +104,32 @@ const PlaceOrder = () => {
                 {cart.cartItems.map((item, index) => (
                   <tr
                     key={index}
-                    className="hover:bg-gray-100 transition-all duration-300"
+                    className="hover:bg-[#F9F1E7] transition-all duration-300"
                   >
                     <td className="p-2 border-b border-gray-200">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg"
+                        className="w-16 h-16 object-cover rounded-md"
                       />
                     </td>
 
                     <td className="p-2 border-b border-gray-200 max-w-xs truncate">
-                      <Link className="text-blue-500 hover:underline">
+                      <Link className="text-[#9F9F9F] font-poppins font-normal text-base">
                         {item.name}
                       </Link>
                     </td>
 
-                    <td className="p-2 border-b border-gray-200">{item.qty}</td>
-
-                    <td className="p-2 border-b border-gray-200">
-                      BDT-{item.price.toFixed(2)}
+                    <td className="p-2 border-b text-[#9F9F9F] font-medium font-poppins px-5 border-gray-200">
+                      {item.qty}
                     </td>
 
-                    <td className="p-2 border-b border-gray-200">
-                      BDT-{(item.qty * item.price).toFixed(2)}
+                    <td className="p-2 border-b text-[#9F9F9F] font-medium font-poppins px-5 border-gray-200">
+                      ₹{item.price.toFixed(2)}
+                    </td>
+
+                    <td className="p-2 border-b text-[#B88E2F] font-medium font-poppins px-5 border-gray-200">
+                      ₹{(item.qty * item.price).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -137,7 +139,7 @@ const PlaceOrder = () => {
         )}
 
         <div className="mt-8">
-          <h2 className="text-3xl font-semibold text-gray-800 mb-5">
+          <h2 className="text-3xl font-semibold font-poppins text-[#242424] mb-5">
             Order Summary
           </h2>
           <div className="flex flex-col md:flex-row justify-between gap-6  bg-white">
@@ -150,44 +152,54 @@ const PlaceOrder = () => {
               )}
 
               {/* Shipping Information */}
-              <div className="p-6 bg-white rounded-md border border-gray-300">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-indigo-600 pb-2">
+              <div className="p-6 bg-[#F9F1E7] rounded-md border border-gray-300">
+                <h2 className="text-2xl font-poppins font-normal pb-3 text-[#242424] mb-4 border-b-2 border-[#B88E2F]">
                   Shipping
                 </h2>
-                <p className="text-gray-700 mb-2">
-                  <strong className="text-indigo-600">Address:</strong>{" "}
+                <p className="text-[#9F9F9F] font-poppins font-normal mb-2 ">
+                  <strong className="text-[#242424] font-medium font-poppins">
+                    Address:
+                  </strong>{" "}
                   {cart.shippingAddress.address}, {cart.shippingAddress.city}{" "}
                   {cart.shippingAddress.postalCode},{" "}
                   {cart.shippingAddress.country}
                 </p>
-                <p className="text-gray-700 mb-2">
-                  <strong className="text-pink-500">Email:</strong>{" "}
+                <p className="text-[#9F9F9F] font-poppins font-normal mb-2">
+                  <strong className="text-[#242424] font-medium font-poppins">
+                    Email:
+                  </strong>{" "}
                   {cart.shippingAddress.email}
                 </p>
-                <p className="text-gray-700 mb-2">
-                  <strong className="text-pink-500">Phone Number:</strong>{" "}
+                <p className="text-[#9F9F9F] font-poppins font-normal mb-2">
+                  <strong className="text-[#242424] font-medium font-poppins">
+                    Phone Number:
+                  </strong>{" "}
                   {cart.shippingAddress.phoneNumber}
                 </p>
-                <p className="text-gray-700">
-                  <strong className="text-pink-500">Emergency Contact:</strong>{" "}
+                <p className="text-[#9F9F9F] font-poppins font-normal">
+                  <strong className="text-[#242424] font-medium font-poppins">
+                    Emergency Contact:
+                  </strong>{" "}
                   {cart.shippingAddress.alternatePhoneNumber}
                 </p>
               </div>
 
               {/* Payment Method */}
-              <div className="p-6 bg-white rounded-md border border-gray-300">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-4 border-b-2 border-indigo-600 pb-2">
+              <div className="p-6 bg-[#F9F1E7] rounded-md border border-gray-300">
+                <h2 className="text-2xl font-poppins font-semibold text-[#242424] mb-4 border-b-2 border-[#B88E2F] pb-2">
                   Payment Method
                 </h2>
-                <p className="text-gray-700">
-                  <strong className="text-indigo-600">Method:</strong>{" "}
+                <p className="text-[#9F9F9F] font-poppins font-normal">
+                  <strong className="text-[#B88E2F] font-semibold font-poppins">
+                    Method:
+                  </strong>{" "}
                   {cart.paymentMethod}
                 </p>
               </div>
             </div>
             <div className="overflow-x-auto w-full md:w-1/2 rounded-md">
               <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-lg">
-                <thead className="bg-indigo-600 text-white">
+                <thead className="bg-[#F9F1E7] text-[#242424] font-poppins">
                   <tr>
                     <th className="py-1 md:py-2 px-2 md:px-4 text-left">
                       Item
@@ -197,44 +209,44 @@ const PlaceOrder = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="text-gray-700">
-                  <tr className="hover:bg-gray-100 border-b">
+                <tbody className="text-[#242424]">
+                  <tr className="hover:bg-[#F9F1E7] border-b">
                     <td className="py-1 md:py-2 px-2 md:px-4">
-                      <span className="font-semibold text-indigo-600">
-                        Items:
+                      <span className="font-semibold text-[#242424] font-poppins">
+                        Items
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">
-                      BDT- {cart.itemsPrice}
+                    <td className="py-1 md:py-2 px-2 md:px-4 text-[#9F9F9F] font-poppins font-medium">
+                      ₹{cart.itemsPrice}
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-100 border-b">
+                  <tr className="hover:bg-[#F9F1E7] border-b">
                     <td className="py-1 md:py-2 px-2 md:px-4">
-                      <span className="font-semibold text-indigo-600">
+                      <span className="font-semibold text-[#242424] font-poppins">
                         Discounted Price
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">
-                      BDT- {discountedPrice.toFixed(2)}
+                    <td className="py-1 md:py-2 px-2 md:px-4 text-[#9F9F9F] font-poppins font-medium">
+                      ₹{discountedPrice.toFixed(2)}
                     </td>
                   </tr>
-                  <tr className="hover:bg-gray-100">
+                  <tr className="hover:bg-[#F9F1E7]">
                     <td className="py-1 md:py-2 px-2 md:px-4">
-                      <span className="font-semibold text-indigo-600">
-                        Shipping Charge:
+                      <span className="font-semibold text-[#242424] font-poppins">
+                        Shipping Charge
                       </span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4">
-                      BDT- {shippingCharge.toFixed(2)}
+                    <td className="py-1 md:py-2 px-2 md:px-4 text-[#9F9F9F] font-poppins font-medium">
+                      ₹{shippingCharge.toFixed(2)}
                     </td>
                   </tr>
                   {/* Highlighted Total Row */}
-                  <tr className="bg-yellow-200 hover:bg-yellow-300">
-                    <td className="py-1 md:py-2 px-2 md:px-4 font-bold text-indigo-800">
-                      <span className="font-extrabold">Total:</span>
+                  <tr className="bg-[#B88E2F]">
+                    <td className="py-1 md:py-2 px-2 md:px-4 font-bold text-[#242424] font-poppins">
+                      <span className="font-extrabold">Total</span>
                     </td>
-                    <td className="py-1 md:py-2 px-2 md:px-4 font-bold text-indigo-800">
-                      BDT- {finalTotal.toFixed(2)}
+                    <td className="py-1 md:py-2 px-2 md:px-4 font-bold text-[#242424]">
+                      ₹{finalTotal.toFixed(2)}
                     </td>
                   </tr>
                 </tbody>
@@ -244,10 +256,8 @@ const PlaceOrder = () => {
 
           <button
             type="button"
-            className={`relative flex justify-center items-center mr-10 bg-gradient-to-r from-pink-500 to-red-500 text-white py-2 px-10 rounded-lg text-lg mt-4 shadow-lg transition-transform duration-300  ${
-              cart.cartItems.length === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:scale-105 hover:shadow-xl"
+            className={`relative flex justify-center items-center mr-10  text-white bg-[#B88E2F] py-2 px-10 rounded-lg text-lg mt-4   ${
+              cart.cartItems.length === 0 ? "opacity-50 cursor-not-allowed" : ""
             }`}
             disabled={cart.cartItems.length === 0 || isLoading}
             onClick={placeOrderHandler}

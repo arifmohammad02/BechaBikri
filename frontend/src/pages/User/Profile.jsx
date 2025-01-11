@@ -60,50 +60,58 @@ const Profile = () => {
 
   return (
     <div className="py-5 min-h-screen flex items-center justify-center px-3 pt-20 bg-white">
-      <div className="w-full max-w-2xl p-8 rounded-lg bg-white border">
-        <h2 className="text-3xl font-semibold text-gray-800 text-center mb-6">
+      <div className="w-full max-w-2xl p-8 rounded-lg bg-[#F9F1E7] border">
+        <h2 className="text-3xl font-poppins font-semibold text-gray-800 text-center mb-6">
           Update Profile
         </h2>
         <form onSubmit={submitHandler} className="space-y-6">
           <div className="mb-4">
-            <label className="block text-gray-600 mb-2">Name</label>
+            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
+              Name
+            </label>
             <input
               type="text"
               placeholder="Enter your name"
-              className="w-full p-4 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-200"
+              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none "
               value={username}
               onChange={(e) => setUserName(e.target.value)}
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-600 mb-2">Email Address</label>
+            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
+              Email Address
+            </label>
             <input
               type="email"
               placeholder="Enter your email"
-              className="w-full p-4 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-200"
+              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-gray-600 mb-2">Password</label>
+            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
+              Password
+            </label>
             <input
               type="password"
               placeholder="Enter your password"
-              className="w-full p-4 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-200"
+              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-gray-600 mb-2">Confirm Password</label>
+            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
+              Confirm Password
+            </label>
             <input
               type="password"
               placeholder="Confirm your password"
-              className="w-full p-4 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-200"
+              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
@@ -112,14 +120,14 @@ const Profile = () => {
           <div className="flex justify-between items-center">
             <button
               type="submit"
-              className="bg-pink-500 text-white py-2 px-6 rounded-lg text-lg hover:bg-pink-600 transition duration-200 transform hover:scale-105"
+              className="bg-[#B88E2F] text-white py-2 px-6 rounded-md text-lg font-normal font-poppins "
             >
               Update
             </button>
 
             <Link
               to="/user-orders"
-              className="bg-pink-600 text-white py-2 px-6 rounded-lg text-lg hover:bg-pink-700 transition duration-200 transform hover:scale-105"
+              className="bg-[#B88E2F] text-white py-2 px-6 rounded-md text-lg font-normal font-poppins"
             >
               My Orders
             </Link>
@@ -131,7 +139,6 @@ const Profile = () => {
         </form>
       </div>
     </div>
-
   );
 };
 
