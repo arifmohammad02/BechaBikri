@@ -50,13 +50,13 @@ const SmallProduct = ({ product }) => {
       <div className="px-5 pb-5">
         <div className="flex items-center gap-1">
           <Link to={`/product/${product._id}`}>
-            <h5 className="text-xl font-poppins font-semibold tracking-tight text-[#3A3A3A]">
+            <h5 className="text-xl font-poppins font-semibold tracking-tight text-[#242424]">
               {truncateName(product.name)}
             </h5>
           </Link>
 
           {/* "See More" or "See Less" button */}
-          {product.name.split(" ").length > 4 && (
+          {product.name.split(" ").length > 3 && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="text-[#B88E2F] font-sans text-xs "
@@ -68,8 +68,8 @@ const SmallProduct = ({ product }) => {
 
         <div className="flex items-center justify-between">
           {/* Discounted Price and Original Price */}
-          <div>
-            <span className="text-lg font-poppins font-bold text-[#3A3A3A]">
+          <div className="flex items-center gap-1">
+            <span className="text-lg font-poppins font-bold text-[#242424]">
               ₹{discountedPrice.toFixed(2)}
             </span>
             {product.discountPercentage > 0 && (
@@ -78,9 +78,9 @@ const SmallProduct = ({ product }) => {
                   ₹{product.price}
                 </span>
 
-                <span className="text-sm font-poppins text-[#B88E2F]">
+                {/* <span className="text-sm font-poppins text-[#B88E2F]">
                   save: ₹{discountAmount.toFixed(2)}
-                </span>
+                </span> */}
               </div>
             )}
           </div>

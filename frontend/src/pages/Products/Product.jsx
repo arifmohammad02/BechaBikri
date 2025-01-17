@@ -40,6 +40,9 @@ const Product = ({ product }) => {
               -{product.discountPercentage}% Off
             </span>
           )}
+          {/* <span className="absolute top-2 right-2 text-[10px] font-normal font-Inter bg-[#FF013D] text-white px-2 py-1 w-fit mt-5 md:mt-0 flex items-center">
+            Save <span className="ml-1 text-[12px]">₹{discountAmount.toFixed(2)}</span>
+          </span> */}
         </div>
       </Link>
       {/* Heart Icon */}
@@ -49,7 +52,7 @@ const Product = ({ product }) => {
       <div className="px-5 pb-5">
         <div className="flex items-center gap-1">
           <Link to={`/product/${product._id}`}>
-            <h5 className="text-xl font-semibold  tracking-tight text-[#3A3A3A]">
+            <h5 className="text-xl font-poppins  font-semibold tracking-tight text-[#242424]">
               {truncateName(product.name)}
             </h5>
           </Link>
@@ -57,18 +60,14 @@ const Product = ({ product }) => {
 
         <div className="flex items-center justify-between">
           {/* Discounted Price and Original Price */}
-          <div>
-            <span className="text-lg font-poppins font-bold text-[#3A3A3A]">
+          <div className="flex items-center gap-1">
+            <span className="text-lg font-poppins font-semibold text-[#3A3A3A]">
               ₹{discountedPrice.toFixed(2)}
             </span>
             {product.discountPercentage > 0 && (
               <div className="flex flex-col items-start">
                 <span className="text-sm text-[#9F9F9F] font-poppins line-through">
                   ₹{product.price}
-                </span>
-
-                <span className="text-sm font-poppins text-[#B88E2F]">
-                  save: ₹{discountAmount.toFixed(2)}
                 </span>
               </div>
             )}

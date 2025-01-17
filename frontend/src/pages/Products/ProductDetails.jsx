@@ -27,7 +27,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-
+  const categoriesQuery = useFetchCategoriesQuery();
 
   const {
     data: product,
@@ -100,26 +100,41 @@ const ProductDetails = () => {
     return <Message variant="danger">Product not found.</Message>;
   }
 
-   console.log(product);
-
   const addToCartHandler = () => {
     dispatch(addToCart({ ...product, qty }));
     navigate("/cart");
   };
 
   return (
-    <div className="bg-white min-h-screen h-full pt-12 px-3 xs:px-0 container mx-auto">
-      <div className="pb-10">
-        {/* Go Back Link */}
-        <div className="py-10">
+    <div className="">
+      <div className="py-8 bg-[#E8E8E8] mt-[72px]">
+        <div className="container mx-auto flex items-center gap-3 md:gap-5 ">
           <Link
             to="/"
-            className="text-[#242424] bg-white border border-[#B88E2F] outline-none  font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2   "
+            className="text-[#000000] font-medium font-poppins text-[15px]"
           >
-            Go Back
+            Home
           </Link>
+          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+            /
+          </span>
+          <Link
+            to="/shop"
+            className="text-[#000000] font-medium font-poppins text-[15px]"
+          >
+            {categoriesQuery.data &&
+              categoriesQuery.data.find((item) => item._id === product.category)
+                ?.name}
+          </Link>
+          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+            /
+          </span>
+          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+            {product.name}
+          </span>
         </div>
-
+      </div>
+      <div className="bg-white min-h-screen h-full pt-8 px-3 xs:px-0 container mx-auto">
         {/* Product Section */}
         <div className="flex flex-col">
           <div className="py-8 bg-white md:py-16 antialiased border border-gray-300 rounded-md overflow-hidden">
@@ -153,9 +168,9 @@ const ProductDetails = () => {
                         </p>
                       </div>
                       <span className="border h-9 border-opacity-5 "></span>
-                      <div className="my-4 flex items-center space-x-2">
+                      <div className="my-4 flex items-center space-x-1">
                         <Ratings value={product.rating} />
-                        <span className="text-[#9F9F9F] text-base font-medium font-poppins">
+                        <span className="text-[#9F9F9F] text-[12px] font-medium font-poppins">
                           ({product.numReviews}{" "}
                           {product.numReviews === 1 ? "Review" : "Reviews"})
                         </span>
@@ -169,7 +184,7 @@ const ProductDetails = () => {
                       </span>
                       {product.discountPercentage > 0 && (
                         <>
-                          <span className="text-[30px] text-[ #ED1D24] font-semibold font-poppins">
+                          <span className="text-[30px] text-[#ED1D24] font-semibold font-poppins">
                             ₹{discountedPrice?.toFixed(2)}
                           </span>
                           {/* <span className="bg-[#B88E2F] text-white text-xs font-semibold px-2 py-1 rounded">
@@ -238,31 +253,31 @@ const ProductDetails = () => {
             <div className="space-y-4 font-poppins font-normal">
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm text-[#9F9F9F]">
+                <label className="text-sm text-black/80">
                   পন্যটি কিনতে “অর্ডার করুন” বাটনে চাপুন
                 </label>
               </div>
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm text-[#9F9F9F]">
+                <label className="text-sm text-black/80">
                   পুরো বাংলাদেশে হোম ডেলিভিরি মাধ্যমে পণ্য পৌঁছানো হয়
                 </label>
               </div>
               <div className="flex items-start space-x-3">
                 <FaCheck />
-                <label className="text-sm text-[#9F9F9F]">
+                <label className="text-sm text-black/80">
                   ১টাকাও এডভান্স নেওয়া হয় না
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-10 p-4 bg-gray-100 rounded-lg shadow-md">
+            <div className="flex justify-between items-center mt-10 p-4 border border-opacity-10 shadow-sm">
               <div className="text-sm text-gray-600">
-                <span className="text-xl text-[#242424] font-normal font-poppins">
+                <span className="text-[16px] md:text-xl text-[#242424] font-semibold font-poppins">
                   Guaranteed Delivery
                 </span>
                 <span className="mx-2">|</span>
-                <span className="text-base text-[#242424] font-medium font-poppins">
+                <span className="text-[14px] md:text-[15px]  text-[#242424] font-medium font-poppins">
                   No Advance
                 </span>
               </div>
@@ -271,10 +286,10 @@ const ProductDetails = () => {
                 <img
                   src={product.image}
                   alt="COD Delivery"
-                  className="h-12 w-12 rounded-lg"
+                  className="h-8 w-8 md:h-12 md:w-12 rounded-lg"
                 />
-                <span className="text-xl text-[#B88E2F] font-bold font-inter">
-                  Cash On Delivery
+                <span className="text-[18px] md:text-2xl first-line:text-[#B88E2F] font-extrabold font-Dosis">
+                ক্যাশ অন ডেলিভারি
                 </span>
               </div>
             </div>
