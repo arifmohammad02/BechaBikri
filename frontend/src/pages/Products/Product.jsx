@@ -68,7 +68,7 @@ const Product = ({ product }) => {
                 </span>
 
                 <span className="text-sm font-poppins text-[#B88E2F]">
-                  You save: ₹{discountAmount.toFixed(2)}
+                  save: ₹{discountAmount.toFixed(2)}
                 </span>
               </div>
             )}

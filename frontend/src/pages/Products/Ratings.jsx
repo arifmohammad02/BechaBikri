@@ -6,7 +6,7 @@ const Ratings = ({ value, text, color = "yellow-400" }) => {
   const emptyStar = 5 - fullStars - halfStars;
 
   return (
-    <div className="flex items-center bg-[#242424] p-3 rounded-lg">
+    <div className="flex items-center">
       {[...Array(fullStars)].map((_, index) => (
         <FaStar
           key={index}
@@ -25,11 +25,11 @@ const Ratings = ({ value, text, color = "yellow-400" }) => {
       {[...Array(emptyStar)].map((_, index) => (
         <FaRegStar
           key={index}
-          className="text-gray-500 ml-1 transition-transform transform hover:scale-125 duration-200"
+          className="text-[#FFAB31] ml-1 transition-transform transform hover:scale-105 duration-200"
         />
       ))}
 
-      <span className="ml-3 text-yellow-300 font-semibold hover:text-yellow-400 transition-colors duration-300">
+      <span className="text-yellow-300 font-semibold hover:text-yellow-400 transition-colors duration-300">
         {text && text}
       </span>
     </div>

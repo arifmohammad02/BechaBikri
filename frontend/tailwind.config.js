@@ -17,7 +17,8 @@ export default {
       },
       fontFamily: {
         'poppins': ['Poppins', 'sans-serif'],
-        "inter": ["Inter", "sans-serif"],
+        "Inter": ["Inter", "sans-serif"],
+        "Dosis":["Dosis", "sans-serif"],
       }
     },
   },

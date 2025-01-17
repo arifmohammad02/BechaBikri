@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import {
   useGetProductDetailsQuery,
   useCreateReviewMutation,
@@ -16,15 +17,17 @@ import Ratings from "./Ratings";
 import { FaCheck } from "react-icons/fa";
 import { addToCart } from "../../redux/features/cart/cartSlice";
 // import OrderNowButton from "../../components/OrderNowButton";
+import { CiShoppingCart } from "react-icons/ci";
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [isExpanded, setIsExpanded] = useState(false);
   const [qty, setQty] = useState(1);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+
 
   const {
     data: product,
@@ -97,7 +100,7 @@ const ProductDetails = () => {
     return <Message variant="danger">Product not found.</Message>;
   }
 
-  // console.log(product);
+   console.log(product);
 
   const addToCartHandler = () => {
     dispatch(addToCart({ ...product, qty }));
@@ -111,7 +114,7 @@ const ProductDetails = () => {
         <div className="py-10">
           <Link
             to="/"
-            class="text-[#242424] bg-white border border-[#B88E2F] outline-none  font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2   "
+            className="text-[#242424] bg-white border border-[#B88E2F] outline-none  font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2   "
           >
             Go Back
           </Link>
@@ -134,37 +137,62 @@ const ProductDetails = () => {
                   <h5 className="text-base text-[#B88E2F] font-medium font-poppins">
                     {product.isFeatured ? "Sale!" : "New!"}
                   </h5>
-                  <h1 className="text-2xl font-normal text-[#242424] mb-2">
-                    {product.name}
-                  </h1>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <span className="text-2xl text-[#B88E2F] font-medium font-poppins">
-                      ₹{discountedPrice?.toFixed(2)}
-                    </span>
-                    {product.discountPercentage > 0 && (
-                      <>
-                        <span className="text-sm text-[#9F9F9F] font-medium font-poppins line-through">
-                          ₹{product.price}
+                  <div className="border-b-[1px] border-opacity-5">
+                    <h1 className="text-[28px] font-Dosis font-semibold text-[#202435]">
+                      {product.name}
+                    </h1>
+
+                    {/* Review Rating and Count */}
+                    <div className="flex items-center gap-3">
+                      <div className="">
+                        <p className="text-[#C2C2D3] text-[13px] font-inter font-normal">
+                          Brand:{" "}
+                          <span className="text-[#223994] text-[13px] font-inter font-normal">
+                            {product.brand}
+                          </span>
+                        </p>
+                      </div>
+                      <span className="border h-9 border-opacity-5 "></span>
+                      <div className="my-4 flex items-center space-x-2">
+                        <Ratings value={product.rating} />
+                        <span className="text-[#9F9F9F] text-base font-medium font-poppins">
+                          ({product.numReviews}{" "}
+                          {product.numReviews === 1 ? "Review" : "Reviews"})
                         </span>
-                        <span className="bg-[#B88E2F] text-white text-xs font-semibold px-2 py-1 rounded">
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 my-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[38px] text-[#98928E] font-normal font-poppins line-through">
+                        ₹{product.price}
+                      </span>
+                      {product.discountPercentage > 0 && (
+                        <>
+                          <span className="text-[30px] text-[ #ED1D24] font-semibold font-poppins">
+                            ₹{discountedPrice?.toFixed(2)}
+                          </span>
+                          {/* <span className="bg-[#B88E2F] text-white text-xs font-semibold px-2 py-1 rounded">
                           -{product.discountPercentage}% Off
-                        </span>
-                        <span className="text-sm font-medium font-poppins text-[#B88E2F]">
-                          You save: ₹{discountAmount.toFixed(2)}
-                        </span>
-                      </>
-                    )}
+                        </span> */}
+                        </>
+                      )}
+                    </div>
+                    <span className="text-[16px] font-normal font-Inter bg-[#FF013D] text-[#FFFFFF] px-2 py-1 w-fit mt-5 md:mt-0">
+                      Save{" "}
+                      <span className="font-semibold text-[25px]">
+                        ₹{discountAmount.toFixed(2)}
+                      </span>
+                    </span>
                   </div>
                   <div className="text-base font-normal font-poppins text-[#9F9F9F]">
-                    <p>Brand: {product.brand}</p>
-                    <p>
-                      Stock:{" "}
-                      {product.countInStock > 0 ? "Available" : "Out of Stock"}
+                    <p className="text-[#00B858] text-[12px] font-poppins bg-[#E5F8ED] font-bold w-fit px-3 py-1 rounded-lg">
+                      {product.countInStock > 0 ? "IN STOCK" : "Out of Stock"}
                     </p>
-                    <p>
+                    {/* <p>
                       Shipping:{" "}
                       <span className="font-semibold">{shipping}</span>
-                    </p>
+                    </p> */}
                   </div>
 
                   {/* Actions */}
@@ -185,55 +213,22 @@ const ProductDetails = () => {
                       customStyles="my-custom-class"
                     /> */}
 
-                    <div className="btn-container">
-                      <button
-                        onClick={addToCartHandler}
-                        disabled={product.countInStock === 0}
-                        className="bg-[#B88E2F] text-lg font-poppins font-medium text-white py-2 px-4 rounded-lg mt-4 md:mt-0"
-                      >
-                        Add To Cart
-                      </button>
+                    <div className="flex items-center gap-4">
+                      <div className="btn-container">
+                        <button
+                          onClick={addToCartHandler}
+                          disabled={product.countInStock === 0}
+                          className="text-[13px] md:text-[16px] font-poppins font-medium border border-[#ED174A] border-opacity-20 flex items-center gap-1 py-[6px] px-2 text-black"
+                        >
+                          <CiShoppingCart className="text-[13px] md:text-[16px] text-[#ED174A]" />
+                          Add To Cart
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <HeartIcon product={product} />
+                      </div>
                     </div>
-
-                    {/* <button
-                      className="text-gray-500 hover:text-red-500 transition-colors"
-                      title="Add to Wishlist"
-                    >
-                    </button> */}
-                    <div className="flex items-center space-x-2 text-xl">
-                      <HeartIcon product={product} />
-                    </div>
-                  </div>
-
-                  {/* Review Rating and Count */}
-                  <div className="mt-6 flex items-center space-x-2">
-                    <Ratings value={product.rating} />
-                    <span className="text-[#9F9F9F] text-base font-medium font-poppins">
-                      ({product.numReviews}{" "}
-                      {product.numReviews === 1 ? "review" : "reviews"})
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  <div className="mt-6">
-                    <h3 className="text-xl  mb-3 font-medium font-poppins text-black/80">
-                      Description
-                    </h3>
-                    <p className="text-gray-600 font-medium font-poppins">
-                      {isExpanded
-                        ? product.description
-                        : `${product.description.substring(0, 150)}${
-                            product.description.length > 150 ? "..." : ""
-                          }`}
-                    </p>
-                    {product.description.length > 150 && (
-                      <button
-                        className="text-purple-500 text-sm font-poppins mt-2"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                      >
-                        {isExpanded ? "See Less" : "Read More"}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -286,7 +281,7 @@ const ProductDetails = () => {
           </div>
 
           {/* Review Section */}
-          <div className="w-full mt-8 bg-gray-100 border border-gray-300 rounded-md overflow-hidden">
+          <div className="w-full mt-8 ">
             <ProductTabs
               loadingProductReview={loadingProductReview}
               userInfo={userInfo}

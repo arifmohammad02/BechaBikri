@@ -10,7 +10,7 @@ import {
   setChecked,
   setRadio,
 } from "../redux/features/shop/shopSlice";
-import { FaBars, FaTimes } from "react-icons/fa"; // Import an icon for opening the sidebar
+import { FaTimes } from "react-icons/fa"; // Import an icon for opening the sidebar
 import { FaFilter } from "react-icons/fa6";
 
 const Shop = () => {

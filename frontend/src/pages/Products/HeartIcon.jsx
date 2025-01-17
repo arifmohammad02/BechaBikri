@@ -37,8 +37,21 @@ const HeartIcon = ({ product }) => {
   };
 
   return (
-    <div className="text-[#B88E2F] cursor-pointer" onClick={toggleFavorites}>
-      {isFavorite ? <FaHeart /> : <FaRegHeart />}
+    <div
+      className="text-[#B88E2F] text-[16px] cursor-pointer"
+      onClick={toggleFavorites}
+    >
+      {isFavorite ? (
+        <div className="flex items-center gap-1 text-[13px] md:text-[16px] font-medium font-poppins  py-[6px] px-2 border border-opacity-20 border-[#ED174A] w-fit ">
+          <FaHeart className="font-normal"  />
+          <span>Favorite</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 text-[13px] md:text-[16px] font-medium font-poppins py-[6px] px-2 border border-opacity-20 border-[#ED174A] w-fit">
+          <FaRegHeart className="text-[#ED174A] font-normal" />
+          <span className="text-black">Add to Favorites</span>
+        </div>
+      )}
     </div>
   );
 };
