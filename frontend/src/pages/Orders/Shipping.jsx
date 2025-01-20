@@ -1,229 +1,236 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Imp
 import {
   saveShippingAddress,
   savePaymentMethod,
 } from "../../redux/features/cart/cartSlice";
-import ProgressSteps from "../../components/ProgressSteps";
-
-import { FaArrowRight } from "react-icons/fa";
+import PlaceOrder from "./PlaceOrder";
+import { BsPersonVcard } from "react-icons/bs";
+import { GiVibratingSmartphone } from "react-icons/gi";
+import { TfiLocationPin } from "react-icons/tfi";
+import { MdPayment } from "react-icons/md";
+import { Link } from "react-router-dom";
+import { FaArrowLeftLong } from "react-icons/fa6";
+import { AiOutlineShopping } from "react-icons/ai";
 
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
   const { shippingAddress } = cart;
 
-  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
-  const [address, setAddress] = useState(shippingAddress.address || "");
-  const [city, setCity] = useState(shippingAddress.city || "");
+  const [name, setName] = useState(shippingAddress?.name || "");
+  const [address, setAddress] = useState(shippingAddress?.address || "");
+  const [city, setCity] = useState(shippingAddress?.city || "");
   const [postalCode, setPostalCode] = useState(
-    shippingAddress.postalCode || ""
+    shippingAddress?.postalCode || ""
   );
-  const [country, setCountry] = useState(shippingAddress.country || "");
+  const [country, setCountry] = useState(shippingAddress?.country || "");
   const [phoneNumber, setPhoneNumber] = useState(
-    shippingAddress.phoneNumber || ""
+    shippingAddress?.phoneNumber || ""
   );
-  const [alternatePhoneNumber, setAlternatePhoneNumber] = useState(
-    shippingAddress.alternatePhoneNumber || ""
-  );
-  const [email, setEmail] = useState(shippingAddress.email || "");
+  const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
 
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  const submitHandler = (e) => {
-    e.preventDefault();
+  // Redux state থেকে লোকাল state আপডেট করুন
+  useEffect(() => {
+    setAddress(shippingAddress?.address || "");
+    setCity(shippingAddress?.city || "");
+    setPostalCode(shippingAddress?.postalCode || "");
+    setCountry(shippingAddress?.country || "");
+    setPhoneNumber(shippingAddress?.phoneNumber || "");
+  }, [shippingAddress]);
 
-    // Input validations
-
-    toast.success("All inputs are valid! Proceeding...", {
-      position: "bottom-right",
-      theme: "colored",
-    });
-
-    // Dispatch actions
+  // Shipping Address অটো আপডেট করার জন্য ফাংশন
+  const handleShippingDetails = () => {
+    // Redux-এ Shipping Address আপডেট
     dispatch(
       saveShippingAddress({
+        name,
         address,
         city,
         postalCode,
         country,
         phoneNumber,
-        alternatePhoneNumber,
-        email,
       })
     );
+
+    // Redux-এ Payment Method আপডেট
     dispatch(savePaymentMethod(paymentMethod));
-    navigate("/placeorder");
+  };
+
+  // ইনপুট পরিবর্তন হলে Redux আপডেট হবে
+  const handleInputChange = (setter) => (e) => {
+    setter(e.target.value);
   };
 
   useEffect(() => {
-    if (!shippingAddress.address) {
-      navigate("/shipping");
-    }
-  }, [navigate, shippingAddress]);
+    handleShippingDetails();
+  }, [address, city, postalCode, country, phoneNumber, paymentMethod]);
+
+  const divisions = [
+    "Dhaka",
+    "Chittagong",
+    "Rajshahi",
+    "Khulna",
+    "Barisal",
+    "Sylhet",
+    "Rangpur",
+    "Mymensingh",
+  ];
 
   return (
-    <div className="container mx-auto mt-20 px-3 md:px-0">
-      <ProgressSteps step1 step2 />
-      <div className="w-full flex justify-center py-5">
-        <form
-          onSubmit={submitHandler}
-          className="w-full max-w-7xl bg-[#F9F1E7] p-8 rounded-lg border"
-        >
-          <h1 className="text-3xl font-poppins font-normal mb-6 text-center text-[#242424]">
-            Shipping
-          </h1>
+    <div className="container mx-auto my-[100px] px-3 md:px-0">
+      <div className="flex flex-col md:flex-row w-full gap-8 items-start">
+        {/* Delivery Details Form */}
+        <div className="md:w-1/2 w-full flex flex-col justify-center border border-opacity-65 rounded-xl">
+          <form className=" py-5 px-6 w-full">
+            <div className="border-b border-opacity-65">
+              <h1 className="text-[22px] font-bold font-mono uppercase text-black mb-3">
+                DELIVERY DETAILS<span className="text-red-600">*</span>
+              </h1>
+            </div>
+            <div className="mb-6 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <BsPersonVcard />
+                <label className="font-medium text-xl text-black font-mono">
+                  Your Name
+                </label>
+              </div>
+              <input
+                type="text"
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                placeholder="Name*"
+                value={name}
+                required
+                onChange={handleInputChange(setName)}
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Side Inputs (Address, City, Postal Code, Country) */}
-            <div>
-              <div className="mb-6">
-                <label className="block font-poppins font-normal text-[#242424] mb-2">
+            <div className="mb-6 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <GiVibratingSmartphone />
+                <label className="font-medium text-xl text-black font-mono">
+                  Your Phone
+                </label>
+              </div>
+
+              <input
+                type="text"
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                placeholder="Phone number*"
+                value={phoneNumber}
+                required
+                onChange={handleInputChange(setPhoneNumber)}
+              />
+            </div>
+            <div className="mb-6 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <TfiLocationPin />
+                <label className="font-medium text-xl text-black font-mono">
                   Address
                 </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md outline-none "
-                  placeholder="Enter address"
-                  value={address}
-                  required
-                  onChange={(e) => setAddress(e.target.value)}
-                />
               </div>
-
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  City
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border outline-none border-gray-300 rounded-md "
-                  placeholder="Enter city"
-                  value={city}
-                  required
-                  onChange={(e) => setCity(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  Postal Code
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border outline-none border-gray-300 rounded-md"
-                  placeholder="Enter postal code"
-                  value={postalCode}
-                  required
-                  onChange={(e) => setPostalCode(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  className=" w-full p-3 border outline-none border-gray-300 rounded-md"
-                  placeholder="Enter country"
-                  value={country}
-                  required
-                  onChange={(e) => setCountry(e.target.value)}
-                />
-              </div>
+              <input
+                type="text"
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                placeholder="Address*"
+                value={address}
+                required
+                onChange={handleInputChange(setAddress)}
+              />
             </div>
-
-            {/* Right Side Inputs (Phone Number, Email, Select Method) */}
-            <div>
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border outline-none border-gray-300 rounded-md"
-                  placeholder="Enter phone number"
-                  value={phoneNumber}
-                  required
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  Alternate Phone Number
-                </label>
-                <input
-                  type="text"
-                  className="w-full p-3 border outline-none border-gray-300 rounded-md"
-                  placeholder="Enter alternate phone number"
-                  value={alternatePhoneNumber}
-                  onChange={(e) => setAlternatePhoneNumber(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-[#242424] font-normal font-poppins mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  className="w-full p-3 border outline-none border-gray-300 rounded-md"
-                  placeholder="Enter email address"
-                  value={email}
-                  required
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-
-              <div className="mb-6">
-                <label className="block font-normal font-poppins text-[#242424] mb-2">
-                  Select Method
-                </label>
-                <div className="mt-2">
-                  <label className="inline-flex items-center ">
-                    <input
-                      type="radio"
-                      className="form-radio text-[#B88E2F]"
-                      name="paymentMethod"
-                      value="Cash on Delivery"
-                      checked={paymentMethod === "Cash on Delivery"}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                    />
-                    <div>
-                      <span className="ml-2 font-normal font-poppins tex-[#242424]">
-                        Cash on Delivery
-                      </span>
-                    </div>
-                  </label>
-                  <p className="text-base font-normal font-poppins text-[#242424]">
-                    Pay after receiving the product
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="relative inline-flex items-center justify-start py-3 pl-4 pr-12 overflow-hidden font-semibold text-[#B88E2F] transition-all duration-150 ease-in-out rounded hover:pl-10 hover:pr-6 bg-gray-50 group"
+            <div className="mb-6 mt-2">
+              <label className="text-[22px] font-bold font-mono uppercase text-black mb-1">
+                DELIVERY AREA<span className="text-red-600">*</span>
+              </label>
+              <select
+                value={city}
+                onChange={handleInputChange(setCity)}
+                required
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
               >
-                <span className="absolute bottom-0 left-0 w-full h-1 transition-all duration-150 ease-in-out bg-[#B88E2F] group-hover:h-full"></span>
-                <span className="absolute right-0 pr-4 duration-200 ease-out group-hover:translate-x-12">
-                  <FaArrowRight />
-                </span>
-                <span className="absolute left-0 pl-2.5 -translate-x-12 group-hover:translate-x-0 ease-out duration-200">
-                  <FaArrowRight className="text-white" />
-                </span>
-                <span className="relative font-poppins  w-full text-left transition-colors duration-200 ease-in-out group-hover:text-white">
-                  continue
-                </span>
-              </button>
+                <option value="">Select a Division</option>
+                {divisions.map((division) => (
+                  <option key={division} value={division}>
+                    {division}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div className="mb-6 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <label className="font-medium text-xl text-black font-mono">
+                  Zip Code
+                </label>
+              </div>
+              <input
+                type="text"
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                placeholder="Postal code*"
+                value={postalCode}
+                required
+                onChange={handleInputChange(setPostalCode)}
+              />
+            </div>
+            <div className="mb-6 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <label className="font-medium text-xl text-black font-mono">
+                  Your country
+                </label>
+              </div>
+              <input
+                type="text"
+                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                placeholder="Country*"
+                value={country}
+                required
+                onChange={handleInputChange(setCountry)}
+              />
+            </div>
+            <div className="mb-4 mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <MdPayment />
+                <label className="font-medium text-xl text-black font-mono">
+                  Payment
+                </label>
+              </div>
+              <select
+                value={paymentMethod}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value);
+                }}
+                className="w-full p-3 border rounded text-[#000000] text-[18px] font-mono semibold"
+              >
+                <option
+                  className="text-[#000000] text-[20px] font-mono semibold"
+                  value="Cash on Delivery"
+                >
+                  Cash on Delivery
+                </option>
+              </select>
+            </div>
+          </form>
+          <div className="flex justify-between px-6 mb-6">
+            <Link
+              to="/cart"
+              className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
+            >
+              <FaArrowLeftLong />
+              <p>Return to cart</p>
+            </Link>
+            <Link
+              to="/shop"
+              className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
+            >
+              <AiOutlineShopping />
+              <p> Continue Shopping</p>
+            </Link>
           </div>
-        </form>
+        </div>
+        {/* Order Summary */}
+        <div className="md:w-1/2 w-full">
+          <PlaceOrder onPlaceOrder={handleShippingDetails} />
+        </div>
       </div>
     </div>
   );

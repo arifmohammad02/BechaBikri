@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import {
@@ -9,23 +9,16 @@ import {
 } from "@redux/api/productApiSlice";
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
-
-import HeartIcon from "./HeartIcon";
 import ProductTabs from "./ProductTabs";
 import Ratings from "./Ratings";
-// import AddToCartButton from "../../components/AddToCartButton";
 import { FaCheck } from "react-icons/fa";
-import { addToCart } from "../../redux/features/cart/cartSlice";
-// import OrderNowButton from "../../components/OrderNowButton";
-import { CiShoppingCart } from "react-icons/ci";
+import AddToCartButton from "../../components/AddToCartButton";
+
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [qty, setQty] = useState(1);
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const categoriesQuery = useFetchCategoriesQuery();
 
@@ -100,10 +93,6 @@ const ProductDetails = () => {
     return <Message variant="danger">Product not found.</Message>;
   }
 
-  const addToCartHandler = () => {
-    dispatch(addToCart({ ...product, qty }));
-    navigate("/cart");
-  };
 
   return (
     <div className="">
@@ -111,25 +100,25 @@ const ProductDetails = () => {
         <div className="container mx-auto flex items-center gap-3 md:gap-5 ">
           <Link
             to="/"
-            className="text-[#000000] font-medium font-poppins text-[15px]"
+            className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]"
           >
             Home
           </Link>
-          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
             /
           </span>
           <Link
             to="/shop"
-            className="text-[#000000] font-medium font-poppins text-[15px]"
+            className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]"
           >
             {categoriesQuery.data &&
               categoriesQuery.data.find((item) => item._id === product.category)
                 ?.name}
           </Link>
-          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
             /
           </span>
-          <span className="text-[#000000] font-medium font-poppins text-[15px]">
+          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
             {product.name}
           </span>
         </div>
@@ -212,38 +201,13 @@ const ProductDetails = () => {
 
                   {/* Actions */}
                   <div className="mt-6 flex items-center space-x-4">
-                    {/* <AddToCartButton
+                    <AddToCartButton
                       product={product}
                       qty={1}
                       buttonText="Add to Cart"
                       addedText="Added to Cart"
                       isOrderNow={true} // This enables the "Order Now" button
-                     
-                    /> */}
-
-                    {/* <OrderNowButton
-                      product={product}
-                      item={product}
-                      qty={1}
-                      customStyles="my-custom-class"
-                    /> */}
-
-                    <div className="flex items-center gap-4">
-                      <div className="btn-container">
-                        <button
-                          onClick={addToCartHandler}
-                          disabled={product.countInStock === 0}
-                          className="text-[13px] md:text-[16px] font-poppins font-medium border border-[#ED174A] border-opacity-20 flex items-center gap-1 py-[6px] px-2 text-black"
-                        >
-                          <CiShoppingCart className="text-[13px] md:text-[16px] text-[#ED174A]" />
-                          Add To Cart
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <HeartIcon product={product} />
-                      </div>
-                    </div>
+                    /> 
                   </div>
                 </div>
               </div>

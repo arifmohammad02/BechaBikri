@@ -26,8 +26,7 @@ const orderSchema = mongoose.Schema(
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
       phoneNumber: { type: String, required: true }, // Primary Phone Number
-      alternatePhoneNumber: { type: String },        // Optional Alternate Phone Number
-      email: { type: String, required: true },       // Email Address
+    // Email Address
     },
     
 

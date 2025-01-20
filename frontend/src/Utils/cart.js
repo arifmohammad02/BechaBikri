@@ -8,11 +8,15 @@ export const updateCart = (state) => {
     state.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0)
   );
 
+  // console.log(state.itemsPrice);
+
+  // Calculate the discount price
+
   // Calculate the shipping price
   state.shippingPrice = addDecimals(state.itemsPrice > 100 ? 0 : 10);
 
   // Calculate the tax price
-  state.taxPrice = addDecimals(Number((0.00 * state.itemsPrice).toFixed(2)));
+  state.taxPrice = addDecimals(Number((0.0 * state.itemsPrice).toFixed(2)));
 
   // Calculate the total price
   state.totalPrice = (

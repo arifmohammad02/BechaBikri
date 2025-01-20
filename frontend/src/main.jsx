@@ -12,8 +12,8 @@ import Loader from "./components/Loader";
 // import Contact from "./pages/Contact";
 
 // Lazy Loading Components
-const About = lazy (() => import("./pages/About"))
-const Contact = lazy (() => import("./pages/Contact"))
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
 const Profile = lazy(() => import("./pages/User/Profile"));
@@ -38,7 +38,6 @@ const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-
     <Route path="/" element={<App />}>
       <Route
         path="/login"
@@ -105,14 +104,22 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
-      <Route path="/about"
-        element={<Suspense fallback={<Loader />}>
-          <About />
-        </Suspense>} />
-      <Route path="/contact"
-        element={<Suspense fallback={<Loader />}>
-          <Contact />
-        </Suspense>} />
+      <Route
+        path="/about"
+        element={
+          <Suspense fallback={<Loader />}>
+            <About />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <Suspense fallback={<Loader />}>
+            <Contact />
+          </Suspense>
+        }
+      />
       {/* Private Routes */}
       <Route
         path="/"

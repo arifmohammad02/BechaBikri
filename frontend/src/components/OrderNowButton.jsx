@@ -21,9 +21,7 @@
 //     <button
 //       onClick={handleOrderNow}
 //       disabled={!product || product.countInStock === 0} // Disable if the product is out of stock
-//       className={`text-white bg-red-600 hover:bg-red-700 focus:outline-none 
-//         font-medium rounded-md text-sm px-4 h-10 dark:bg-red-600 
-//         dark:hover:bg-red-700 dark:focus:ring-red-800 ${customStyles}`}
+//       className={` ${customStyles}`}
 //     >
 //       Order Now
 //     </button>
