@@ -33,7 +33,7 @@ const OrderSummery = () => {
             className="border-b border-gray-300 flex flex-col items-center md:flex-row"
           >
             {/* Product Info */}
-            <div className="py-4 px-6 flex flex-col md:flex-row items-center border-b-[1px] md:border-b-0 w-full md:w-auto">
+            <div className="py-4  flex flex-col md:flex-row items-center border-b-[1px] md:border-b-0 w-full md:w-auto">
               <img
                 src={item.image}
                 alt={item.name}
@@ -41,15 +41,15 @@ const OrderSummery = () => {
               />
               <Link
                 to={`/product/${item._id}`}
-                className="text-[#000000] text-center text-[14px] md:text-[16px] font-mono font-medium flex items-center"
+                className="text-[#000000] text-center text-[14px] md:text-[14px] font-mono font-medium flex items-center"
               >
                 {item.name}<span className="flex items-center"><IoMdClose className="text-[10px]"/>{item.qty}</span>
               </Link>
             </div>
 
             {/* Price */}
-            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold text-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-              ₹{" "}
+            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold text-center border-b-[1px] md:border-b-0 w-full md:w-auto flex items-center gap-[2px]">
+            <span>₹</span>
               {item.discountPercentage > 0
                 ? calculateDiscountedPrice(item)
                 : item.price.toFixed(2)}
@@ -60,7 +60,7 @@ const OrderSummery = () => {
               <div className="flex items-center justify-center space-x-2">
                 {/* Decrease Quantity Button */}
                 <button
-                  className={`w-8 h-8 font-bold border rounded-full text-[#000000] text-[14px] md:text-[16px] font-mono ${
+                  className={`w-5 h-5 font-bold border rounded-full text-[#000000] text-[14px] md:text-[14px] font-mono ${
                     item.qty > 1
                       ? "text-black border-gray-400"
                       : "text-gray-400 border-gray-300 cursor-not-allowed"
@@ -74,13 +74,13 @@ const OrderSummery = () => {
                 </button>
 
                 {/* Quantity Display */}
-                <span className="w-10 h-10 inline-flex items-center justify-center border rounded-full bg-gray-100 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold">
+                <span className="w-6 h-6 inline-flex items-center justify-center border rounded-full bg-gray-100 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold">
                   {item.qty}
                 </span>
 
                 {/* Increase Quantity Button */}
                 <button
-                  className="w-8 h-8 font-bold border border-gray-400 rounded-full text-[#000000] text-[14px] md:text-[16px] font-mono hover:bg-gray-100"
+                  className="w-5 h-5 font-bold border border-gray-400 rounded-full text-[#000000] text-[14px] md:text-[14px] font-mono hover:bg-gray-100"
                   onClick={() => addToCartHandler(item, item.qty + 1)}
                 >
                   +
@@ -89,8 +89,8 @@ const OrderSummery = () => {
             </div>
 
             {/* Total */}
-            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold text-center">
-              ₹{" "}
+            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold text-center flex items-center gap-[2px]">
+             <span>₹</span>
               {(
                 item.qty *
                 (item.discountPercentage > 0

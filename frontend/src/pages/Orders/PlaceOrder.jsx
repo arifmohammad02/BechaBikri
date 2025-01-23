@@ -1,19 +1,26 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useCreateOrderMutation } from "@redux/api/orderApiSlice";
+import {
+  useCreateOrderMutation,
+  usePayOrderMutation,
+} from "@redux/api/orderApiSlice";
 import { clearCartItems } from "../../redux/features/cart/cartSlice";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import OrderSummery from "../../components/OrderSummery";
 
-const PlaceOrder = ({ onPlaceOrder }) => {
+const PlaceOrder = ({ onPlaceOrder, validateFields, onResetForm }) => {
   const cart = useSelector((state) => state.cart);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
+  const [payOrder] = usePayOrderMutation();
 
   const placeOrderHandler = async () => {
+    if (!validateFields()) {
+      return;
+    }
     onPlaceOrder(); // শিপিং ডিটেইলস নিশ্চিত করা
     try {
       setIsLoading(true);
@@ -22,15 +29,23 @@ const PlaceOrder = ({ onPlaceOrder }) => {
         shippingAddress: cart.shippingAddress,
         paymentMethod: cart.paymentMethod,
       }).unwrap();
+
+      await payOrder({
+        orderId: order._id,
+        details: { paymentMethod: "Cash On Delivery" },
+        
+      }).unwrap();
+      // console.log(order._id);
+      toast.success("Order placed successfully!");
       dispatch(clearCartItems());
+      onResetForm(); // Shipping form reset
       navigate(`/order/${order._id}`);
     } catch (error) {
-      toast.error("Order creation failed!");
+      toast.error("Failed to place order. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const { cartItems } = cart;
 
@@ -52,10 +67,29 @@ const PlaceOrder = ({ onPlaceOrder }) => {
       <div>
         <OrderSummery />
       </div>
-      <div>
-        <div className="py-4 text-[#000000] text-[16px] font-mono font-bold text-right flex justify-between">
+      <div className="border-b border-gray-300 mb-5">
+        <div className="py-4 text-[#000000] text-[16px] font-mono font-semibold text-right flex justify-between ">
           Subtotal:
-          <span className="text-[#000000] text-[14px] md:text-[20px] font-mono font-bold">
+          <span className="text-[#000000] text-[14px] md:text-[18px] font-mono font-medium">
+            ₹
+            {cartItems
+              .reduce(
+                (acc, item) =>
+                  acc +
+                  item.qty *
+                    (item.discountPercentage > 0
+                      ? calculateDiscountedPrice(item)
+                      : item.price),
+                0
+              )
+              .toFixed(2)}
+          </span>
+        </div>
+      </div>
+      <div>
+        <div className="py-4 text-[#000000] text-[20px] font-mono font-bold text-right flex justify-between ">
+          Total
+          <span className="text-[#000000] text-[14px] md:text-[21px] font-mono font-bold">
             ₹
             {cartItems
               .reduce(
@@ -73,7 +107,7 @@ const PlaceOrder = ({ onPlaceOrder }) => {
       </div>
       <button
         onClick={placeOrderHandler}
-        className={`px-4 py-2 text-white bg-green-500 rounded ${
+        className={`px-4 py-4 w-full text-white text-[20px] font-normal font-serif bg-[#ED174A] hover:bg-[#223994] transition-all duration-300 ease-in-out rounded ${
           isLoading ? "opacity-50" : ""
         }`}
         disabled={isLoading}

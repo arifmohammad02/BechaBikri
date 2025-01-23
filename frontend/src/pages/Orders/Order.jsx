@@ -1,4 +1,3 @@
-
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
@@ -7,7 +6,6 @@ import Loader from "../../components/Loader";
 import {
   useDeliverOrderMutation,
   useGetOrderDetailsQuery,
-  usePayOrderMutation,
 } from "../../redux/api/orderApiSlice";
 import Message from "../../components/Message";
 
@@ -21,24 +19,14 @@ const Order = () => {
     error,
   } = useGetOrderDetailsQuery(orderId);
 
-  // eslint-disable-next-line no-unused-vars
-  const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation();
+  // console.log(order);
+  
+
+
   const [deliverOrder, { isLoading: loadingDeliver }] =
     useDeliverOrderMutation();
   const { userInfo } = useSelector((state) => state.auth);
 
-  const handleCODPayment = async () => {
-    try {
-      await payOrder({
-        orderId,
-        details: { paymentMethod: "Cash On Delivery" },
-      });
-      refetch();
-      toast.success("Order marked as paid (Cash on Delivery)");
-    } catch (error) {
-      toast.error(error?.data?.message || error.message);
-    }
-  };
 
   const deliverHandler = async () => {
     try {
@@ -227,15 +215,6 @@ const Order = () => {
               ₹{totalPrice.toFixed(2)}
             </span>
           </div>
-
-          {!order.isPaid && (
-            <button
-              className="w-full py-2 font-sans font-semibold text-base bg-[#B88E2F] text-white rounded-md"
-              onClick={handleCODPayment}
-            >
-              Pay with Cash on Delivery
-            </button>
-          )}
 
           {loadingDeliver && <Loader />}
           {userInfo &&

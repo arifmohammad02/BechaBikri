@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { CiShoppingCart } from "react-icons/ci";
 import HeartIcon from "../pages/Products/HeartIcon";
+import { FaLongArrowAltRight } from "react-icons/fa";
 
 const AddToCartButton = ({
   product,
@@ -46,7 +47,7 @@ const AddToCartButton = ({
           {isAdded ? addedText : buttonText}
         </button>
         <div className="flex items-center gap-2">
-          <HeartIcon product={product}/>
+          <HeartIcon product={product} />
         </div>
       </div>
       <div className="mt-2">
@@ -54,11 +55,10 @@ const AddToCartButton = ({
           <button
             onClick={handleOrderNow}
             disabled={product.countInStock === 0}
-            className="text-white bg-red-600 hover:bg-red-700 focus:outline-none 
-            font-medium rounded-md text-sm px-4 h-10 dark:bg-red-600 
-            dark:hover:bg-red-700 dark:focus:ring-red-800"
+            className="flex items-center justify-center mt-5 px-4 py-4 w-full text-white text-[20px] font-normal font-serif bg-[#ED174A] hover:bg-[#223994] transition-all duration-300 ease-in-out rounded animate-bounce"
           >
             Order Now
+            <FaLongArrowAltRight className="ml-2" />  
           </button>
         )}
       </div>

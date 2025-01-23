@@ -12,6 +12,7 @@ import { MdPayment } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import { AiOutlineShopping } from "react-icons/ai";
+import { toast } from "react-toastify";
 
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
@@ -78,158 +79,217 @@ const Shipping = () => {
     "Mymensingh",
   ];
 
+  const resetForm = () => {
+    setName("");
+    setAddress("");
+    setCity("");
+    setPostalCode("");
+    setCountry("");
+    setPhoneNumber("");
+    setPaymentMethod("Cash on Delivery");
+  };
+  
+
   return (
-    <div className="container mx-auto my-[100px] px-3 md:px-0">
-      <div className="flex flex-col md:flex-row w-full gap-8 items-start">
-        {/* Delivery Details Form */}
-        <div className="md:w-1/2 w-full flex flex-col justify-center border border-opacity-65 rounded-xl">
-          <form className=" py-5 px-6 w-full">
-            <div className="border-b border-opacity-65">
-              <h1 className="text-[22px] font-bold font-mono uppercase text-black mb-3">
-                DELIVERY DETAILS<span className="text-red-600">*</span>
-              </h1>
-            </div>
-            <div className="mb-6 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <BsPersonVcard />
-                <label className="font-medium text-xl text-black font-mono">
-                  Your Name
-                </label>
-              </div>
-              <input
-                type="text"
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-                placeholder="Name*"
-                value={name}
-                required
-                onChange={handleInputChange(setName)}
-              />
-            </div>
-
-            <div className="mb-6 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <GiVibratingSmartphone />
-                <label className="font-medium text-xl text-black font-mono">
-                  Your Phone
-                </label>
-              </div>
-
-              <input
-                type="text"
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-                placeholder="Phone number*"
-                value={phoneNumber}
-                required
-                onChange={handleInputChange(setPhoneNumber)}
-              />
-            </div>
-            <div className="mb-6 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <TfiLocationPin />
-                <label className="font-medium text-xl text-black font-mono">
-                  Address
-                </label>
-              </div>
-              <input
-                type="text"
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-                placeholder="Address*"
-                value={address}
-                required
-                onChange={handleInputChange(setAddress)}
-              />
-            </div>
-            <div className="mb-6 mt-2">
-              <label className="text-[22px] font-bold font-mono uppercase text-black mb-1">
-                DELIVERY AREA<span className="text-red-600">*</span>
-              </label>
-              <select
-                value={city}
-                onChange={handleInputChange(setCity)}
-                required
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-              >
-                <option value="">Select a Division</option>
-                {divisions.map((division) => (
-                  <option key={division} value={division}>
-                    {division}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mb-6 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <label className="font-medium text-xl text-black font-mono">
-                  Zip Code
-                </label>
-              </div>
-              <input
-                type="text"
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-                placeholder="Postal code*"
-                value={postalCode}
-                required
-                onChange={handleInputChange(setPostalCode)}
-              />
-            </div>
-            <div className="mb-6 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <label className="font-medium text-xl text-black font-mono">
-                  Your country
-                </label>
-              </div>
-              <input
-                type="text"
-                className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
-                placeholder="Country*"
-                value={country}
-                required
-                onChange={handleInputChange(setCountry)}
-              />
-            </div>
-            <div className="mb-4 mt-2">
-              <div className="flex items-center gap-1 mb-1">
-                <MdPayment />
-                <label className="font-medium text-xl text-black font-mono">
-                  Payment
-                </label>
-              </div>
-              <select
-                value={paymentMethod}
-                onChange={(e) => {
-                  setPaymentMethod(e.target.value);
-                }}
-                className="w-full p-3 border rounded text-[#000000] text-[18px] font-mono semibold"
-              >
-                <option
-                  className="text-[#000000] text-[20px] font-mono semibold"
-                  value="Cash on Delivery"
-                >
-                  Cash on Delivery
-                </option>
-              </select>
-            </div>
-          </form>
-          <div className="flex justify-between px-6 mb-6">
-            <Link
-              to="/cart"
-              className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
-            >
-              <FaArrowLeftLong />
-              <p>Return to cart</p>
-            </Link>
-            <Link
-              to="/shop"
-              className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
-            >
-              <AiOutlineShopping />
-              <p> Continue Shopping</p>
-            </Link>
-          </div>
+    <div>
+      <div className="py-8 bg-[#E8E8E8] mt-[100px]">
+        <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
+          <Link
+            to="/"
+            className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
+          >
+            Home
+          </Link>
+          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
+            /
+          </span>
+          <Link
+            to="/cart"
+            className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
+          >
+            Cart
+          </Link>
+          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
+            /
+          </span>
+          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
+            Checkout
+          </span>
         </div>
-        {/* Order Summary */}
-        <div className="md:w-1/2 w-full">
-          <PlaceOrder onPlaceOrder={handleShippingDetails} />
+      </div>
+      <div className="container mx-auto my-[45px] px-3 md:px-0">
+        <div className="flex flex-col xl:flex-row w-full gap-8 items-start">
+          {/* Delivery Details Form */}
+          <div className="w-full flex flex-col xl:w-1/2 justify-center border border-opacity-65 rounded-xl">
+            <form className=" py-5 px-6 w-full">
+              <div className="border-b border-opacity-65">
+                <h1 className="text-[22px] font-bold font-mono uppercase text-black mb-3">
+                  DELIVERY DETAILS<span className="text-red-600">*</span>
+                </h1>
+              </div>
+              <div className="mb-6 mt-2">
+                <div className="flex items-center gap-1 mb-1">
+                  <BsPersonVcard />
+                  <label className="font-medium text-xl text-black font-mono">
+                    Your Name
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                  placeholder="Name*"
+                  value={name}
+                  required
+                  onChange={handleInputChange(setName)}
+                />
+              </div>
+
+              <div className="flex items-center gap-5">
+                <div className="mb-6 mt-2 w-full">
+                  <div className="flex items-center gap-1 mb-1">
+                    <GiVibratingSmartphone />
+                    <label className="font-medium text-xl text-black font-mono">
+                      Your Phone
+                    </label>
+                  </div>
+
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                    placeholder="Phone number*"
+                    value={phoneNumber}
+                    required
+                    onChange={handleInputChange(setPhoneNumber)}
+                  />
+                </div>
+                <div className="mb-6 mt-2 w-full">
+                  <div className="flex items-center gap-1 mb-1">
+                    <TfiLocationPin />
+                    <label className="font-medium text-xl text-black font-mono">
+                      Address
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                    placeholder="Address*"
+                    value={address}
+                    required
+                    onChange={handleInputChange(setAddress)}
+                  />
+                </div>
+              </div>
+              <div className="mb-6 mt-2">
+                <label className="text-[22px] font-bold font-mono uppercase text-black mb-1">
+                  DELIVERY AREA<span className="text-red-600">*</span>
+                </label>
+                <select
+                  value={city}
+                  onChange={handleInputChange(setCity)}
+                  required
+                  className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                >
+                  <option value="">Select a Division</option>
+                  {divisions.map((division) => (
+                    <option key={division} value={division}>
+                      {division}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-5">
+                <div className="mb-6 mt-2 w-full">
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="font-medium text-xl text-black font-mono">
+                      Zip Code
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                    placeholder="Postal code*"
+                    value={postalCode}
+                    required
+                    onChange={handleInputChange(setPostalCode)}
+                  />
+                </div>
+                <div className="mb-6 mt-2 w-full">
+                  <div className="flex items-center gap-1 mb-1">
+                    <label className="font-medium text-xl text-black font-mono">
+                      Your country
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
+                    placeholder="Country*"
+                    value={country}
+                    required
+                    onChange={handleInputChange(setCountry)}
+                  />
+                </div>
+              </div>
+              <div className="mb-4 mt-2">
+                <div className="flex items-center gap-1 mb-1">
+                  <MdPayment />
+                  <label className="font-medium text-xl text-black font-mono">
+                    Payment
+                  </label>
+                </div>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value);
+                  }}
+                  className="w-full p-3 border rounded text-[#000000] text-[18px] font-mono semibold"
+                >
+                  <option
+                    className="text-[#000000] text-[20px] font-mono semibold"
+                    value="Cash on Delivery"
+                  >
+                    Cash on Delivery
+                  </option>
+                </select>
+              </div>
+            </form>
+            <div className="flex justify-between px-6 mb-6">
+              <Link
+                to="/cart"
+                className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
+              >
+                <FaArrowLeftLong />
+                <p>Return to cart</p>
+              </Link>
+              <Link
+                to="/shop"
+                className="flex items-center gap-1 text-[#6079d6] text-[16px] font-normal font-serif"
+              >
+                <AiOutlineShopping />
+                <p> Continue Shopping</p>
+              </Link>
+            </div>
+          </div>
+          {/* Order Summary */}
+          <div className="w-full xl:w-1/2 ">
+            <PlaceOrder
+              onPlaceOrder={handleShippingDetails}
+              onResetForm={resetForm}
+              validateFields={() => {
+                if (
+                  !name ||
+                  !phoneNumber ||
+                  !address ||
+                  !city ||
+                  !postalCode ||
+                  !country
+                ) {
+                  toast.error("All fields are required!");
+                  return false;
+                }
+                return true;
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>

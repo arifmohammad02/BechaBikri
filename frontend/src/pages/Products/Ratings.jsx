@@ -6,11 +6,11 @@ const Ratings = ({ value, text, color = "yellow-400" }) => {
   const emptyStar = 5 - fullStars - halfStars;
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-1">
       {[...Array(fullStars)].map((_, index) => (
         <FaStar
           key={index}
-          className={`text-${color} ml-1 text-xs transition-transform transform hover:scale-125 duration-200 text-yellow-300`}
+          className={`text-${color} text-xs transition-transform transform hover:scale-125 duration-200 text-yellow-300`}
         />
       ))}
 

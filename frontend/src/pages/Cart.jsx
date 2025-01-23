@@ -43,43 +43,43 @@ const Cart = () => {
     return product.price.toFixed(2);
   };
 
-
-
   return (
-    <div className="mt-[72px]">
+    <div className="mt-[100px]">
       <div className="py-8 bg-[#E8E8E8]">
         <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
           <Link
             to="/"
-            className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]"
+            className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
           >
             Home
           </Link>
-          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
+          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
             /
           </span>
-          <span className="text-[#9B9BB4] font-medium font-poppins text-[14px] md:text-[18px]">
+          <span className="text-[#9B9BB4] font-medium font-serif text-[14px] md:text-[18px]">
             Shopping Cart
           </span>
         </div>
       </div>
       <div className="container flex justify-between items-center mx-auto mt-8 pb-12">
         {cartItems.length === 0 ? (
-          <div className="flex flex-col items-center gap-4">
-            <p>
-              <LuShoppingBag className="w-28 h-28" />
-            </p>
-            <span className="text-[30px] font-medium font-sans text-center">
-              Your cart is empty
-            </span>
-            <p className=" max-w-96 text-center">
-              Add products while you shop, so they'll be ready for checkout
-              later.
-            </p>
-            <button className="flex items-center gap-3 bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#a1926d] transition-all ease-in-out duration-300">
-              <Link to="/shop">Go To Shop</Link>
-              <FaArrowRight />
-            </button>
+          <div className="w-full flex justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <p>
+                <LuShoppingBag className="w-28 h-28" />
+              </p>
+              <span className="text-[30px] font-medium font-sans text-center">
+                Your cart is empty
+              </span>
+              <p className=" max-w-96 text-center">
+                Add products while you shop, so they'll be ready for checkout
+                later.
+              </p>
+              <button className="flex items-center gap-3 bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#a1926d] transition-all ease-in-out duration-300">
+                <Link to="/shop">Go To Shop</Link>
+                <FaArrowRight />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="w-full px-3 sm:px-0">

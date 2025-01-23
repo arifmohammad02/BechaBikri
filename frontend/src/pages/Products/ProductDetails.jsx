@@ -96,7 +96,7 @@ const ProductDetails = () => {
 
   return (
     <div className="">
-      <div className="py-8 bg-[#E8E8E8] mt-[72px]">
+      <div className="py-8 bg-[#E8E8E8] mt-[100px]">
         <div className="container mx-auto flex items-center gap-3 md:gap-5 ">
           <Link
             to="/"

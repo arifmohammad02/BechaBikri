@@ -47,23 +47,23 @@ const ProductCard = ({ p }) => {
         <div className="pt-4">
           <div>
             <h5 className="text-xl font-semibold text-[#242424] mb-1 truncate">
-              {isExpanded ? p?.name : `${p?.name.substring(0, 20)}...`}
+              {isExpanded ? p?.name : `${p?.name.substring(0, 20)}`}
               <button
                 className="text-[#B88E2F] text-xs ml-2"
                 onClick={toggleName}
               >
-                {isExpanded ? "See Less" : "See More"}
+                {isExpanded ? "Read Less" : "Read More"}
               </button>
             </h5>
             <p className="text-lg  font-medium font-poppins text-[#242424">
-              {p?.price?.toLocaleString("en-US", {
+              {p?.price?.toLocaleString("en-IN", {
                 style: "currency",
-                currency: "BDT",
+                currency: "INR",
               })}
             </p>
           </div>
           <p className="mb-3 text-sm text-gray-600 overflow-hidden">
-            {p?.description?.substring(0, 32)} ...
+            {p?.description?.substring(0, 28)}...
           </p>
           <section className="flex justify-between items-center">
             <Link
