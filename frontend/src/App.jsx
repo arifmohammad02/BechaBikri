@@ -46,16 +46,25 @@ function App() {
     );
   }
 
-
-  const shouldShowFooter = !["/login", "/register"].includes(location.pathname);
+  const shouldShowExtras = ![
+    "/login",
+    "/register",
+    "/admin/dashboard",
+    "/admin/categorylist",
+    "/admin/userlist",
+    "/admin/productlist",
+    "/admin/allproductslist",
+    "/admin/orderlist",
+    "/product/update/:_id",
+  ].includes(location.pathname);
 
   return (
     <div>
       <ToastContainer />
       <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
       <Outlet />
-      {shouldShowFooter && <ServiceTag />}
-      {shouldShowFooter && <Footer />}
+      {shouldShowExtras && <ServiceTag />}
+      {shouldShowExtras && <Footer />}
     </div>
   );
 }

@@ -33,7 +33,7 @@ import { MdFavoriteBorder } from "react-icons/md";
 import { RiShoppingBagLine } from "react-icons/ri";
 import { CiUser } from "react-icons/ci";
 
-const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
+const Navigation = ({ isMenuOpen, setIsMenuOpen}) => {
   const { userInfo } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.cart);
   const [tabOpen, setTabOpen] = useState(false);
@@ -438,8 +438,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   );
 
   const DesktopHeader = (
-    <div className="w-full fixed top-0 left-0 z-50 bg-white text-black border-b">
-      <div className="container mx-auto flex justify-between items-center py-6">
+    <div className="w-full fixed top-0 left-0 z-50 bg-white text-black border-b lg:px-5 2xl:px-0">
+      <div className="2xl:container mx-auto flex justify-between items-center py-6">
         {/* Logo */}
         <div>
           <Link to="/" className="flex items-center">

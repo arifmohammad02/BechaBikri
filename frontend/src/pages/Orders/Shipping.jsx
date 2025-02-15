@@ -17,6 +17,8 @@ import { toast } from "react-toastify";
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
   const { shippingAddress } = cart;
+  // console.log(shippingAddress);
+  // console.log(cart);
 
   const [name, setName] = useState(shippingAddress?.name || "");
   const [address, setAddress] = useState(shippingAddress?.address || "");
@@ -34,6 +36,7 @@ const Shipping = () => {
 
   // Redux state থেকে লোকাল state আপডেট করুন
   useEffect(() => {
+    setName(shippingAddress?.name || "");
     setAddress(shippingAddress?.address || "");
     setCity(shippingAddress?.city || "");
     setPostalCode(shippingAddress?.postalCode || "");
@@ -41,9 +44,13 @@ const Shipping = () => {
     setPhoneNumber(shippingAddress?.phoneNumber || "");
   }, [shippingAddress]);
 
-  // Shipping Address অটো আপডেট করার জন্য ফাংশন
+  const getShippingCharge = (city) => {
+    return city === "Dhaka" ? 60 : 130;
+  };
+
   const handleShippingDetails = () => {
-    // Redux-এ Shipping Address আপডেট
+    const shippingCharge = getShippingCharge(city);
+
     dispatch(
       saveShippingAddress({
         name,
@@ -52,6 +59,7 @@ const Shipping = () => {
         postalCode,
         country,
         phoneNumber,
+        shippingCharge,
       })
     );
 
@@ -60,9 +68,6 @@ const Shipping = () => {
   };
 
   // ইনপুট পরিবর্তন হলে Redux আপডেট হবে
-  const handleInputChange = (setter) => (e) => {
-    setter(e.target.value);
-  };
 
   useEffect(() => {
     handleShippingDetails();
@@ -78,17 +83,6 @@ const Shipping = () => {
     "Rangpur",
     "Mymensingh",
   ];
-
-  const resetForm = () => {
-    setName("");
-    setAddress("");
-    setCity("");
-    setPostalCode("");
-    setCountry("");
-    setPhoneNumber("");
-    setPaymentMethod("Cash on Delivery");
-  };
-  
 
   return (
     <div>
@@ -140,7 +134,7 @@ const Shipping = () => {
                   placeholder="Name*"
                   value={name}
                   required
-                  onChange={handleInputChange(setName)}
+                  onChange={(e) => setName(e.target.value)} // ইনপুট পরিবর্তন হলে Redux আপডেট হবে}
                 />
               </div>
 
@@ -159,7 +153,7 @@ const Shipping = () => {
                     placeholder="Phone number*"
                     value={phoneNumber}
                     required
-                    onChange={handleInputChange(setPhoneNumber)}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                   />
                 </div>
                 <div className="mb-6 mt-2 w-full">
@@ -175,7 +169,7 @@ const Shipping = () => {
                     placeholder="Address*"
                     value={address}
                     required
-                    onChange={handleInputChange(setAddress)}
+                    onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
               </div>
@@ -185,7 +179,7 @@ const Shipping = () => {
                 </label>
                 <select
                   value={city}
-                  onChange={handleInputChange(setCity)}
+                  onChange={(e) => setCity(e.target.value)}
                   required
                   className="w-full p-3 border border-opacity-65 rounded bg-[#F3F4F7] placeholder:text-[#000000] text-[16px] font-mono font-normal"
                 >
@@ -197,6 +191,7 @@ const Shipping = () => {
                   ))}
                 </select>
               </div>
+
               <div className="flex items-center gap-5">
                 <div className="mb-6 mt-2 w-full">
                   <div className="flex items-center gap-1 mb-1">
@@ -210,7 +205,7 @@ const Shipping = () => {
                     placeholder="Postal code*"
                     value={postalCode}
                     required
-                    onChange={handleInputChange(setPostalCode)}
+                    onChange={(e) => setPostalCode(e.target.value)}
                   />
                 </div>
                 <div className="mb-6 mt-2 w-full">
@@ -225,7 +220,7 @@ const Shipping = () => {
                     placeholder="Country*"
                     value={country}
                     required
-                    onChange={handleInputChange(setCountry)}
+                    onChange={(e) => setCountry(e.target.value)}
                   />
                 </div>
               </div>
@@ -273,7 +268,6 @@ const Shipping = () => {
           <div className="w-full xl:w-1/2 ">
             <PlaceOrder
               onPlaceOrder={handleShippingDetails}
-              onResetForm={resetForm}
               validateFields={() => {
                 if (
                   !name ||

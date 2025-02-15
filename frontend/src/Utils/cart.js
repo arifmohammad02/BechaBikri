@@ -2,18 +2,17 @@ export const addDecimals = (num) => {
   return (Math.round(num * 100) / 100).toFixed(2);
 };
 
-export const updateCart = (state) => {
+export const updateCart = (state, shippingAddress = {}) => {
+
   // Calculate the items price
   state.itemsPrice = addDecimals(
     state.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0)
   );
 
-  // console.log(state.itemsPrice);
-
-  // Calculate the discount price
-
   // Calculate the shipping price
-  state.shippingPrice = addDecimals(state.itemsPrice > 100 ? 0 : 10);
+  state.shippingPrice = addDecimals(
+    shippingAddress?.shippingCharge ?? 0  // Ensure fallback if undefined
+  );
 
   // Calculate the tax price
   state.taxPrice = addDecimals(Number((0.0 * state.itemsPrice).toFixed(2)));

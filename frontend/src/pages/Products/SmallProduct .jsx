@@ -29,7 +29,7 @@ const SmallProduct = ({ product }) => {
 
   return (
     <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow">
-      <Link to={`/product/${product._id}`}>
+      <Link to={`/product/${product._id}`}  >
         <div className="relative">
           <img className="p-5" src={product.image} alt={product.name} />
 

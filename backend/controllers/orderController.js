@@ -3,13 +3,19 @@ import Product from "../models/productModel.js";
 
 // Utility Function
 function calcPrices(orderItems) {
-  const itemsPrice = orderItems.reduce(
-    (acc, item) => acc + item.price * item.qty,
+  const itemsPrice = orderItems.reduce((acc, item) => {
+    const discount = (item.price * item.discountPercentage) / 100;
+    const discountedPrice = item.price - discount;
+    return acc + discountedPrice * item.qty;
+  }, 0);
+
+  // Shipping charge প্রতিটি orderItems থেকে যোগ করা হবে
+  const shippingPrice = orderItems.reduce(
+    (acc, item) => acc + (item.shippingCharge ?? 0),
     0
   );
 
-  const shippingPrice = itemsPrice > 100 ? 0 : 10;
-  const taxRate = 0.00;
+  const taxRate = 0.0;
   const taxPrice = (itemsPrice * taxRate).toFixed(2);
 
   const totalPrice = (
@@ -60,12 +66,15 @@ const createOrder = async (req, res) => {
         ...itemFromClient,
         product: itemFromClient._id,
         price: matchingItemFromDB.price,
+        shippingCharge: shippingAddress?.shippingCharge ?? 0,
         _id: undefined,
       };
     });
 
-    const { itemsPrice, taxPrice, shippingPrice, totalPrice } =
-      calcPrices(dbOrderItems);
+    const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calcPrices(
+      dbOrderItems,
+      shippingAddress
+    );
 
     const order = new Order({
       orderItems: dbOrderItems,
@@ -111,6 +120,30 @@ const countTotalOrders = async (req, res) => {
   }
 };
 
+const countTotalOrdersByDate = async (req, res) => {
+  try {
+    const ordersByDate = await Order.aggregate([
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$createdAt",
+              timezone: "Asia/Dhaka",
+            },
+          },
+          totalOrders: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: -1 } }, // সর্বশেষ দিনের ডাটা প্রথমে দেখাবে
+    ]);
+
+    res.json(ordersByDate);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const calculateTotalSales = async (req, res) => {
   try {
     const orders = await Order.find();
@@ -132,7 +165,11 @@ const calcualteTotalSalesByDate = async (req, res) => {
       {
         $group: {
           _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$paidAt" },
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$paidAt",
+              timezone: "Asia/Dhaka",
+            },
           },
           totalSales: { $sum: "$totalPrice" },
         },
@@ -145,6 +182,10 @@ const calcualteTotalSalesByDate = async (req, res) => {
   }
 };
 
+const getLocalTime = (utcTime) => {
+  return new Date(utcTime).toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+};
+
 const findOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate(
@@ -153,7 +194,12 @@ const findOrderById = async (req, res) => {
     );
 
     if (order) {
-      res.json(order);
+      const response = {
+        ...order.toObject(),
+        paidAt: order.paidAt ? getLocalTime(order.paidAt) : null,
+        deliveredAt: order.deliveredAt ? getLocalTime(order.deliveredAt) : null,
+      };
+      res.json(response);
     } else {
       res.status(404);
       throw new Error("Order not found");
@@ -164,60 +210,59 @@ const findOrderById = async (req, res) => {
 };
 
 const markOrderAsPaid = async (req, res) => {
-    try {
-      const order = await Order.findById(req.params.id);
-  
-      if (order) {
-        // Check payment method
-        if (order.paymentMethod === "Cash on Delivery") {
-          order.isPaid = true;
-          order.paidAt = Date.now();
-  
-          // Save the updated order
-          const updatedOrder = await order.save();
-          return res.status(200).json(updatedOrder);
-        }
-  
-        // For other payment methods like PayPal
-        order.isPaid = true;
-        order.paidAt = Date.now();
-        order.paymentResult = {
-          id: req.body.id || "N/A",
-          status: req.body.status || "Completed",
-          update_time: req.body.update_time || Date.now(),
-          email_address: req.body.payer?.email_address || "N/A",
-        };
-  
-        const updatedOrder = await order.save();
-        return res.status(200).json(updatedOrder);
-      } else {
-        res.status(404).json({ error: "Order not found" });
-      }
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
-  
-
-const markOrderAsDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-      order.isDelivered = true;
-      order.deliveredAt = Date.now();
+      // Use the provided paidAt time or fallback to the current time
+      const paidAtTime = req.body.paidAt
+        ? new Date(req.body.paidAt)
+        : new Date();
+
+      order.isPaid = true;
+      order.paidAt = paidAtTime;
+
+      if (order.paymentMethod !== "Cash on Delivery") {
+        order.paymentResult = {
+          id: req.body.id || "N/A",
+          status: req.body.status || "Completed",
+          update_time: req.body.update_time || paidAtTime.toISOString(),
+          email_address: req.body.payer?.email_address || "N/A",
+        };
+      }
 
       const updatedOrder = await order.save();
-      res.json(updatedOrder);
+      return res.status(200).json(updatedOrder);
     } else {
-      res.status(404);
-      throw new Error("Order not found");
+      res.status(404).json({ error: "Order not found" });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+const markOrderAsDelivered = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (order) {
+      // Use the provided deliveredAt time or fallback to the current time
+      const deliveredAtTime = req.body.deliveredAt
+        ? new Date(req.body.deliveredAt)
+        : new Date();
+
+      order.isDelivered = true;
+      order.deliveredAt = deliveredAtTime;
+
+      const updatedOrder = await order.save();
+      res.json(updatedOrder);
+    } else {
+      res.status(404).json({ error: "Order not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 export {
   createOrder,
   getAllOrders,
@@ -228,4 +273,5 @@ export {
   findOrderById,
   markOrderAsPaid,
   markOrderAsDelivered,
+  countTotalOrdersByDate,
 };

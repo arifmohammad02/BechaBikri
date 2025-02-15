@@ -4,6 +4,7 @@ import Loader from "../components/Loader";
 import Message from "../components/Message";
 import Header from "../components/Header";
 import Product from "./Products/Product";
+import { FaLongArrowAltRight } from "react-icons/fa";
 
 const Home = () => {
   const { keyword } = useParams();
@@ -23,28 +24,31 @@ const Home = () => {
           ) : (
             <>
               <div className="flex justify-between items-center mb-5 mt-8">
-                <div className="border-l-[4px] h-10 border-[#B88E2F] flex items-center pl-3">
-                <h1 className="text-4xl font-bold font-mono text-[#3A3A3A]">
-                  Special Products
-                </h1>
+                <div className="text-center w-full">
+                  <h1 className="text-[48px] font-figtree font-bold text-center text-[#212B36]">
+                    Special Products
+                  </h1>
+                  <p className="text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
+                    Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                    Repellendus, distinctio.
+                  </p>
                 </div>
-
-                {/* <Link
-                  to="/shop"
-                  className="bg-[#B88E2F] font-poppins font-medium text-lg rounded-md py-1 px-3 md:px-5 text-white"
-                >
-                  Shop
-                </Link> */}
               </div>
 
               <div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 py-2 xl:py-5 w-full">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-5 w-full">
                   {data.products.map((product) => (
                     <div key={product._id}>
                       <Product product={product} />
                     </div>
                   ))}
                 </div>
+                <Link to="/shop" className="flex justify-center items-center mb-5">
+                  <button className="bg-blue-600 hover:bg-blue-600/90 font-serif font-medium text-lg rounded-md py-2 px-4 text-white mt-5 flex items-center">
+                    View All
+                    <FaLongArrowAltRight className="ml-2" />
+                  </button>
+                </Link>
               </div>
             </>
           )}

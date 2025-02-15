@@ -1,10 +1,10 @@
-import pkg from 'cloudinary';
+import pkg from "cloudinary";
 const { v2: cloudinary } = pkg;
 import multer from "multer";
 import express from "express";
 const router = express.Router();
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-import path from 'path';
+import path from "path";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,

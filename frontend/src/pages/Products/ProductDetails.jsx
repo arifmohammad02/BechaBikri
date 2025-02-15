@@ -14,7 +14,6 @@ import Ratings from "./Ratings";
 import { FaCheck } from "react-icons/fa";
 import AddToCartButton from "../../components/AddToCartButton";
 
-
 const ProductDetails = () => {
   const { id: productId } = useParams();
   const [rating, setRating] = useState(0);
@@ -93,7 +92,6 @@ const ProductDetails = () => {
     return <Message variant="danger">Product not found.</Message>;
   }
 
-
   return (
     <div className="">
       <div className="py-8 bg-[#E8E8E8] mt-[100px]">
@@ -168,7 +166,7 @@ const ProductDetails = () => {
                   </div>
                   <div className="flex flex-col md:flex-row md:items-center gap-3 my-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-[38px] text-[#98928E] font-normal font-poppins line-through">
+                      <span className="text-[30px] text-[#98928E] font-normal font-poppins line-through">
                         ₹{product.price}
                       </span>
                       {product.discountPercentage > 0 && (
@@ -207,7 +205,7 @@ const ProductDetails = () => {
                       buttonText="Add to Cart"
                       addedText="Added to Cart"
                       isOrderNow={true} // This enables the "Order Now" button
-                    /> 
+                    />
                   </div>
                 </div>
               </div>
@@ -253,7 +251,7 @@ const ProductDetails = () => {
                   className="h-8 w-8 md:h-12 md:w-12 rounded-lg"
                 />
                 <span className="text-[18px] md:text-2xl first-line:text-[#B88E2F] font-extrabold font-Dosis">
-                ক্যাশ অন ডেলিভারি
+                  ক্যাশ অন ডেলিভারি
                 </span>
               </div>
             </div>

@@ -8,6 +8,7 @@ import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
 import Loader from "./components/Loader";
+import Sidebar from "./components/Sidebar";
 // import About from "./pages/About";
 // import Contact from "./pages/Contact";
 
@@ -88,6 +89,7 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
+      <Route path="/sidebar" element={<Sidebar />}></Route>
       <Route
         path="/shop"
         element={

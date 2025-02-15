@@ -3,14 +3,7 @@ import Product from "../models/productModel.js";
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      price,
-      category,
-      quantity,
-      brand,
-    } = req.fields;
+    const { name, description, price, category, quantity, brand } = req.fields;
 
     // Validation
     switch (true) {
@@ -26,18 +19,6 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
-      // case !shippingCharge:
-      //   return res.json({ error: "Shipping Charge is required" });
-      // case !offer:
-      //   return res.json({ error: "Offer is required" });
-      // case !warranty:
-      //   return res.json({ error: "Warranty is required" });
-      // case !discountPercentage:
-      //   return res.json({ error: "Discount Percentage is required" });
-      // case !specifications:
-      //   return res.json({ error: "Specifications is required" });
-      // case !isFeatured:
-      // return res.json({ error: "Is Featured is required" });
     }
 
     const product = new Product({ ...req.fields });
@@ -51,17 +32,7 @@ const addProduct = asyncHandler(async (req, res) => {
 
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
-    const {
-      name,
-      description,
-      price,
-      category,
-      quantity,
-      brand,
-      
-      
-      
-    } = req.fields;
+    const { name, description, price, category, quantity, brand } = req.fields;
 
     // Validation
     switch (true) {
@@ -77,8 +48,6 @@ const updateProductDetails = asyncHandler(async (req, res) => {
         return res.json({ error: "Category is required" });
       case !quantity:
         return res.json({ error: "Quantity is required" });
-      
-     
     }
 
     const product = await Product.findByIdAndUpdate(

@@ -12,9 +12,13 @@ import {
 } from "../redux/features/shop/shopSlice";
 import { FaTimes } from "react-icons/fa"; // Import an icon for opening the sidebar
 import { FaFilter } from "react-icons/fa6";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Shop = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const categoryId = queryParams.get("category");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State to control sidebar visibility
 
@@ -32,6 +36,12 @@ const Shop = () => {
     checked,
     radio,
   });
+
+  useEffect(() => {
+    if (categoryId && categories) {
+      dispatch(setChecked([categoryId])); // Preselect the category
+    }
+  }, [categoryId, categories, dispatch]);
 
   useEffect(() => {
     if (!categoriesQuery.isLoading) {
@@ -144,6 +154,7 @@ const Shop = () => {
                       <input
                         type="checkbox"
                         id={`category-${c._id}`}
+                        checked={checked.includes(c._id)} // Ensure checkbox is checked if categoryId matches
                         onChange={(e) => handleCheck(e.target.checked, c._id)}
                         className="w-6 h-6 text-pink-600 bg-gray-100 border-gray-300 focus:ring-pink-500"
                       />
@@ -156,7 +167,6 @@ const Shop = () => {
                     </div>
                   </div>
                 ))}
-
                 <h2 className="text-center py-2 font-mono font-semibold text-[20px] bg-black/80 text-white rounded-full my-5">
                   Brands
                 </h2>

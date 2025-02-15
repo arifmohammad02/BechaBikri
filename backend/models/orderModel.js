@@ -9,7 +9,7 @@ const orderSchema = mongoose.Schema(
         qty: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
-        shippingCharge: { type: Number, default: 0},
+        // shippingCharge: { type: Number, default: 0},
         discountPercentage: { type: Number, default: 0},
         offer: { type: String, default: "" },
         product: {
@@ -21,12 +21,14 @@ const orderSchema = mongoose.Schema(
     ],
 
     shippingAddress: {
+      name: { type: String, required: true },
       address: { type: String, required: true },
       city: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
-      phoneNumber: { type: String, required: true }, // Primary Phone Number
-    // Email Address
+      phoneNumber: { type: String, required: true },
+      shippingCharge: { type: Number, default: 0}, 
+  
     },
     
 
@@ -74,8 +76,9 @@ const orderSchema = mongoose.Schema(
 
     paidAt: {
       type: Date,
+      default: () => new Date(), // Use the device's local time
     },
-
+    
     isDelivered: {
       type: Boolean,
       required: true,
@@ -84,6 +87,7 @@ const orderSchema = mongoose.Schema(
 
     deliveredAt: {
       type: Date,
+      default: () => new Date(), // Use the device's local time
     },
   },
   {

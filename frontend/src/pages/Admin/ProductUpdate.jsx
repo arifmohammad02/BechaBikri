@@ -10,7 +10,6 @@ import {
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
 
-
 const ProductUpdate = () => {
   const params = useParams();
   const { data: productData } = useGetProductByIdQuery(params._id);
@@ -31,9 +30,6 @@ const ProductUpdate = () => {
   const [isFeatured, setIsFeatured] = useState(
     productData?.isFeatured || false
   );
-  const [shippingCharge, setShippingCharge] = useState(
-    productData?.shippingCharge || 0
-  );
   const [offer, setOffer] = useState(productData?.offer || "");
   const [warranty, setWarranty] = useState(productData?.warranty || "");
   // const [specifications, setSpecifications] = useState(
@@ -52,6 +48,7 @@ const ProductUpdate = () => {
   const [uploadProductImage] = useUploadProductImageMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     if (productData && productData._id) {
@@ -64,7 +61,6 @@ const ProductUpdate = () => {
       setImage(productData.image);
       setDiscountPercentage(productData.discountPercentage);
       setIsFeatured(productData.isFeatured);
-      setShippingCharge(productData.shippingCharge);
       setOffer(productData.offer);
       setWarranty(productData.warranty);
       // setSpecifications(productData.specifications);
@@ -138,7 +134,6 @@ const ProductUpdate = () => {
       formData.append("countInStock", stock);
       formData.append("discountPercentage", discountPercentage);
       formData.append("isFeatured", isFeatured);
-      formData.append("shippingCharge", shippingCharge);
       formData.append("offer", offer);
       formData.append("warranty", warranty);
       // formData.append("specifications", JSON.stringify(specifications));
@@ -180,214 +175,229 @@ const ProductUpdate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col py-10 mt-10">
-      <div className="flex flex-col lg:flex-row gap-8 w-full">
-        {/* Admin Menu */}
-        <AdminMenu />
+    <div className={` py-10`}>
+      <div className="min-h-screen backdrop:flex flex-col py-10 mt-10 container mx-auto">
+        <div className="flex flex-col lg:flex-row gap-8 w-full">
+          {/* Admin Menu */}
+          <AdminMenu />
 
-        {/* Product Update/Delete Section */}
-        <div className="w-full bg-white rounded-md p-4 border container mx-auto">
-          <h1 className="text-2xl font-bold text-gray-800 mb-5 border-b pb-3">
-            Update / Delete Product
-          </h1>
+          {/* Product Update/Delete Section */}
+          <div className="w-full bg-white p-4 border-2 container mx-auto">
+            <h1 className="text-[22px] font-bold font-figtree text-black mb-5 border-b pb-3">
+              Update / Delete Product
+            </h1>
 
-          {/* Product Image */}
-          {image && (
-            <div className="text-center mb-6">
-              <img
-                src={image}
-                alt="product"
-                className="mx-auto max-h-52 w-auto rounded-lg border shadow-md hover:shadow-lg transition duration-300"
-              />
-            </div>
-          )}
+            {/* Product Image */}
+            {image && (
+              <div className="text-center mb-6">
+                <img
+                  src={image}
+                  alt="product"
+                  className="mx-auto max-h-52 w-auto rounded-lg border shadow-md hover:shadow-lg transition duration-300"
+                />
+              </div>
+            )}
 
-          {/* Image Upload */}
-          <div className="mb-6">
-            <label className="block w-full text-center text-gray-700 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer py-5 font-medium hover:bg-gray-200 transition duration-300">
-              {uploadLoading ? "Uploading..." : "Upload Image"}
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={uploadFileHandler}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          {/* Product Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
-            <div>
-              <label htmlFor="name" className="text-gray-600 font-medium">
-                Name
-              </label>
-              <input
-                type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="price" className="text-gray-600 font-medium">
-                Price
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                min="0"
-              />
-            </div>
-            <div>
-              <label htmlFor="quantity" className="text-gray-600 font-medium">
-                Quantity
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                min="0"
-              />
-            </div>
-            <div>
-              <label htmlFor="brand" className="text-gray-600 font-medium">
-                Brand
-              </label>
-              <input
-                type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="stock" className="text-gray-600 font-medium">
-                Count In Stock
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                min="0"
-              />
-            </div>
-            <div>
-              <label htmlFor="category" className="text-gray-600 font-medium">
-                Category
-              </label>
-              <select
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                onChange={(e) => setCategory(e.target.value)}
-                value={category}
-              >
-                <option value="">Choose Category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="discountPercentage"
-                className="text-gray-600 font-medium"
-              >
-                Discount Percentage
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={discountPercentage}
-                onChange={(e) => setDiscountPercentage(e.target.value)}
-                min="0"
-                max="100"
-              />
-            </div>
-            <div>
-              <label htmlFor="isFeatured" className="text-gray-600 font-medium">
-                Featured
-              </label>
-              <input
-                type="checkbox"
-                className="px-4 py-2 flex justify-start mt-2"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="shippingCharge"
-                className="text-gray-600 font-medium"
-              >
-                Shipping Charge
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={shippingCharge}
-                onChange={(e) => setShippingCharge(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="offer" className="text-gray-600 font-medium">
-                Offer
-              </label>
-              <input
-                type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={offer}
-                onChange={(e) => setOffer(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="warranty" className="text-gray-600 font-medium">
-                Warranty
-              </label>
-              <input
-                type="text"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={warranty}
-                onChange={(e) => setWarranty(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="discountedAmount"
-                className="text-gray-600 font-medium"
-              >
-                Discounted Amount
-              </label>
-              <input
-                type="number"
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={discountedAmount}
-                onChange={(e) => setDiscountedAmount(e.target.value)}
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div className="mb-6">
+            {/* Image Upload */}
             <div className="mb-6">
-              <label
-                htmlFor="description"
-                className="text-gray-600 font-medium"
-              >
-                Description
+              <label className="block w-full text-center text-gray-700 font-bold text-[18px] font-figtree bg-gray-50 border-2 border-dashed cursor-pointer py-5">
+                {uploadLoading ? "Uploading..." : "Upload Image"}
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={uploadFileHandler}
+                  className="hidden"
+                />
               </label>
-              <textarea
-                className="w-full mt-2 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
             </div>
-            {/* <div>
+
+            {/* Product Information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Name
+                </label>
+                <input
+                  type="text"
+                  className="w-full mt-2 p-3 border rounded-lg text-gray-800 font-figtree font-normal text-[16px] focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="price"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Price
+                </label>
+                <input
+                  type="number"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  min="0"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="quantity"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  min="0"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="brand"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Brand
+                </label>
+                <input
+                  type="text"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="stock"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Count In Stock
+                </label>
+                <input
+                  type="number"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  min="0"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="category"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Category
+                </label>
+                <select
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  onChange={(e) => setCategory(e.target.value)}
+                  value={category}
+                >
+                  <option value="">Choose Category</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="discountPercentage"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Discount Percentage
+                </label>
+                <input
+                  type="number"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={discountPercentage}
+                  onChange={(e) => setDiscountPercentage(e.target.value)}
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="isFeatured"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Featured
+                </label>
+                <input
+                  type="checkbox"
+                  className="px-4 py-2 flex justify-start mt-2"
+                  checked={isFeatured}
+                  onChange={(e) => setIsFeatured(e.target.checked)}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="offer"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Offer
+                </label>
+                <input
+                  type="text"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={offer}
+                  onChange={(e) => setOffer(e.target.value)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="warranty"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Warranty
+                </label>
+                <input
+                  type="text"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={warranty}
+                  onChange={(e) => setWarranty(e.target.value)}
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="discountedAmount"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Discounted Amount
+                </label>
+                <input
+                  type="number"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={discountedAmount}
+                  onChange={(e) => setDiscountedAmount(e.target.value)}
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <div className="mb-6">
+                <label
+                  htmlFor="description"
+                  className="text-gray-700 font-figtree font-medium text-[18px]"
+                >
+                  Description
+                </label>
+                <textarea
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              {/* <div>
               <label
                 htmlFor="specifications"
                 className="text-gray-600 font-medium"
@@ -400,22 +410,23 @@ const ProductUpdate = () => {
                 onChange={(e) => setSpecifications(e.target.value)}
               ></textarea>
             </div> */}
-          </div>
+            </div>
 
-          {/* Buttons */}
-          <div className="flex justify-between items-center gap-4">
-            <button 
-              className="text-white bg-black"
-              onClick={handleSubmit}
-            >
-              {updateLoading ? "Updating..." : "Update Product"}
-            </button>
-            <button 
-              className="text-white bg-red-500"
-              onClick={handleDelete}
-            >
-              {deleteLoading ? "Deleting..." : "Delete Product"}
-            </button>
+            {/* Buttons */}
+            <div className="flex justify-between items-center gap-4">
+              <button
+                className="text-white bg-black/90 hover:bg-black px-3 py-2 rounded-md font-figtree font-medium text-[16px]"
+                onClick={handleSubmit}
+              >
+                {updateLoading ? "Updating..." : "Update Product"}
+              </button>
+              <button
+                className="text-white bg-red-500/90 hover:bg-red-500 px-3 py-2 rounded-md font-figtree font-medium text-[16px]"
+                onClick={handleDelete}
+              >
+                {deleteLoading ? "Deleting..." : "Delete Product"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

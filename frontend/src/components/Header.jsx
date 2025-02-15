@@ -4,6 +4,7 @@ import SmallProduct from "../pages/Products/SmallProduct ";
 import { useGetTopProductsQuery } from "../redux/api/productApiSlice";
 import Loader from "./Loader";
 import { FaLongArrowAltRight } from "react-icons/fa";
+import Category from "./Category";
 const Header = () => {
   const { data, isLoading, error } = useGetTopProductsQuery();
   // console.log(data);
@@ -21,28 +22,36 @@ const Header = () => {
       <div className="mt-16">
         <ProductCarousel />
       </div>
+      <div>
+        <Category />
+      </div>
       <div className="container mx-auto flex justify-between gap-5">
         <div className="w-full">
           <div className="flex justify-between items-center mb-5 mt-10 px-3 md:px-0">
-            <div className="border-l-[4px] h-10 border-[#B88E2F] flex items-center pl-3">
-              <h1 className="text-4xl font-bold font-mono text-[#3A3A3A]">
+            <div className="text-center w-full">
+              <h1 className="text-[48px] font-figtree font-bold text-center text-[#212B36]">
                 Our Products
               </h1>
+              <p className="text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                Repellendus, distinctio.
+              </p>
             </div>
-            <Link
-              to="/shop"
-              className="flex items-center justify-center gap-1 border rounded-xl font-sens font-medium text-lg text-gray-400 hover:text-[#000000] py-1 px-3 md:px-5 cursor-pointer"
-            >
-              View All
-              <FaLongArrowAltRight className="text-xs" />
-            </Link>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-3 md:px-0">
-            {data.map((product) => (
-              <div key={product._id}>
-                <SmallProduct product={product} />
-              </div>
-            ))}
+          <div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-3 md:px-0">
+              {data.map((product) => (
+                <div key={product._id}>
+                  <SmallProduct product={product} />
+                </div>
+              ))}
+            </div>
+            <Link to="/shop" className="flex justify-center mt-3">
+              <button className="bg-blue-600 hover:bg-blue-600/90 font-serif font-medium text-lg rounded-md py-2 px-4 text-white mt-5 flex items-center">
+                View All
+                <FaLongArrowAltRight className="ml-2" />
+              </button>
+            </Link>
           </div>
         </div>
       </div>

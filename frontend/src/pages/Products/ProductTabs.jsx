@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Ratings from "./Ratings";
 import { useGetTopProductsQuery } from "@redux/api/productApiSlice";
@@ -16,6 +16,9 @@ const ProductTabs = ({
   product,
 }) => {
   const { data, isLoading } = useGetTopProductsQuery();
+  useEffect(() => {
+    window.scrollTo(0, 0 * 16);
+  }, [product]);
 
   const [activeTab, setActiveTab] = useState(1);
 
@@ -136,17 +139,18 @@ const ProductTabs = ({
                 </p>
               ) : (
                 product.reviews.map((review) => (
-                  <div
-                    key={review._id}
-                    className="border p-2"
-                  >
+                  <div key={review._id} className="border p-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-2xl font-serif">{review.name}</span>
+                      <span className="font-semibold text-2xl font-serif">
+                        {review.name}
+                      </span>
                       <span className="text-sm">
                         {review.createdAt.substring(0, 10)}
                       </span>
                     </div>
-                    <p className="mt-2 text-[15px] font-medium font-serif">{review.comment}</p>
+                    <p className="mt-2 text-[15px] font-medium font-serif">
+                      {review.comment}
+                    </p>
                     <Ratings value={review.rating} />
                   </div>
                 ))
@@ -159,11 +163,11 @@ const ProductTabs = ({
       {/* Related Products Section (Always Visible Below Tabs) */}
       <section className="w-full py-6">
         <span className="border-l-[4px] h-10 mb-5 border-[#B88E2F] flex items-center pl-3">
-        <h2 className="text-3xl font-bold font-mono text-gray-800">
-          Related Products
-        </h2>
+          <h2 className="text-3xl font-bold font-mono text-gray-800">
+            Related Products
+          </h2>
         </span>
-      
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {!data ? (
             <Loader />

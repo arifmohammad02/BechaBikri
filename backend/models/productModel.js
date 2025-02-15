@@ -34,7 +34,6 @@ const productSchema = mongoose.Schema(
     // New features added
     discountPercentage: { type: Number, default: 0 }, // Discount Percentage
     isFeatured: { type: Boolean, default: false }, // Is Featured
-    shippingCharge: { type: Number, default: 0 }, // Shipping Charge
     offer: { type: String, default: "" }, // Offer (e.g., discount on certain conditions)
     warranty: { type: String, default: "" }, // Warranty information (e.g., "2 years")
     // specifications: [{ type: String }], // 10 specifications or features
