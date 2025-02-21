@@ -1,7 +1,13 @@
 import mongoose from "mongoose";
+import shortid from "shortid";
 
 const orderSchema = mongoose.Schema(
   {
+    orderId: {
+      type: String,
+      default: shortid.generate,
+      unique: true,
+    },
     user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
     orderItems: [
       {
@@ -9,8 +15,7 @@ const orderSchema = mongoose.Schema(
         qty: { type: Number, required: true },
         image: { type: String, required: true },
         price: { type: Number, required: true },
-        // shippingCharge: { type: Number, default: 0},
-        discountPercentage: { type: Number, default: 0},
+        discountPercentage: { type: Number, default: 0 },
         offer: { type: String, default: "" },
         product: {
           type: mongoose.Schema.Types.ObjectId,
@@ -27,10 +32,8 @@ const orderSchema = mongoose.Schema(
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
       phoneNumber: { type: String, required: true },
-      shippingCharge: { type: Number, default: 0}, 
-  
+      shippingCharge: { type: Number, default: 0 },
     },
-    
 
     paymentMethod: {
       type: String,
@@ -78,11 +81,18 @@ const orderSchema = mongoose.Schema(
       type: Date,
       default: () => new Date(), // Use the device's local time
     },
-    
+
     isDelivered: {
-      type: Boolean,
-      required: true,
-      default: false,
+      type: String,
+      enum: [
+        "Order Placed",
+        "Processing",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled",
+      ],
+      default: "Order Placed",
     },
 
     deliveredAt: {

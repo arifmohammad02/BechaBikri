@@ -11,10 +11,10 @@ const Home = () => {
   const { data, isLoading, isError } = useGetProductsQuery({ keyword });
 
   return (
-    <div className="bg-white min-h-screen h-full ">
+    <div className="bg-white min-h-screen h-full px-3 md:px-0">
       <div className="">
         {!keyword ? <Header /> : null}
-        <div className="container mx-auto py-4 px-3 md:px-0 pt-6">
+        <div className="container mx-auto py-4 pt-6">
           {isLoading ? (
             <Loader />
           ) : isError ? (
@@ -25,10 +25,10 @@ const Home = () => {
             <>
               <div className="flex justify-between items-center mb-5 mt-8">
                 <div className="text-center w-full">
-                  <h1 className="text-[48px] font-figtree font-bold text-center text-[#212B36]">
+                  <h1 className="text-[24px] md:text-[48px] font-figtree font-bold text-center text-[#212B36]">
                     Special Products
                   </h1>
-                  <p className="text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
+                  <p className="text-[14px] md:text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
                     Lorem ipsum dolor, sit amet consectetur adipisicing elit.
                     Repellendus, distinctio.
                   </p>
@@ -36,14 +36,17 @@ const Home = () => {
               </div>
 
               <div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-5 w-full">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5 w-full">
                   {data.products.map((product) => (
                     <div key={product._id}>
                       <Product product={product} />
                     </div>
                   ))}
                 </div>
-                <Link to="/shop" className="flex justify-center items-center mb-5">
+                <Link
+                  to="/shop"
+                  className="flex justify-center items-center mb-5"
+                >
                   <button className="bg-blue-600 hover:bg-blue-600/90 font-serif font-medium text-lg rounded-md py-2 px-4 text-white mt-5 flex items-center">
                     View All
                     <FaLongArrowAltRight className="ml-2" />

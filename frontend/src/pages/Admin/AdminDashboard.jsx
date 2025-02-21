@@ -186,7 +186,7 @@ const AdminDashboard = () => {
         {/* Order List Section */}
         <div className="mt-8">
           <div className="overflow-auto">
-            <h2 className="text-[18px] font-figtree font-bold text-black 2xl:pl-7">
+            <h2 className="text-[18px] font-figtree font-bold text-black ml-5">
               Recent Orders
             </h2>
             <OrderList

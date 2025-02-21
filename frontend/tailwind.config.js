@@ -3,6 +3,17 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      animation: {
+        ripple: "ripple 0.6s linear",
+      },
+      keyframes: {
+        ripple: {
+          to: {
+            transform: "scale(2)",
+            opacity: "0",
+          },
+        },
+      },
       colors: {
         primary: {
           50: "#eff6ff",

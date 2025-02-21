@@ -43,9 +43,9 @@ const Favorites = () => {
               </span>
             </div>
           </div>
-          <div className="min-h-screen font-poppins text-white w-full container mx-auto flex">
-            <div className="">
-              {/* Check if the 'favorites' array is empty */}
+          <div className="font-poppins text-white w-full container mx-auto flex">
+            <div className=" flex justify-center items-center w-full py-10">
+          
               {favorites.length === 0 ? (
                 <div className="flex flex-col items-center gap-4">
                   <p>

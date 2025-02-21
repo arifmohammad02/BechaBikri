@@ -39,12 +39,12 @@ const ProductCard = ({ p }) => {
               />
             </Link>
           </div>
-          <div className="pt-5 text-xl">
+          <div className="py-3 text-xl flex items-center justify-center">
             <HeartIcon product={p} />
           </div>
         </section>
 
-        <div className="pt-4">
+        <div>
           <div>
             <h5 className="text-xl font-semibold text-[#242424] mb-1 truncate">
               {isExpanded ? p?.name : `${p?.name.substring(0, 20)}`}

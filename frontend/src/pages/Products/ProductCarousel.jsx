@@ -86,7 +86,7 @@ const ProductCarousel = () => {
               alt="bannerImage"
               className="h-[200px] sm:h-full lg:h-[600px] w-full object-cover rounded-md"
             />
-            <div className="absolute top-0 left-0 w-full h-full bg-black/10 pl-2 md:pl-10">
+            <div className="absolute top-0 left-0 w-full h-full bg-black/10 px-3">
               <div className="container mx-auto flex flex-col justify-center gap-2 md:gap-3 h-full">
                 <p className=" w-24 py-1 mt-3 bg-red-600 text-white text-xs uppercase text-center font-medium tracking-wide rounded-md  ">
                   {item?.sale}

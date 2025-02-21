@@ -175,14 +175,14 @@ const ProductUpdate = () => {
   };
 
   return (
-    <div className={` py-10`}>
-      <div className="min-h-screen backdrop:flex flex-col py-10 mt-10 container mx-auto">
-        <div className="flex flex-col lg:flex-row gap-8 w-full">
+    <div className={`py-10`}>
+      <div className="min-h-screen backdrop:flex flex-col py-10 mt-10">
+        <div className="flex flex-col gap-8 w-full px-4">
           {/* Admin Menu */}
           <AdminMenu />
 
           {/* Product Update/Delete Section */}
-          <div className="w-full bg-white p-4 border-2 container mx-auto">
+          <div className="w-full bg-white p-5 border-2 2xl:container 2xl:mx-auto">
             <h1 className="text-[22px] font-bold font-figtree text-black mb-5 border-b pb-3">
               Update / Delete Product
             </h1>
@@ -200,7 +200,7 @@ const ProductUpdate = () => {
 
             {/* Image Upload */}
             <div className="mb-6">
-              <label className="block w-full text-center text-gray-700 font-bold text-[18px] font-figtree bg-gray-50 border-2 border-dashed cursor-pointer py-5">
+              <label className="block w-full text-center text-gray-700 font-bold text-[18px] font-figtree bg-gray-50 border-2 border-dashed border-gray-400 cursor-pointer py-5 rounded-sm">
                 {uploadLoading ? "Uploading..." : "Upload Image"}
                 <input
                   type="file"
@@ -223,7 +223,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full mt-2 p-3 border rounded-lg text-gray-800 font-figtree font-normal text-[16px] focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border rounded-sm text-gray-800 font-figtree font-normal text-[16px] focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
@@ -237,7 +237,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   min="0"
@@ -252,7 +252,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   min="0"
@@ -267,7 +267,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={brand}
                   onChange={(e) => setBrand(e.target.value)}
                 />
@@ -281,7 +281,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                   min="0"
@@ -295,7 +295,7 @@ const ProductUpdate = () => {
                   Category
                 </label>
                 <select
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   onChange={(e) => setCategory(e.target.value)}
                   value={category}
                 >
@@ -316,7 +316,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={discountPercentage}
                   onChange={(e) => setDiscountPercentage(e.target.value)}
                   min="0"
@@ -347,7 +347,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={offer}
                   onChange={(e) => setOffer(e.target.value)}
                 />
@@ -361,7 +361,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={warranty}
                   onChange={(e) => setWarranty(e.target.value)}
                 />
@@ -375,7 +375,7 @@ const ProductUpdate = () => {
                 </label>
                 <input
                   type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={discountedAmount}
                   onChange={(e) => setDiscountedAmount(e.target.value)}
                   min="0"
@@ -392,7 +392,7 @@ const ProductUpdate = () => {
                   Description
                 </label>
                 <textarea
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />

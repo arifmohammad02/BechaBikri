@@ -1,11 +1,8 @@
-// import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-// import { addToCart } from "../../redux/features/cart/cartSlice";
 import HeartIcon from "./HeartIcon";
 import "react-toastify/dist/ReactToastify.css";
 import { FaArrowRight } from "react-icons/fa6";
-// import AddToCartButton from "../../components/AddToCartButton";
 
 const Product = ({ product }) => {
   const dispatch = useDispatch();
@@ -13,8 +10,8 @@ const Product = ({ product }) => {
   // Function to truncate the name if more than 4 words
   const truncateName = (name) => {
     const words = name.split(" ");
-    if (words.length > 3) {
-      return words.slice(0, 3).join(" ") + "...";
+    if (words.length > 6) {
+      return words.slice(0, 6).join(" ") + "...";
     }
     return name;
   };
@@ -23,11 +20,6 @@ const Product = ({ product }) => {
     product.discountPercentage > 0
       ? product.price - (product.price * product.discountPercentage) / 100
       : product.price;
-
-  const discountAmount =
-    product.discountPercentage > 0
-      ? (product.price * product.discountPercentage) / 100
-      : 0;
 
   return (
     <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow">
@@ -40,28 +32,25 @@ const Product = ({ product }) => {
               -{product.discountPercentage}% Off
             </span>
           )}
-          {/* <span className="absolute top-2 right-2 text-[10px] font-normal font-Inter bg-[#FF013D] text-white px-2 py-1 w-fit mt-5 md:mt-0 flex items-center">
-            Save <span className="ml-1 text-[12px]">₹{discountAmount.toFixed(2)}</span>
-          </span> */}
         </div>
       </Link>
       {/* Heart Icon */}
-      <div className="ml-4 pb-3 text-xl">
+      <div className="pb-3 text-xl flex items-center justify-center">
         <HeartIcon product={product} />
       </div>
-      <div className="px-5 pb-5">
-        <div className="flex items-center gap-1">
+      <div className="px-5">
+        <div className="flex items-center justify-center gap-1">
           <Link to={`/product/${product._id}`}>
-            <h5 className="text-xl font-poppins  font-semibold tracking-tight text-[#242424]">
+            <h5 className="text-[16px] font-figtree font-semibold tracking-tight text-[#242424] text-center text-ellipsis overflow-hidden">
               {truncateName(product.name)}
             </h5>
           </Link>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center flex-col">
           {/* Discounted Price and Original Price */}
           <div className="flex items-center gap-1">
-            <span className="text-lg font-poppins font-semibold text-[#3A3A3A]">
+            <span className="text-sm md:text-lg font-poppins font-semibold text-[#3A3A3A]">
               ₹{discountedPrice.toFixed(2)}
             </span>
             {product.discountPercentage > 0 && (
@@ -74,7 +63,7 @@ const Product = ({ product }) => {
           </div>
 
           {/* <AddToCartButton product={product} /> */}
-          <Link to={`/product/${product._id}`}>
+          <Link to={`/product/${product._id}`} className="my-3">
             <div className="relative font-poppins  inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-[#B88E2F] transition duration-300 ease-out border-2 border-[#B88E2F] rounded-md shadow-md group">
               <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#B88E2F] group-hover:translate-x-0 ease">
                 <FaArrowRight className="w-3 h-3 text-current" />

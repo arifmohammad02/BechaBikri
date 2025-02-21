@@ -9,6 +9,8 @@ import AdminMenu from "./AdminMenu";
 import Modal from "../../components/Modal";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { CiEdit } from "react-icons/ci";
+import { MdDeleteOutline } from "react-icons/md";
 
 const CategoryList = () => {
   const { data: categories, refetch } = useFetchCategoriesQuery();
@@ -120,9 +122,9 @@ const CategoryList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-gray-50 to-gray-100 p-5">
+    <div className="min-h-screen bg-gradient-to-r from-gray-50 to-gray-100">
       <AdminMenu />
-      <div className="2xl:container 2xl:mx-auto py-8 2xl:pl-7 pt-32">
+      <div className="2xl:container 2xl:mx-auto py-8 pt-32 px-3">
         <h1 className="text-[24px] font-bold text-black font-figtree mb-8 text-start">
           Category
         </h1>
@@ -130,7 +132,7 @@ const CategoryList = () => {
         {/* Category Form - Redesigned */}
         <div className="bg-white p-8 mb-8 border">
           <form onSubmit={handleCreateCategory} className="space-y-6">
-            <div className="flex items-center justify-between gap-10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-10">
               <div className="w-full">
                 <label className="block text-[16px] font-semibold font-figtree text-black mb-2">
                   Category Name
@@ -215,7 +217,7 @@ const CategoryList = () => {
                 </div>
 
                 {/* Name Column */}
-                <div className="w-1/2 text-center">
+                <div className="w-1/4 text-center">
                   <p className="text-[14px] font-medium font-figtree text-black uppercase">
                     {category.name}
                   </p>
@@ -225,23 +227,23 @@ const CategoryList = () => {
                 <div className="w-1/4 text-right">
                   <div className="flex items-center justify-end space-x-4">
                     <button
-                      className="bg-pink-500 text-white text-[16px] font-normal font-serif px-4 py-2 rounded-lg hover:bg-pink-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                      className=" text-black text-[20px] font-normal font-serif"
                       onClick={() => {
                         setModalVisible(true);
                         setSelectedCategory(category);
                         setUpdatingName(category.name);
                       }}
                     >
-                      Edit
+                     <CiEdit/>
                     </button>
                     <button
-                      className="bg-red-500 text-white px-4 py-2 rounded-lg text-[16px] font-normal font-serif hover:bg-red-600 transition-all duration-300 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      className="text-black text-[20px] font-normal font-serif"
                       onClick={() => {
                         setSelectedCategory(category);
                         setModalVisible(true);
                       }}
                     >
-                      Delete
+                     <MdDeleteOutline />
                     </button>
                   </div>
                 </div>

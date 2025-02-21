@@ -66,17 +66,20 @@ const Login = () => {
   };
 
   return (
-    <section className="bg-gray-50  flex justify-center items-center h-screen">
-      <div className="flex justify-center items-center flex-col w-full px-4 py-8 mx-auto lg:py-0">
-        <div className="w-full bg-[#F9F1E7] rounded-md  max-w-md">
-          <div className="p-6 space-y-2  rounded-md">
-            <h1 className="text-2xl font-normal font-poppins leading-tight text-center text-[#242424] ">
+    <section className="bg-[#F3F6F9] flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center flex-col w-full px-4 py-8 mx-auto">
+        <div className="w-full bg-[#FFFFFF] rounded-md md:w-[500px] border border-gray-300 shadow-md">
+          <div className="p-6 space-y-2 rounded-md">
+            <h1 className="text-[24px] font-figtree font-bold text-center text-[#020101]">
               Login
             </h1>
+            <p className="text-[14px] font-figtree font-normal text-center text-[#242424] mt-5 pb-3">
+              Login to your account to continue
+            </p>
             <form onSubmit={submitHandler} className="space-y-2" action="#">
-              <div>
-                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424]">
-                  Your email
+              <div className="mb-6">
+                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
+                  email
                 </label>
                 <input
                   value={email}
@@ -84,13 +87,13 @@ const Login = () => {
                   type="email"
                   name="email"
                   id="email"
-                  className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400"
+                  className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
                   placeholder="name@gmail.com"
                   required=""
                 />
               </div>
               <div>
-                <label className="block mb-2 text-sm font-poppins font-normal text-[#242424]">
+                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
                   Password
                 </label>
                 <div className="relative">
@@ -101,32 +104,55 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full  border text-gray-900 sm:text-sm rounded-md p-2.5 outline-none   dark:placeholder-gray-400"
+                    className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
                     required
                   />
                   <button
                     type="button"
                     onClick={togglePasswordVisibility}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#9F9F9F]"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#000000]"
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
               </div>
-              <button
-                disabled={isLoading}
-                type="submit"
-                className="w-full text-white outline-none font-semibold font-sans rounded-md text-base px-5 py-2.5 bg-[#B88E2F]"
-              >
-                {isLoading ? "Signing In..." : "Sign In"}
-              </button>
+              <div className="flex justify-between pt-5">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="remember"
+                    id="remember"
+                    className="w-4 h-4 border border-gray-300 rounded-md cursor-pointer"
+                  />
+                  <label className="block text-[12px] font-figtree font-normal text-[#212B36] capitalize">
+                    Remember me
+                  </label>
+                </div>
+                <p>
+                  <Link
+                    to="/#"
+                    className="text-[#007EFC] font-figtree font-semibold text-[14px]"
+                  >
+                    Forgot Password?
+                  </Link>
+                </p>
+              </div>
+              <div className="py-6">
+                <button
+                  disabled={isLoading}
+                  type="submit"
+                  className="w-full text-white font-figtree font-bold text-[16px] outline-none rounded-[4px] px-5 py-2.5 bg-[#007EFC] hover:bg-blue-600 transition-all duration-300"
+                >
+                  {isLoading ? "Signing In..." : "Sign In"}
+                </button>
+              </div>
             </form>
             <div className="mt-4 text-center">
-              <p className="text-[#9F9F9F] font-normal font-poppins">
-                New user?{" "}
+              <p className="text-[#212B36] font-figtree font-semibold text-[14px]">
+                Don't you have an account?
                 <Link
                   to="/register"
-                  className="text-[#B88E2F] font-poppins text-sm"
+                  className="text-[#007EFC] font-figtree font-semibold text-[14px] pl-1"
                 >
                   Register
                 </Link>

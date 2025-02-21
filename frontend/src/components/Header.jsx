@@ -27,19 +27,19 @@ const Header = () => {
       </div>
       <div className="container mx-auto flex justify-between gap-5">
         <div className="w-full">
-          <div className="flex justify-between items-center mb-5 mt-10 px-3 md:px-0">
+          <div className="flex justify-between items-center mb-5 mt-10">
             <div className="text-center w-full">
-              <h1 className="text-[48px] font-figtree font-bold text-center text-[#212B36]">
+              <h1 className="text-[24px] md:text-[48px] font-figtree font-bold text-center text-[#212B36]">
                 Our Products
               </h1>
-              <p className="text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
+              <p className="text-[14px] md:text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
                 Lorem ipsum dolor, sit amet consectetur adipisicing elit.
                 Repellendus, distinctio.
               </p>
             </div>
           </div>
           <div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-3 md:px-0">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5 w-full">
               {data.map((product) => (
                 <div key={product._id}>
                   <SmallProduct product={product} />

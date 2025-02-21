@@ -132,8 +132,8 @@ const UserList = () => {
       <div className="flex flex-col md:flex-row">
         <AdminMenu />
 
-        <div className="flex-1 p-6 md:p-8">
-          <div className="container mx-auto pl-7">
+        <div className="flex-1 px-4 pb-8">
+          <div className="2xl:container 2xl:mx-auto 2xl:pl-7">
             <h1 className="text-[22px] font-bold text-black mb-6 font-figtree">
               User Management
             </h1>
@@ -144,7 +144,7 @@ const UserList = () => {
                 <input
                   type="text"
                   placeholder="Search by name or email"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 focus:ring-2 focus:ring-blue-500 placeholder:text-black placeholder:font-normal placeholder:font-figtree"
+                  className="w-full pl-2 lg:pl-5 pr-4 py-3 border border-gray-200 focus:ring-2 focus:ring-blue-500 placeholder:text-black placeholder:font-normal placeholder:font-figtree"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -227,7 +227,9 @@ const UserList = () => {
                         </div>
                       </th>
                     ))}
-                    <th className="px-6 py-4 text-right border-b text-[16px] font-semibold font-figtree uppercase text-black">Actions</th>
+                    <th className="px-6 py-4 text-right border-b text-[16px] font-semibold font-figtree uppercase text-black">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
@@ -261,7 +263,9 @@ const UserList = () => {
                             className="w-full px-3 py-2 border rounded-md"
                           />
                         ) : (
-                          <span className="font-medium text-[14px] font-figtree text-black">{user.username}</span>
+                          <span className="font-medium text-[14px] font-figtree text-black">
+                            {user.username}
+                          </span>
                         )}
                       </td>
 
@@ -357,7 +361,11 @@ const UserList = () => {
                     className="px-3 py-1 border rounded-md font-medium text-[14px] font-figtree text-black"
                   >
                     {[5, 10, 20, 50].map((size) => (
-                      <option key={size} value={size} className="font-medium text-[14px] font-figtree text-black">
+                      <option
+                        key={size}
+                        value={size}
+                        className="font-medium text-[14px] font-figtree text-black"
+                      >
                         Show {size}
                       </option>
                     ))}

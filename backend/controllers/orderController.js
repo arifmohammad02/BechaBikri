@@ -9,7 +9,6 @@ function calcPrices(orderItems) {
     return acc + discountedPrice * item.qty;
   }, 0);
 
-  // Shipping charge প্রতিটি orderItems থেকে যোগ করা হবে
   const shippingPrice = orderItems.reduce(
     (acc, item) => acc + (item.shippingCharge ?? 0),
     0
@@ -31,6 +30,15 @@ function calcPrices(orderItems) {
     totalPrice,
   };
 }
+
+const generateOrderId = () => {
+  return (
+    Date.now().toString().slice(-3) + // শেষ ৩ সংখ্যা (Timestamp থেকে)
+    Math.floor(100 + Math.random() * 900) // ৩-সংখ্যার র্যান্ডম নাম্বার
+  );
+};
+
+console.log(generateOrderId()); // যেমন: 345678
 
 const createOrder = async (req, res) => {
   try {
@@ -77,6 +85,7 @@ const createOrder = async (req, res) => {
     );
 
     const order = new Order({
+      orderId: generateOrderId(),
       orderItems: dbOrderItems,
       user: req.user._id,
       shippingAddress,
@@ -246,13 +255,24 @@ const markOrderAsDelivered = async (req, res) => {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-      // Use the provided deliveredAt time or fallback to the current time
-      const deliveredAtTime = req.body.deliveredAt
-        ? new Date(req.body.deliveredAt)
-        : new Date();
+      // নতুন স্ট্যাটাসটি রিকোয়েস্ট থেকে নিতে হবে, ডিফল্ট 'Delivered' সেট করা হলো
+      const newStatus = req.body.status || "Delivered";
 
-      order.isDelivered = true;
-      order.deliveredAt = deliveredAtTime;
+      if (
+        ![
+          "Order Placed",
+          "Processing",
+          "Shipped",
+          "Out for Delivery",
+          "Delivered",
+          "Cancelled",
+        ].includes(newStatus)
+      ) {
+        return res.status(400).json({ error: "Invalid delivery status" });
+      }
+
+      order.isDelivered = newStatus;
+      order.deliveredAt = new Date();
 
       const updatedOrder = await order.save();
       res.json(updatedOrder);
@@ -263,6 +283,43 @@ const markOrderAsDelivered = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ✅ নতুন ফাংশন: যেকোনো স্ট্যাটাস আপডেট করতে ব্যবহার করা যাবে
+const updateOrderStatus = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const newStatus = req.body.status;
+
+    if (
+      ![
+        "Order Placed",
+        "Processing",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled",
+      ].includes(newStatus)
+    ) {
+      return res.status(400).json({ error: "Invalid order status" });
+    }
+
+    order.isDelivered = newStatus;
+    if (newStatus === "Delivered") {
+      order.deliveredAt = new Date();
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export {
   createOrder,
   getAllOrders,
@@ -274,4 +331,5 @@ export {
   markOrderAsPaid,
   markOrderAsDelivered,
   countTotalOrdersByDate,
+  updateOrderStatus,
 };

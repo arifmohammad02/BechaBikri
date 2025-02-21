@@ -2,7 +2,10 @@ import { useState } from "react";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import { Link } from "react-router-dom";
-import { useGetOrdersQuery } from "@redux/api/orderApiSlice";
+import {
+  useGetOrdersQuery,
+  useUpdateOrderStatusMutation,
+} from "@redux/api/orderApiSlice";
 import AdminMenu from "./AdminMenu";
 
 const OrderList = ({
@@ -10,16 +13,33 @@ const OrderList = ({
   className = "pt-36",
   isDashboard = false,
 }) => {
-  const { data: orders, isLoading, error } = useGetOrdersQuery();
+  const { data: orders, isLoading, error, refetch } = useGetOrdersQuery();
+  const [updateOrderStatus] = useUpdateOrderStatusMutation();
+  const [orderStatuses, setOrderStatuses] = useState({});
 
   // State for search and filter (only if not in dashboard)
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    setUpdatingOrderId(orderId);
+    setOrderStatuses((prev) => ({ ...prev, [orderId]: newStatus })); // Select value update
+
+    try {
+      await updateOrderStatus({ orderId, status: newStatus }).unwrap();
+      refetch();
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
   // Sort orders by date (most recent first)
   const sortedOrders = orders
@@ -33,7 +53,7 @@ const OrderList = ({
           order.user?.username
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.user?._id.toLowerCase().includes(searchTerm.toLowerCase());
 
         const orderDate = new Date(order.createdAt);
@@ -75,7 +95,7 @@ const OrderList = ({
 
   return (
     <div
-      className={`py-5 lg:px-5 2xl:container 2xl:mx-auto w-full h-full flex justify-center items-start 2xl:pl-5 ${className}`}
+      className={`py-5 px-3 2xl:container 2xl:mx-auto w-full h-full flex justify-center items-start ${className}`}
     >
       {isLoading ? (
         <Loader />
@@ -84,10 +104,10 @@ const OrderList = ({
           {error?.data?.message || error.error}
         </Message>
       ) : (
-        <div className="transition-all duration-300 flex-1">
+        <div className="transition-all duration-300 flex-1 w-full">
           {/* Conditionally render the title */}
           {!isDashboard && (
-            <h1 className="text-[22px] font-bold font-figtree text-black">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold font-figtree text-black mb-4">
               Order List
             </h1>
           )}
@@ -100,25 +120,25 @@ const OrderList = ({
                 placeholder="Search by User Name, User ID, or Order ID"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="p-2 border border-gray-300 flex-1 placeholder:text-black placeholder:text-[16px] placeholder:font-figtree"
+                className="p-2 border border-gray-300 flex-1 placeholder:text-black placeholder:text-sm sm:placeholder:text-base font-figtree"
               />
               <div className="flex gap-2">
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="p-2 border border-gray-300 placeholder:text-black placeholder:text-[16px] placeholder:font-figtree"
+                  className="p-2 border border-gray-300 placeholder:text-black placeholder:text-sm sm:placeholder:text-base font-figtree"
                 />
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="p-2 border border-gray-300 placeholder:text-black placeholder:text-[16px] placeholder:font-figtree"
+                  className="p-2 border border-gray-300 placeholder:text-black placeholder:text-sm sm:placeholder:text-base font-figtree"
                 />
               </div>
               <button
                 onClick={resetFilters}
-                className="p-2 bg-gray-500 rounded-sm text-white hover:bg-gray-600 transition-all duration-200 placeholder:text-black placeholder:text-[16px] placeholder:font-figtree"
+                className="p-2 bg-gray-500 rounded-sm text-white hover:bg-gray-600 transition-all duration-200 text-sm sm:text-base font-figtree"
               >
                 Reset
               </button>
@@ -130,7 +150,7 @@ const OrderList = ({
             <div className="my-4">
               <label
                 htmlFor="itemsPerPage"
-                className="mr-2 text-[16px] font-medium font-figtree text-gray-600"
+                className="mr-2 text-sm sm:text-base font-medium font-figtree text-gray-600"
               >
                 Items per page:
               </label>
@@ -138,7 +158,7 @@ const OrderList = ({
                 id="itemsPerPage"
                 value={itemsPerPage}
                 onChange={handleItemsPerPageChange}
-                className="p-2 border border-gray-300 rounded-md text-[15px] font-medium font-figtree text-black"
+                className="p-2 border border-gray-300 rounded-md text-sm sm:text-base font-medium font-figtree text-black"
               >
                 <option value={8}>8</option>
                 <option value={16}>16</option>
@@ -180,6 +200,7 @@ const OrderList = ({
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border-r">
                       DELIVERED
                     </th>
+                    <th className="text-left px-4 py-3">STATUS</th>
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">
                       Action
                     </th>
@@ -204,7 +225,7 @@ const OrderList = ({
 
                       {/* Order ID */}
                       <td className="px-4 py-3 text-xs sm:text-sm md:text-base font-figtree font-normal text-black">
-                        {order._id}
+                        {order.orderId}
                       </td>
 
                       {/* User */}
@@ -226,28 +247,33 @@ const OrderList = ({
 
                       {/* Paid Status */}
                       <td className="px-4 py-3">
-                        {order.isPaid ? (
-                          <p className="p-2 text-center bg-green-100 text-green-600 w-[4rem] sm:w-[6rem] rounded-md text-xs sm:text-sm md:text-base font-figtree font-normal">
-                            Completed
-                          </p>
-                        ) : (
-                          <p className="p-2 text-center bg-red-100 text-red-600 w-[4rem] sm:w-[6rem] rounded-md text-xs sm:text-sm md:text-base font-figtree font-normal">
-                            Pending
-                          </p>
-                        )}
+                        {order.isPaid ? "Completed" : "Pending"}
                       </td>
-
-                      {/* Delivered Status */}
+                      <td className="px-4 py-3">{order.isDelivered}</td>
                       <td className="px-4 py-3">
-                        {order.isDelivered ? (
-                          <p className="p-2 text-center bg-green-100 text-green-600 w-[4rem] sm:w-[6rem] rounded-md text-xs sm:text-sm md:text-base font-figtree font-normal ">
-                            Delivered
-                          </p>
-                        ) : (
-                          <p className="p-2 text-center bg-red-100 text-red-600 w-[4rem] sm:w-[6rem] rounded-md text-xs sm:text-sm md:text-base font-figtree font-normal">
-                            Pending
-                          </p>
-                        )}
+                        <select
+                          value={orderStatuses[order._id] || order.status} // Updated status use
+                          onChange={(e) =>
+                            handleStatusChange(order._id, e.target.value)
+                          }
+                          disabled={updatingOrderId === order._id}
+                          className="p-1 border rounded bg-white"
+                        >
+                          {updatingOrderId === order._id ? (
+                            <option>Updating...</option>
+                          ) : (
+                            <>
+                              <option value="Order Placed">Order Placed</option>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Out for Delivery">
+                                Out for Delivery
+                              </option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </>
+                          )}
+                        </select>
                       </td>
 
                       {/* More Button */}
@@ -266,49 +292,50 @@ const OrderList = ({
           </div>
 
           {/* Conditionally render pagination controls */}
-
-          <div className="flex justify-between items-center mt-4">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed font-figtree font-normal text-base"
-            >
-              Previous
-            </button>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600 uppercase font-figtree">
-                Showing {indexOfFirstItem + 1}-
-                {Math.min(indexOfLastItem, filteredOrders.length)} of{" "}
-                {filteredOrders.length} items
-              </span>
-              <div className="flex gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => paginate(page)}
-                      className={`px-3 py-1 ${
-                        currentPage === page
-                          ? "bg-indigo-500 text-white"
-                          : "bg-gray-200 text-black"
-                      } rounded-md hover:bg-indigo-600 hover:text-white transition-all duration-200`}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
+          {!isDashboard && (
+            <div className="flex justify-between items-center mt-4">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed font-figtree font-normal text-sm sm:text-base"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600 uppercase font-figtree">
+                  Showing {indexOfFirstItem + 1}-
+                  {Math.min(indexOfLastItem, filteredOrders.length)} of{" "}
+                  {filteredOrders.length} items
+                </span>
+                <div className="flex gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => paginate(page)}
+                        className={`px-3 py-1 ${
+                          currentPage === page
+                            ? "bg-indigo-500 text-white"
+                            : "bg-gray-200 text-black"
+                        } rounded-md hover:bg-indigo-600 hover:text-white transition-all duration-200 text-sm sm:text-base`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  )}
+                </div>
               </div>
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="p-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm sm:text-base font-figtree font-normal"
+              >
+                Next
+              </button>
             </div>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="p-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed text-base font-figtree font-normal"
-            >
-              Next
-            </button>
-          </div>
+          )}
         </div>
       )}
     </div>

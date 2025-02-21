@@ -38,18 +38,18 @@ const HeartIcon = ({ product }) => {
 
   return (
     <div
-      className="text-[#B88E2F] text-[16px] cursor-pointer"
+      className="text-[#B88E2F] text-[16px] cursor-pointer md:border md:border-[#ED174A] rounded-3xl"
       onClick={toggleFavorites}
     >
       {isFavorite ? (
-        <div className="flex items-center gap-1 text-[13px] md:text-[16px] font-medium font-poppins  py-[6px] px-2 border border-opacity-20 border-[#ED174A] w-fit ">
-          <FaHeart className="font-normal"  />
-          <span>Favorite</span>
+        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 w-fit ">
+          <FaHeart className="font-normal" />
+          <span className="hidden md:inline">Favorite</span>
         </div>
       ) : (
-        <div className="flex items-center gap-1 text-[13px] md:text-[16px] font-medium font-poppins py-[6px] px-2 border border-opacity-20 border-[#ED174A] w-fit">
+        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 w-fit">
           <FaRegHeart className="text-[#ED174A] font-normal" />
-          <span className="text-black">Add to Favorites</span>
+          <span className="text-black hidden md:inline">Add to Favorites</span>
         </div>
       )}
     </div>
