@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import moment from "moment";
 import { useAllProductsQuery } from "@redux/api/productApiSlice";
 import AdminMenu from "./AdminMenu";
 
 const AllProducts = () => {
-  const { data: products, isLoading, isError } = useAllProductsQuery();
+  const { data: products, isLoading, isError , refetch} = useAllProductsQuery();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5); // Default to 5 items per page
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -20,10 +24,8 @@ const AllProducts = () => {
   }
 
   // Filter products based on search term
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Sorting logic
@@ -75,7 +77,7 @@ const AllProducts = () => {
         <div className="mb-5 border p-5">
           <input
             type="text"
-            placeholder="Search by name or description..."
+            placeholder="Search by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-pink-500 placeholder:text-black placeholder:text-[14px] placeholder:font-figtree font-figtree font-medium text-[15px] text-black"
@@ -84,7 +86,10 @@ const AllProducts = () => {
 
         {/* Items per page dropdown */}
         <div className="mb-5">
-          <label htmlFor="itemsPerPage" className="mr-2 text-[16px] font-medium font-figtree text-gray-600">
+          <label
+            htmlFor="itemsPerPage"
+            className="mr-2 text-[16px] font-medium font-figtree text-gray-600"
+          >
             Items per page:
           </label>
           <select
@@ -116,9 +121,7 @@ const AllProducts = () => {
                 <th className="px-6 py-3 text-left text-[16px] font-semibold font-figtree text-black uppercase border-b border-r">
                   Image
                 </th>
-                <th className="px-6 py-3 text-left text-[16px] font-semibold font-figtree uppercase text-black border-b border-r">
-                  Description
-                </th>
+
                 <th
                   className="px-6 py-3 text-left text-[16px] font-semibold font-figtree uppercase text-black border-b border-r cursor-pointer"
                   onClick={() => handleSort("price")}
@@ -158,9 +161,7 @@ const AllProducts = () => {
                       className="w-16 h-16 object-cover rounded-md"
                     />
                   </td>
-                  <td className="px-6 py-4 font-medium text-[14px] font-figtree text-black border-b">
-                    {product.description.substring(0, 100)}...
-                  </td>
+
                   <td className="px-6 py-4 font-medium text-[14px] font-figtree text-black border-b">
                     BDT {product.price}
                   </td>

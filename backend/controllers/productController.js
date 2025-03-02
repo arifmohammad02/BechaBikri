@@ -1,5 +1,29 @@
 import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
+import sanitizeHtml from "sanitize-html";
+
+const sanitizeDescription = (description) => {
+  return sanitizeHtml(description, {
+    allowedTags: [
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "p",
+      "strong",
+      "em",
+      "ul",
+      "ol",
+      "li",
+      "a",
+    ],
+    allowedAttributes: {
+      a: ["href", "target"],
+    },
+  });
+};
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
@@ -21,7 +45,12 @@ const addProduct = asyncHandler(async (req, res) => {
         return res.json({ error: "Quantity is required" });
     }
 
-    const product = new Product({ ...req.fields });
+    const sanitizedDescription = sanitizeDescription(description);
+
+    const product = new Product({
+      ...req.fields,
+      description: sanitizedDescription,
+    });
     await product.save();
     res.json(product);
   } catch (error) {
@@ -50,9 +79,11 @@ const updateProductDetails = asyncHandler(async (req, res) => {
         return res.json({ error: "Quantity is required" });
     }
 
+    const sanitizedDescription = sanitizeDescription(description);
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      { ...req.fields },
+      { ...req.fields, description: sanitizedDescription },
       { new: true }
     );
 

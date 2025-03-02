@@ -17,4 +17,7 @@ export default defineConfig({
       '@redux': path.resolve(__dirname, 'src/redux'),
     },
   },
+  build: {
+    sourcemap: false, // Disable source maps in build
+  },
 })

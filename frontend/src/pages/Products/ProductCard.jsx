@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { AiOutlineArrowRight } from "react-icons/ai";
 import { FaCartShopping } from "react-icons/fa6";
-
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/features/cart/cartSlice";
 import { toast } from "react-toastify";
@@ -62,9 +61,7 @@ const ProductCard = ({ p }) => {
               })}
             </p>
           </div>
-          <p className="mb-3 text-sm text-gray-600 overflow-hidden">
-            {p?.description?.substring(0, 28)}...
-          </p>
+
           <section className="flex justify-between items-center">
             <Link
               to={`/product/${p._id}`}

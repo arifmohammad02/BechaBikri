@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   AiOutlineHome,
   AiOutlineShopping,
@@ -38,17 +38,11 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   const { cartItems } = useSelector((state) => state.cart);
   const [tabOpen, setTabOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const dropdownRef = useRef(null); // Ref for dropdown
 
-  // console.log(cartItems);
-
-  // Menu toggle function
+  // Define toggleMenu function
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
-  };
-
-  // Tab toggle function
-  const toggleTab = () => {
-    setTabOpen(!tabOpen);
   };
 
   // Handle screen resize and set isMobile state
@@ -66,9 +60,20 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setTabOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const [logoutApiCall] = useLogoutMutation();
 
   const logoutHandler = async () => {
@@ -81,13 +86,20 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
     }
   };
 
-  // Close menu on item click for mobile view
+  // Close menu and dropdown on item click
   const handleItemClick = () => {
     if (isMobile) {
       setIsMenuOpen(false); // Close menu for mobile view
     }
+    setTabOpen(false); // Close dropdown
   };
 
+  // Toggle dropdown
+  const toggleTab = () => {
+    setTabOpen(!tabOpen);
+  };
+
+  // Mobile Header
   const MobileHeader = (
     <div>
       {/* Mobile Header */}
@@ -172,7 +184,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     <div className="absolute -top-0 left-6">
                       <span className="text-sm font-semibold">
                         {cartItems?.length > 0 && (
-                          <span className="relative bottom-2 right-1 px-1.5 py-0    inline-flex items-center justify-center mx-auto font-semibold bg-[#B88E2F] text-sm text-white rounded-full">
+                          <span className="relative bottom-2 right-1 px-1.5 py-0 inline-flex items-center justify-center mx-auto font-semibold bg-[#B88E2F] text-sm text-white rounded-full">
                             {cartItems.length}
                           </span>
                         )}
@@ -183,12 +195,12 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 <div>
                   <Link
                     to="/favorite"
-                    className="flex items-center group hover:text-[#B88E2F]transition-all duration-300 ease-in-out"
+                    className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
                     onClick={handleItemClick}
                   >
                     <div className="relative flex items-center justify-center w-10 h-10 bg-[#FFE4F8] rounded-full -z-10">
                       <MdFavoriteBorder
-                        className="flex-none text-[#FF57D0] hover:text-[#B88E2F] "
+                        className="flex-none text-[#FF57D0] hover:text-[#B88E2F]"
                         size={20}
                       />
                       <div className="absolute -top-[42px] left-2">
@@ -198,8 +210,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   </Link>
                 </div>
                 <button
-                  onClick={toggleMenu}
-                  className="text-[#242424] hover:text-[#B88E2F] text-xl "
+                  onClick={toggleMenu} // Use toggleMenu here
+                  className="text-[#242424] hover:text-[#B88E2F] text-xl"
                 >
                   {isMenuOpen ? <FaBarsStaggered /> : <FaBarsStaggered />}
                 </button>
@@ -221,7 +233,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         {/* Close Button */}
         {isMenuOpen && (
           <button
-            onClick={toggleMenu}
+            onClick={toggleMenu} // Use toggleMenu here
             className="absolute top-4 right-4 text-[#242424] hover:text-[#B88E2F]"
           >
             <FaTimes size={24} />
@@ -229,14 +241,14 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         )}
 
         {/* Sidebar Items */}
-        <div className="flex flex-col bg space-y-6 mt-8">
+        <div className="flex flex-col space-y-6 mt-8">
           <Link
             to="/"
             className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
             onClick={handleItemClick}
           >
             <MdHome className="flex-none text-[#242424]" size={26} />
-            <span className="ml-4 opacity-100 text-[#242424] transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins ">
+            <span className="ml-4 opacity-100 text-[#242424] transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins">
               Home
             </span>
           </Link>
@@ -291,7 +303,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         </div>
 
         {/* User Info (Profile, Logout) */}
-        <div className="relative group">
+        <div className="relative group" ref={dropdownRef}>
           {userInfo ? (
             <>
               <button
@@ -300,7 +312,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               >
                 <div className="flex items-center">
                   <FaUser className="flex-none text-[#242424]" size={26} />
-                  <span className="ml-4 text-sm  flex  font-normal font-poppins ">
+                  <span className="ml-4 text-sm flex font-normal font-poppins">
                     {userInfo?.username}
                     <div className="ml-1 flex items-center">
                       {tabOpen ? (
@@ -313,7 +325,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 </div>
               </button>
               {tabOpen && userInfo && (
-                <div className="space-y-2 text-white rounded-b-md  mt-1 py-2">
+                <div className="space-y-2 text-white rounded-b-md mt-1 py-2">
                   <button
                     onClick={toggleTab} // Close tab when clicked
                     className="absolute top-2 right-2 text-white"
@@ -422,7 +434,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   className="flex items-center hover:text-pink-500 transition-all duration-300 ease-in-out"
                 >
                   <AiOutlineUserAdd
-                    className="flex-none text-white "
+                    className="flex-none text-white"
                     size={26}
                   />
                   <span className="ml-4 text-sm font-semibold text-white">
@@ -439,7 +451,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
 
   const DesktopHeader = (
     <div className="w-full fixed top-0 left-0 z-50 bg-white text-black border-b">
-      <div className="flex justify-between items-center py-6 px-3">
+      <div className="flex justify-between items-center py-6 container mx-auto">
         {/* Logo */}
         <div>
           <Link to="/" className="flex items-center">
@@ -543,8 +555,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   <RiShoppingBagLine className="text-[#EA2B0F]" size={24} />
                   {cartItems?.length > 0 && (
                     <span
-                      className="absolute -top-[2px] left-5  font-normal font-poppins py-0 px-1.5  text-sm text-white bg-[#B88E2F]
-                  rounded-full"
+                      className="absolute -top-[2px] left-5 font-normal font-poppins py-0 px-1.5 text-sm text-white bg-[#B88E2F] rounded-full"
                     >
                       {cartItems.length}
                     </span>
@@ -553,7 +564,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               </Link>
 
               {/* Profile */}
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={toggleTab}
                   className="flex items-center justify-center w-10 h-10 bg-[#FFE9E1] rounded-full"
@@ -567,7 +578,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                       className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out pb-3"
                       onClick={handleItemClick}
                     >
-                      <FaUserCircle className="flex-none " size={26} />
+                      <FaUserCircle className="flex-none" size={26} />
                       <span className="ml-4 text-sm font-poppins font-normal">
                         Profile
                       </span>
@@ -631,7 +642,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                       className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out"
                     >
                       <FaSignOutAlt className="flex-none" size={26} />
-                      <span className="ml-4  text-sm font-poppins font-normal">
+                      <span className="ml-4 text-sm font-poppins font-normal">
                         Logout
                       </span>
                     </button>
@@ -641,7 +652,8 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             </>
           )}
         </div>
-      </div>
+      </div> 
+      
     </div>
   );
 

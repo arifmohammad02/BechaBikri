@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import AdminMenu from "./AdminMenu";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -9,47 +9,71 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
+import CustomReactQuill from "../../components/CustomReactQuill"; // Import the custom wrapper
 
 const ProductUpdate = () => {
   const params = useParams();
-  const { data: productData } = useGetProductByIdQuery(params._id);
+  const navigate = useNavigate();
 
+  // Fetch product data by ID
+  const { data: productData, refetch } = useGetProductByIdQuery(params._id);
+
+  // Fetch categories
+  const { data: categories = [] } = useFetchCategoriesQuery();
+
+  // State for form fields
   const [image, setImage] = useState(productData?.image || "");
   const [name, setName] = useState(productData?.name || "");
-  const [description, setDescription] = useState(
-    productData?.description || ""
-  );
+  const [description, setDescription] = useState(productData?.description || "");
   const [price, setPrice] = useState(productData?.price || "");
-  const [category, setCategory] = useState(productData?.category || "");
+  const [category, setCategory] = useState(productData?.category?._id || "");
   const [quantity, setQuantity] = useState(productData?.quantity || "");
   const [brand, setBrand] = useState(productData?.brand || "");
-  const [stock, setStock] = useState(productData?.countInStock);
+  const [stock, setStock] = useState(productData?.countInStock || 0);
   const [discountPercentage, setDiscountPercentage] = useState(
     productData?.discountPercentage || 0
   );
-  const [isFeatured, setIsFeatured] = useState(
-    productData?.isFeatured || false
-  );
+  const [isFeatured, setIsFeatured] = useState(productData?.isFeatured || false);
   const [offer, setOffer] = useState(productData?.offer || "");
   const [warranty, setWarranty] = useState(productData?.warranty || "");
-  // const [specifications, setSpecifications] = useState(
-  //   productData?.specifications || []
-  // );
   const [discountedAmount, setDiscountedAmount] = useState(
     productData?.discountedAmount || 0
   );
+
+  // Loading states
   const [uploadLoading, setUploadLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const navigate = useNavigate();
-  const { data: categories = [] } = useFetchCategoriesQuery();
-
+  // RTK Query mutations
   const [uploadProductImage] = useUploadProductImageMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // React Quill configuration
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      ["clean"],
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "link",
+    "image",
+  ];
+
+  // Sync state with fetched product data
   useEffect(() => {
     if (productData && productData._id) {
       setName(productData.name);
@@ -63,11 +87,12 @@ const ProductUpdate = () => {
       setIsFeatured(productData.isFeatured);
       setOffer(productData.offer);
       setWarranty(productData.warranty);
-      // setSpecifications(productData.specifications);
       setDiscountedAmount(productData.discountedAmount);
+      setStock(productData.countInStock);
     }
   }, [productData]);
 
+  // Handle image upload
   const uploadFileHandler = async (e) => {
     const formData = new FormData();
     formData.append("image", e.target.files[0]);
@@ -83,6 +108,7 @@ const ProductUpdate = () => {
     }
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -131,22 +157,20 @@ const ProductUpdate = () => {
       formData.append("quantity", quantity);
       formData.append("brand", brand);
       formData.append("countInStock", stock);
-      formData.append("countInStock", stock);
       formData.append("discountPercentage", discountPercentage);
       formData.append("isFeatured", isFeatured);
       formData.append("offer", offer);
       formData.append("warranty", warranty);
-      // formData.append("specifications", JSON.stringify(specifications));
       formData.append("discountedAmount", discountedAmount);
 
-      const data = await updateProduct({ productId: params._id, formData });
+      const data = await updateProduct({ productId: params._id, formData }).unwrap();
 
       if (data?.error) {
         toast.error(data.error);
       } else {
         toast.success(`Product successfully updated`);
+        await refetch(); // Refetch the product data
         navigate("/admin/allproductslist");
-        window.location.reload(); // Refresh to update the list
       }
     } catch (err) {
       toast.error("Product update failed. Try again.");
@@ -155,24 +179,23 @@ const ProductUpdate = () => {
     }
   };
 
+  // Handle product deletion
   const handleDelete = async () => {
-    let answer = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
+    const answer = window.confirm("Are you sure you want to delete this product?");
     if (!answer) return;
 
     setDeleteLoading(true);
     try {
-      const { data } = await deleteProduct(params._id);
+      const { data } = await deleteProduct(params._id).unwrap();
       toast.success(`"${data.name}" is deleted`);
       navigate("/admin/allproductslist");
-      window.location.reload(); // Refresh to update the list
     } catch (err) {
       toast.error("Delete failed. Try again.");
     } finally {
       setDeleteLoading(false);
     }
   };
+
 
   return (
     <div className={`py-10`}>
@@ -391,25 +414,17 @@ const ProductUpdate = () => {
                 >
                   Description
                 </label>
-                <textarea
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
+                {/* Replace textarea with React Quill */}
+                <CustomReactQuill
+                  theme="snow"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={setDescription}
+                  modules={modules}
+                  formats={formats}
+                  placeholder="Product Description"
+                  className="bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
                 />
               </div>
-              {/* <div>
-              <label
-                htmlFor="specifications"
-                className="text-gray-600 font-medium"
-              >
-                Specifications
-              </label>
-              <textarea
-                className="w-full mt-2 p-3 border rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition"
-                value={specifications}
-                onChange={(e) => setSpecifications(e.target.value)}
-              ></textarea>
-            </div> */}
             </div>
 
             {/* Buttons */}

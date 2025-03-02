@@ -4,6 +4,7 @@ import Ratings from "./Ratings";
 import { useGetTopProductsQuery } from "@redux/api/productApiSlice";
 import SmallProduct from "./SmallProduct ";
 import Loader from "../../components/Loader";
+import DOMPurify from "dompurify";
 
 const ProductTabs = ({
   loadingProductReview,
@@ -29,6 +30,8 @@ const ProductTabs = ({
   const handleTabClick = (tabNumber) => {
     setActiveTab(tabNumber);
   };
+
+  const sanitizedDescription = DOMPurify.sanitize(product.description);
 
   return (
     <div className="flex flex-col bg-white space-y-6 ">
@@ -57,8 +60,11 @@ const ProductTabs = ({
           {/* Description */}
 
           {activeTab === 1 && (
-            <div className="mt-4 space-y-6">
-              <p className="text-gray-700">{product.description}</p>
+            <div className="mt-4 space-y-6 w-full">
+              <div 
+                className="prose" // Use Tailwind's prose class for better typography
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+              />
             </div>
           )}
 

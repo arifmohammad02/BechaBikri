@@ -200,7 +200,7 @@ const OrderList = ({
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border-r">
                       DELIVERED
                     </th>
-                    <th className="text-left px-4 py-3">STATUS</th>
+                    <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">STATUS</th>
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">
                       Action
                     </th>

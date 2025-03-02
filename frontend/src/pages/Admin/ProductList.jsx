@@ -8,29 +8,54 @@ import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
 import AdminMenu from "./AdminMenu";
 import { FaSpinner } from "react-icons/fa6";
+import ReactQuill from "react-quill"; // Import React Quill
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
+
 
 const ProductList = () => {
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(""); // State for rich text description
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("");
   const [brand, setBrand] = useState("");
   const [stock, setStock] = useState(0);
   const [imageUrl, setImageUrl] = useState(null);
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [isFeatured, setIsFeatured] = useState(false);
   const [offer, setOffer] = useState("");
   const [warranty, setWarranty] = useState("");
-  // const [specifications, setSpecifications] = useState("");
   const [discountedAmount, setDiscountedAmount] = useState(0);
   const navigate = useNavigate();
 
   const [uploadProductImage] = useUploadProductImageMutation();
   const [createProduct] = useCreateProductMutation();
   const { data: categories } = useFetchCategoriesQuery();
+
+  // React Quill modules and formats configuration
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
+      ["bold", "italic", "underline", "strike"], // Bold, italic, etc.
+      [{ list: "ordered" }, { list: "bullet" }], // Lists
+      ["link", "image"], // Links and images
+      ["clean"], // Remove formatting
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "link",
+    "image",
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,11 +76,11 @@ const ProductList = () => {
       return toast.error("Category is required.");
 
     try {
-      setLoading(true); // Set loading to true
+      setLoading(true);
       const productData = new FormData();
       productData.append("image", image);
       productData.append("name", name);
-      productData.append("description", description);
+      productData.append("description", description); // Rich text description
       productData.append("price", price);
       productData.append("category", category);
       productData.append("quantity", quantity);
@@ -69,8 +94,6 @@ const ProductList = () => {
 
       const { data } = await createProduct(productData);
 
-      // console.log(data);
-
       if (data.error) {
         toast.error("Product creation failed. Try Again.");
       } else {
@@ -81,14 +104,14 @@ const ProductList = () => {
       console.error(error);
       toast.error("Product creation failed. Try Again.");
     } finally {
-      setLoading(false); // Set loading to false after the process
+      setLoading(false);
     }
   };
 
   const uploadFileHandler = async (e) => {
     const formData = new FormData();
     formData.append("image", e.target.files[0]);
-    setLoading(true); // Set loading to true before upload
+    setLoading(true);
 
     try {
       const res = await uploadProductImage(formData).unwrap();
@@ -98,7 +121,7 @@ const ProductList = () => {
     } catch (error) {
       toast.error(error?.data?.message || error.error);
     } finally {
-      setLoading(false); // Set loading to false after upload
+      setLoading(false);
     }
   };
 
@@ -338,16 +361,6 @@ const ProductList = () => {
           </div>
 
           <div className="mb-6">
-            {/* <div className="mb-6">
-              <label htmlFor="specifications" className="text-gray-700">
-                Specifications (comma separated)
-              </label>
-              <textarea
-                className="p-4 w-full border border-gray-300 rounded-lg bg-white text-gray-800 outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={specifications}
-                onChange={(e) => setSpecifications(e.target.value)}
-              />
-            </div> */}
             <div className="">
               <label
                 htmlFor="description"
@@ -355,18 +368,22 @@ const ProductList = () => {
               >
                 Description
               </label>
-              <textarea
-                className="p-4 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+              {/* Replace textarea with React Quill */}
+              <ReactQuill
+                theme="snow"
                 value={description}
+                onChange={setDescription}
+                modules={modules}
+                formats={formats}
                 placeholder="Product Description"
-                onChange={(e) => setDescription(e.target.value)}
-              ></textarea>
+                className="bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
+              />
             </div>
           </div>
 
           <button
             onClick={handleSubmit}
-            disabled={loading} // Disable button while loading
+            disabled={loading}
             className={`text-lg font-semibold text-white w-fit
               duration-300 px-3 py-2 rounded ${
                 loading

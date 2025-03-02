@@ -2,90 +2,111 @@ import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import { Link } from "react-router-dom";
 import { useGetMyOrdersQuery } from "@redux/api/orderApiSlice";
+import Sidebar from "../../components/Sidebar";
+import { BsThreeDots } from "react-icons/bs";
 
 const UserOrder = () => {
   const { data: orders, isLoading, error } = useGetMyOrdersQuery();
 
   return (
-    <div className="container mx-auto py-20">
-      <h2 className="text-2xl font-semibold mb-4">My Orders </h2>
-
-      {isLoading ? (
-        <Loader />
-      ) : error ? (
-        <Message variant="danger">{error?.data?.error || error.error}</Message>
-      ) : (
-        <div className=" overflow-x-auto">
-          <table className="w-full bg-white rounded-lg shadow-md">
-            <thead className="bg-[#F9F1E7] text-base font-poppins font-normal border">
-              <tr className="text-left">
-                <th className="px-4 py-3 text-gray-700 border">IMAGE</th>
-                <th className="px-4 py-3 text-gray-700 border">ID</th>
-                <th className="px-4 py-3 text-gray-700 border">DATE</th>
-                <th className="px-4 py-3 text-gray-700 border">TOTAL</th>
-                <th className="px-4 py-3 text-gray-700 border">PAID</th>
-                <th className="px-4 py-3 text-gray-700 border">DELIVERED</th>
-                <th className="px-4 py-3 text-gray-700 border">ACTION</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {orders.map((order) => (
-                <tr
-                  key={order._id}
-                  className="border-b border-l border-r border-gray-200 hover:bg-[#F9F1E7] hover:shadow-md transition duration-200"
-                >
-                  <td className="px-4 py-3">
-                    <img
-                      src={order.orderItems[0].image}
-                      alt={order.user}
-                      className="w-16 h-16 rounded-lg border border-gray-300"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
-                    {order._id}
-                  </td>
-                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
-                    {order.createdAt.substring(0, 10)}
-                  </td>
-                  <td className="px-4 py-3 text-[#9F9F9F] font-poppins font-normal text-sm">
-                    ₹{order.totalPrice}
-                  </td>
-                  <td className="px-4 py-3">
-                    {order.isPaid ? (
-                      <span className="px-3 py-1 text-xs text-center font-medium  font-sans text-white bg-[#B88E2F] rounded-full">
-                        Completed
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 text-xs font-medium font-poppins text-white bg-[#242424] rounded-full">
-                        Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {order.isDelivered ? (
-                      <span className="px-3 py-1 text-xs text-center font-medium  font-sans text-white bg-[#B88E2F] rounded-full">
-                        Completed
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 text-xs  font-medium font-poppins text-white bg-[#242424]   rounded-full">
-                        Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link to={`/order/${order._id}`}>
-                      <button className="px-4 py-2 text-sm font-medium font-sans text-white bg-[#B88E2F] rounded-md  transition duration-200">
-                        View Details
-                      </button>
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="mt-[100px]">
+      <div className="py-4 bg-[#E8E8E8]">
+        <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
+          <Link
+            to="/"
+            className="text-[#000000] font-normal font-poppins text-[15px]"
+          >
+            Home
+          </Link>
+          <span className="text-[#000000] font-normal font-poppins text-[15px] ">
+            /
+          </span>
+          <span className="text-[#9B9BB4] font-normal font-poppins text-[15px]">
+            Order List
+          </span>
         </div>
-      )}
+      </div>
+      <div className="flex container mx-auto flex-col lg:flex-row lg:items-start py-10 gap-10 px-3 xs:px-0">
+        <Sidebar />
+
+        {isLoading ? (
+          <Loader />
+        ) : error ? (
+          <Message variant="danger">
+            {error?.data?.error || error.error}
+          </Message>
+        ) : (
+          <div className=" overflow-x-auto w-full border p-5 rounded-md">
+            <h2 className="text-[23px] font-semibold text-[#3C3836] font-dosis mb-4">
+              Order List
+            </h2>
+            <table className="w-full bg-white border">
+              <thead className="bg-[#F9F1E7] text-base font-poppins font-normal border">
+                <tr className="text-left">
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    ORDER ID
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    DATE
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    TOTAL
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    Payment Status
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    Order Status
+                  </th>
+                  <th className="text-center px-4 py-3 text-sm sm:text-base font-figtree font-bold text-[#3C3836] border uppercase">
+                    ACTION
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {orders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="border-b border-l border-r border-gray-200"
+                  >
+                    <td className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                      {order.orderId}
+                    </td>
+                    <td className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                      {order.createdAt.substring(0, 10)}
+                    </td>
+                    <td className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                      ₹{order.totalPrice}
+                    </td>
+                    <td className="text-center">
+                      {order.isPaid ? (
+                        <span className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                          Completed
+                        </span>
+                      ) : (
+                        <span className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                      {order.isDelivered}
+                    </td>
+                    <td className="text-center py-5">
+                      <Link to={`/order/${order._id}`}>
+                        <button className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
+                          <BsThreeDots />
+                        </button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

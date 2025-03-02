@@ -5,6 +5,7 @@ import { useProfileMutation } from "@redux/api/usersApiSlice";
 import { setCredentials } from "../../redux/features/auth/authSlice";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
+import Sidebar from "../../components/Sidebar";
 
 const Profile = () => {
   const [username, setUserName] = useState("");
@@ -27,7 +28,6 @@ const Profile = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    // Show SweetAlert2 confirmation popup
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "Do you want to update your profile?",
@@ -59,84 +59,100 @@ const Profile = () => {
   };
 
   return (
-    <div className="py-5 min-h-screen flex items-center justify-center px-3 pt-20 bg-white">
-      <div className="w-full max-w-2xl p-8 rounded-lg bg-[#F9F1E7] border">
-        <h2 className="text-3xl font-poppins font-semibold text-gray-800 text-center mb-6">
-          Update Profile
-        </h2>
-        <form onSubmit={submitHandler} className="space-y-6">
-          <div className="mb-4">
-            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
-              Name
-            </label>
-            <input
-              type="text"
-              placeholder="Enter your name"
-              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none "
-              value={username}
-              onChange={(e) => setUserName(e.target.value)}
-            />
-          </div>
+    <div className="mt-[100px]">
+      <div className="py-6 bg-[#E8E8E8]">
+        <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
+          <Link
+            to="/"
+            className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
+          >
+            Home
+          </Link>
+          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
+            /
+          </span>
+          <span className="text-[#9B9BB4] font-medium font-serif text-[14px] md:text-[18px]">
+            My Account
+          </span>
+        </div>
+      </div>
+      <div className="flex container mx-auto flex-col lg:flex-row lg:items-start py-10 gap-10 px-3 xs:px-0">
+        <Sidebar />
+        <div className="w-full p-8 rounded-md bg-white border">
+          <h2 className="text-[23px]  font-dosis font-semibold text-[#3C3836] mb-4">
+            My Account
+          </h2>
+          <form onSubmit={submitHandler} className="space-y-6">
+            <div className="flex items-center gap-5 flex-col md:flex-row">
+              <div className="mb-4 w-full">
+                <label className="block text-[16px] font-normal font-poppins text-[#3C3836] mb-2">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your name"
+                  className="w-full p-4 rounded-md font-normal font-poppins text-[14px] border text-[#000000] outline-none placeholder:text-[#000000] placeholder:text-[14px] placeholder:font-poppins placeholder:font-normal"
+                  value={username}
+                  onChange={(e) => setUserName(e.target.value)}
+                />
+              </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+              <div className="mb-4 w-full">
+                <label className="block text-[16px] font-normal font-poppins text-[#3C3836] mb-2">
+                  Your Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full p-4 rounded-md font-normal font-poppins text-[14px] border text-[#000000] outline-none placeholder:text-[#000000] placeholder:text-[14px] placeholder:font-poppins placeholder:font-normal"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            <div className="flex items-center gap-5 flex-col md:flex-row">
+              <div className="mb-4 w-full">
+                <label className="block text-[16px] font-normal font-poppins text-[#3C3836] mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="w-full p-4 rounded-md font-normal font-poppins text-[14px] border text-[#000000] outline-none placeholder:text-[#000000] placeholder:text-[14px] placeholder:font-poppins placeholder:font-normal"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-normal font-poppins text-gray-600 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              placeholder="Confirm your password"
-              className="w-full p-4 rounded-lg font-normal font-poppins border-2 text-gray-700 outline-none"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
-          </div>
+              <div className="mb-4 w-full">
+                <label className="block text-[16px] font-normal font-poppins text-[#3C3836] mb-2">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Confirm your password"
+                  className="w-full p-4 rounded-md font-normal font-poppins text-[14px] border text-[#000000] outline-none placeholder:text-[#000000] placeholder:text-[14px] placeholder:font-poppins placeholder:font-normal"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+            </div>
 
-          <div className="flex justify-between items-center">
-            <button
-              type="submit"
-              className="bg-[#B88E2F] text-white py-2 px-6 rounded-md text-lg font-normal font-poppins "
-            >
-              Update
-            </button>
+            <div className="flex justify-between items-center">
+              <button
+                type="submit"
+                className="bg-blue-700 hover:bg-blue-800 font-roboto text-white py-3 px-8 rounded-md text-[16px] font-medium"
+              >
+                Update
+              </button>
+            </div>
 
-            <Link
-              to="/user-orders"
-              className="bg-[#B88E2F] text-white py-2 px-6 rounded-md text-lg font-normal font-poppins"
-            >
-              My Orders
-            </Link>
-          </div>
-
-          {loadingUpdateProfile && (
-            <div className="text-center text-gray-500">Loading...</div>
-          )}
-        </form>
+            {loadingUpdateProfile && (
+              <div className="text-center text-gray-500">Loading...</div>
+            )}
+          </form>
+        </div>
       </div>
     </div>
   );

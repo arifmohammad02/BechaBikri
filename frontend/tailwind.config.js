@@ -34,11 +34,12 @@ export default {
         // => @media (min-width: 640px) { ... }
       },
       fontFamily: {
-        figtree: ["Figtree", "sans-serif"],
         roboto: ["Roboto", "sans-serif"],
         poppins: ["Poppins", "sans-serif"],
+        dosis: ["Dosis", "sans-serif"],
+        figtree: ["Figtree", "sans-serif"],
       },
     },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography")],
 };
