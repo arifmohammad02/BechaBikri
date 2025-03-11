@@ -174,9 +174,6 @@ const ProductDetails = () => {
                           <span className="text-[30px] text-[#ED1D24] font-semibold font-poppins">
                             ₹{discountedPrice?.toFixed(2)}
                           </span>
-                          {/* <span className="bg-[#B88E2F] text-white text-xs font-semibold px-2 py-1 rounded">
-                          -{product.discountPercentage}% Off
-                        </span> */}
                         </>
                       )}
                     </div>
@@ -191,10 +188,7 @@ const ProductDetails = () => {
                     <p className="text-[#00B858] text-[12px] font-poppins bg-[#E5F8ED] font-bold w-fit px-3 py-1 rounded-lg">
                       {product.countInStock > 0 ? "IN STOCK" : "Out of Stock"}
                     </p>
-                    {/* <p>
-                      Shipping:{" "}
-                      <span className="font-semibold">{shipping}</span>
-                    </p> */}
+                   
                   </div>
 
                   {/* Actions */}

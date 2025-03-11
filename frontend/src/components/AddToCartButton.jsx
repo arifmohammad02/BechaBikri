@@ -47,7 +47,7 @@ const AddToCartButton = ({
           {isAdded ? addedText : buttonText}
         </button>
         <div className="flex items-center gap-2">
-          <HeartIcon product={product} />
+          <HeartIcon product={product}  />
         </div>
       </div>
       <div className="mt-2">

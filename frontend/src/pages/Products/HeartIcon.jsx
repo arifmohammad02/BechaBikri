@@ -42,12 +42,12 @@ const HeartIcon = ({ product }) => {
       onClick={toggleFavorites}
     >
       {isFavorite ? (
-        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 w-fit ">
+        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 py-2 w-fit ">
           <FaHeart className="font-normal" />
           <span className="hidden md:inline">Favorite</span>
         </div>
       ) : (
-        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 w-fit">
+        <div className="flex items-center gap-1 text-[12px] font-medium font-poppins px-2 py-2 w-fit">
           <FaRegHeart className="text-[#ED174A] font-normal" />
           <span className="text-black hidden md:inline">Add to Favorites</span>
         </div>

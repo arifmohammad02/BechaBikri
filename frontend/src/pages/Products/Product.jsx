@@ -25,7 +25,7 @@ const Product = ({ product }) => {
     <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow">
       <Link to={`/product/${product._id}`}>
         <div className="relative">
-          <img className="p-5" src={product.image} alt={product.name} />
+          <img className="cursor-pointer w-full rounded-md object-cover xs:h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 p-5" src={product.image} alt={product.name} />
           {/* Discount Badge */}
           {product.discountPercentage > 0 && (
             <span className="absolute top-2 left-2 bg-[#B88E2F] font-poppins text-white text-xs font-semibold px-2 py-1 rounded">
@@ -35,7 +35,7 @@ const Product = ({ product }) => {
         </div>
       </Link>
       {/* Heart Icon */}
-      <div className="pb-3 text-xl flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <HeartIcon product={product} />
       </div>
       <div className="px-5">

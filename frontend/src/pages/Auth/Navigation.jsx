@@ -1,26 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import {
-  AiOutlineHome,
-  AiOutlineShopping,
-  AiOutlineLogin,
-  AiOutlineUserAdd,
-  AiOutlineShoppingCart,
-} from "react-icons/ai";
+import { AiOutlineShopping, AiOutlineLogin } from "react-icons/ai";
+import { GoSignIn } from "react-icons/go";
+import { SlHome } from "react-icons/sl";
 import { FaCartShopping } from "react-icons/fa6";
-import { MdHome } from "react-icons/md";
-import {
-  FaTachometerAlt,
-  FaBox,
-  FaListAlt,
-  FaClipboardList,
-  FaUsers,
-  FaUser,
-  FaUserCircle,
-  FaSignOutAlt,
-  FaAngleUp,
-  FaAngleDown,
-  FaTimes,
-} from "react-icons/fa";
+import { MdOutlineDashboard } from "react-icons/md";
+import { CgProfile } from "react-icons/cg";
+import { LiaClipboardListSolid } from "react-icons/lia";
+import { IoIosLogOut } from "react-icons/io";
+import { FaAngleUp, FaAngleDown, FaTimes } from "react-icons/fa";
 import { FaBarsStaggered } from "react-icons/fa6";
 import { FaHeart } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,7 +18,8 @@ import FavoritesCount from "../Products/FavoritesCount";
 import { logout } from "@redux/features/auth/authSlice";
 import { MdFavoriteBorder } from "react-icons/md";
 import { RiShoppingBagLine } from "react-icons/ri";
-import { CiUser } from "react-icons/ci";
+import { CiHeart, CiLogin, CiShop, CiUser } from "react-icons/ci";
+import { HiOutlineBars3CenterLeft } from "react-icons/hi2";
 
 const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
   const { userInfo } = useSelector((state) => state.auth);
@@ -118,19 +106,6 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
             {!userInfo ? (
               <div className="flex items-center gap-4">
                 <Link
-                  to="/login"
-                  className="text-[#242424] font-serif text-[16px] font-normal hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/"
-                  className="flex items-center font-serif text-[16px] font-normal text-[#242424] group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
-                  onClick={handleItemClick}
-                >
-                  Home
-                </Link>
-                <Link
                   to="/cart"
                   className="flex items-center group hover:text-yellow-500 transition-all duration-300 ease-in-out"
                   onClick={handleItemClick}
@@ -168,6 +143,19 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     </div>
                   </Link>
                 </div>
+                <button
+                  onClick={toggleMenu}
+                  className="p-[5px] rounded-md backdrop-blur-3xl bg-white/20 border border-gray-500/30
+             text-[#242424] text-xl transition-all duration-300 shadow-md flex items-center justify-center hover:bg-gray-400/20"
+                >
+                  <span className="transition-transform duration-300 ease-in-out transform group-hover:rotate-180">
+                    {isMenuOpen ? (
+                      <HiOutlineBars3CenterLeft size={22} />
+                    ) : (
+                      <HiOutlineBars3CenterLeft size={22} />
+                    )}
+                  </span>
+                </button>
               </div>
             ) : (
               <div className="flex gap-4">
@@ -210,10 +198,17 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   </Link>
                 </div>
                 <button
-                  onClick={toggleMenu} // Use toggleMenu here
-                  className="text-[#242424] hover:text-[#B88E2F] text-xl"
+                  onClick={toggleMenu}
+                  className="p-[5px] rounded-md backdrop-blur-3xl bg-white/20 border border-gray-500/30
+             text-[#242424] text-xl transition-all duration-300 shadow-md flex items-center justify-center hover:bg-gray-400/20"
                 >
-                  {isMenuOpen ? <FaBarsStaggered /> : <FaBarsStaggered />}
+                  <span className="transition-transform duration-300 ease-in-out transform group-hover:rotate-180">
+                    {isMenuOpen ? (
+                      <HiOutlineBars3CenterLeft size={22} />
+                    ) : (
+                      <HiOutlineBars3CenterLeft size={22} />
+                    )}
+                  </span>
                 </button>
               </div>
             )}
@@ -241,34 +236,37 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
         )}
 
         {/* Sidebar Items */}
-        <div className="flex flex-col space-y-6 mt-8">
+        <div className="flex flex-col space-y-3 mt-8">
           <Link
             to="/"
-            className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
+            className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
             onClick={handleItemClick}
           >
-            <MdHome className="flex-none text-[#242424]" size={26} />
-            <span className="ml-4 opacity-100 text-[#242424] transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins">
+            <SlHome className="flex-none text-[#242424]" size={22} />
+            <span className="opacity-100 text-[#242424] transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins">
               Home
             </span>
           </Link>
           <Link
             to="/shop"
-            className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
+            className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
             onClick={handleItemClick}
           >
-            <AiOutlineShopping className="flex-none text-[#242424]" size={26} />
-            <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
+            <CiShop className="flex-none text-[#242424]" size={22} />
+            <span className="opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
               Shop
             </span>
           </Link>
           <Link
             to="/cart"
-            className="flex items-center group hover:text-yellow-500 transition-all duration-300 ease-in-out"
+            className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
             onClick={handleItemClick}
           >
             <div className="relative flex">
-              <FaCartShopping className="flex-none text-[#242424]" size={26} />
+              <AiOutlineShopping
+                className="flex-none text-[#242424]"
+                size={22}
+              />
               <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
                 Cart
               </span>
@@ -286,11 +284,14 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
           <div>
             <Link
               to="/favorite"
-              className="flex items-center group hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
+              className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
               onClick={handleItemClick}
             >
               <div className="relative flex">
-                <FaHeart className="flex-none text-[#242424]" size={26} />
+                <MdFavoriteBorder
+                  className="flex-none text-[#242424]"
+                  size={22}
+                />
                 <span className="ml-4 opacity-100 transform transition-all duration-300 ease-in-out text-sm font-normal font-poppins text-[#242424]">
                   Favorites
                 </span>
@@ -310,18 +311,26 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 onClick={toggleTab}
                 className="flex items-center gap-2 hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
               >
-                <div className="flex items-center">
-                  <FaUser className="flex-none text-[#242424]" size={26} />
-                  <span className="ml-4 text-sm flex font-normal font-poppins">
-                    {userInfo?.username}
-                    <div className="ml-1 flex items-center">
-                      {tabOpen ? (
-                        <FaAngleUp className="text-[#242424]" size={16} />
-                      ) : (
-                        <FaAngleDown className="text-[#242424]" size={16} />
-                      )}
-                    </div>
-                  </span>
+                <div className="flex items-start cursor-pointer ml-4">
+                  <CiUser className="flex-none text-[#242424]" size={26} />
+                  <div className="ml-4 text-sm flex flex-col font-normal font-poppins">
+                    <p className="text-[18px] font-figtree font-semibold text-[#212b36] capitalize">
+                      {userInfo.username}
+                    </p>
+                  </div>
+                  <div className="ml-auto flex items-center mt-1">
+                    {tabOpen ? (
+                      <FaAngleUp
+                        className="text-[#242424] transition-transform duration-200"
+                        size={16}
+                      />
+                    ) : (
+                      <FaAngleDown
+                        className="text-[#242424] transition-transform duration-200"
+                        size={16}
+                      />
+                    )}
+                  </div>
                 </div>
               </button>
               {tabOpen && userInfo && (
@@ -330,100 +339,99 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                     onClick={toggleTab} // Close tab when clicked
                     className="absolute top-2 right-2 text-white"
                   ></button>
-                  {userInfo.isAdmin && (
-                    <div className="flex flex-col space-y-6 mb-8">
+                  <div className="flex flex-col gap-2 my-5">
+                    <Link
+                      to="/"
+                      className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                      onClick={handleItemClick}
+                    >
+                      <SlHome
+                        size={22}
+                        className=" text-[#212b36] text-[18px]"
+                      />
+                      <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                        Home
+                      </span>
+                    </Link>
+                    {userInfo.isAdmin && (
                       <Link
                         to="/admin/dashboard"
-                        className="flex items-center hover:text-lime-300 transition-all duration-300 ease-in-out"
+                        className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
                         onClick={handleItemClick}
                       >
-                        <FaTachometerAlt className="flex-none" size={26} />
-                        <span className="ml-4 text-sm font-semibold">
+                        <MdOutlineDashboard
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
                           Dashboard
                         </span>
                       </Link>
-                      <Link
-                        to="/admin/productlist"
-                        className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                        onClick={handleItemClick}
-                      >
-                        <FaBox className="flex-none" size={26} />
-                        <span className="ml-4 text-sm font-semibold">
-                          Products
-                        </span>
-                      </Link>
-                      <Link
-                        to="/admin/categorylist"
-                        className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                        onClick={handleItemClick}
-                      >
-                        <FaListAlt className="flex-none" size={26} />
-                        <span className="ml-4 text-sm font-semibold">
-                          Category
-                        </span>
-                      </Link>
-                      <Link
-                        to="/admin/orderlist"
-                        className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                        onClick={handleItemClick}
-                      >
-                        <FaClipboardList className="flex-none" size={26} />
-                        <span className="ml-4 text-sm font-semibold">
-                          Orders
-                        </span>
-                      </Link>
-                      <Link
-                        to="/admin/userlist"
-                        className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                        onClick={handleItemClick}
-                      >
-                        <FaUsers
-                          className="flex-none text-[#242424]"
-                          size={26}
-                        />
-                        <span className="ml-4 text-sm text-[#242424]">
-                          Users
-                        </span>
-                      </Link>
-                    </div>
-                  )}
-                  <Link
-                    to="/profile"
-                    className="flex items-center hover:text-emerald-500 transition-all duration-300 ease-in-out"
-                    onClick={handleItemClick}
-                  >
-                    <FaUserCircle
-                      className="flex-none text-[#242424]"
-                      size={26}
-                    />
-                    <span className="ml-4 text-sm font-normal text-[#242424] font-poppins">
-                      Profile
-                    </span>
-                  </Link>
-                  <button
-                    onClick={logoutHandler}
-                    className="flex items-center hover:text-[#B88E2F] transition-all duration-300 ease-in-out"
-                  >
-                    <FaSignOutAlt
-                      className="flex-none text-[#242424]"
-                      size={26}
-                    />
-                    <span className="ml-4 text-[#242424] text-sm font-normal font-poppins">
-                      Logout
-                    </span>
-                  </button>
+                    )}
+                    <Link
+                      to="/favorite"
+                      className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                      onClick={handleItemClick}
+                    >
+                      <CiHeart
+                        size={22}
+                        className=" text-[#212b36] text-[18px]"
+                      />
+                      <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                        Wishlist
+                      </span>
+                    </Link>
+                    <Link
+                      to="/user-orders"
+                      className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                      onClick={handleItemClick}
+                    >
+                      <LiaClipboardListSolid
+                        size={22}
+                        className=" text-[#212b36] text-[18px]"
+                      />
+                      <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                        Orders
+                      </span>
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                      onClick={handleItemClick}
+                    >
+                      <CgProfile
+                        size={22}
+                        className=" text-[#212b36] text-[18px]"
+                      />
+                      <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                        Profile
+                      </span>
+                    </Link>
+                    <button
+                      onClick={logoutHandler}
+                      className="flex items-center justify-center gap-4 border border-gray-500/50 rounded-md px-3 py-2 hover:bg-gray-300/50 transition-all duration-300 ease-in-out mx-4"
+                    >
+                      <IoIosLogOut
+                        size={22}
+                        className=" text-[#212b36] text-[18px]"
+                      />
+                      <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                        Logout
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
             </>
           ) : (
-            <ul className="flex flex-col space-y-6 mb-8">
+            <ul className="flex flex-col space-y-3">
               <li>
                 <Link
                   to="/login"
-                  className="flex items-center hover:text-purple-500 transition-all duration-300 ease-in-out"
+                  className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
                 >
-                  <AiOutlineLogin className="flex-none text-white" size={26} />
-                  <span className="ml-4 text-sm font-semibold text-white">
+                  <CiLogin className=" text-[#212b36] text-[18px]" size={22} />
+                  <span className="text-[#212b36] text-[18px] font-figtree font-normal">
                     Login
                   </span>
                 </Link>
@@ -431,13 +439,10 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
               <li>
                 <Link
                   to="/register"
-                  className="flex items-center hover:text-pink-500 transition-all duration-300 ease-in-out"
+                  className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
                 >
-                  <AiOutlineUserAdd
-                    className="flex-none text-white"
-                    size={26}
-                  />
-                  <span className="ml-4 text-sm font-semibold text-white">
+                  <GoSignIn className="text-[#212b36] text-[18px]" size={22} />
+                  <span className="text-[#212b36] text-[18px] font-figtree font-normal">
                     Register
                   </span>
                 </Link>
@@ -554,9 +559,7 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                 <div className="flex items-center justify-center w-10 h-10 bg-[#FFF1EE] rounded-full -z-10">
                   <RiShoppingBagLine className="text-[#EA2B0F]" size={24} />
                   {cartItems?.length > 0 && (
-                    <span
-                      className="absolute -top-[2px] left-5 font-normal font-poppins py-0 px-1.5 text-sm text-white bg-[#B88E2F] rounded-full"
-                    >
+                    <span className="absolute -top-[2px] left-5 font-normal font-poppins py-0 px-1.5 text-sm text-white bg-[#B88E2F] rounded-full">
                       {cartItems.length}
                     </span>
                   )}
@@ -572,88 +575,103 @@ const Navigation = ({ isMenuOpen, setIsMenuOpen }) => {
                   <CiUser className="text-[#f17e50]" size={24} />
                 </button>
                 {tabOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md p-2 z-50">
-                    <Link
-                      to="/profile"
-                      className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out pb-3"
-                      onClick={handleItemClick}
-                    >
-                      <FaUserCircle className="flex-none" size={26} />
-                      <span className="ml-4 text-sm font-poppins font-normal">
-                        Profile
-                      </span>
-                    </Link>
-                    {userInfo.isAdmin && (
-                      <div className="flex flex-col space-y-6 mb-8">
+                  <div className="absolute right-0 mt-8 w-72 bg-white/90 backdrop-blur-3xl rounded-xl z-50 border border-gray-500/50 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+                    <div className="border-b border-gray-300 flex flex-col pl-4 py-3 bg-gradient-to-r from-white/20 to-white/5">
+                      <p className="text-[18px] font-figtree font-semibold text-[#212b36] capitalize">
+                        {userInfo.username}
+                      </p>
+                      <p className="text-sm text-[#637381] font-normal font-figtree">
+                        {userInfo.email}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 my-5">
+                      <Link
+                        to="/"
+                        className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                        onClick={handleItemClick}
+                      >
+                        <SlHome
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                          Home
+                        </span>
+                      </Link>
+                      {userInfo.isAdmin && (
                         <Link
                           to="/admin/dashboard"
-                          className="flex items-center hover:text-lime-300 transition-all duration-300 ease-in-out"
+                          className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
                           onClick={handleItemClick}
                         >
-                          <FaTachometerAlt className="flex-none" size={26} />
-                          <span className="ml-4 text-sm font-semibold">
+                          <MdOutlineDashboard
+                            size={22}
+                            className=" text-[#212b36] text-[18px]"
+                          />
+                          <span className="text-[#212b36] text-[18px] font-figtree font-normal">
                             Dashboard
                           </span>
                         </Link>
-                        <Link
-                          to="/admin/productlist"
-                          className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                          onClick={handleItemClick}
-                        >
-                          <FaBox className="flex-none" size={26} />
-                          <span className="ml-4 text-sm font-semibold">
-                            Products
-                          </span>
-                        </Link>
-                        <Link
-                          to="/admin/categorylist"
-                          className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                          onClick={handleItemClick}
-                        >
-                          <FaListAlt className="flex-none" size={26} />
-                          <span className="ml-4 text-sm font-semibold">
-                            Category
-                          </span>
-                        </Link>
-                        <Link
-                          to="/admin/orderlist"
-                          className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                          onClick={handleItemClick}
-                        >
-                          <FaClipboardList className="flex-none" size={26} />
-                          <span className="ml-4 text-sm font-semibold">
-                            Orders
-                          </span>
-                        </Link>
-                        <Link
-                          to="/admin/userlist"
-                          className="flex items-center hover:text-orange-500 transition-all duration-300 ease-in-out"
-                          onClick={handleItemClick}
-                        >
-                          <FaUsers className="flex-none" size={26} />
-                          <span className="ml-4 text-sm font-semibold">
-                            Users
-                          </span>
-                        </Link>
-                      </div>
-                    )}
-                    <button
-                      onClick={logoutHandler}
-                      className="flex items-center hover:text-[#B88E2F] text-[#242424] transition-all duration-300 ease-in-out"
-                    >
-                      <FaSignOutAlt className="flex-none" size={26} />
-                      <span className="ml-4 text-sm font-poppins font-normal">
-                        Logout
-                      </span>
-                    </button>
+                      )}
+                      <Link
+                        to="/favorite"
+                        className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                        onClick={handleItemClick}
+                      >
+                        <CiHeart
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                          Wishlist
+                        </span>
+                      </Link>
+                      <Link
+                        to="/user-orders"
+                        className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                        onClick={handleItemClick}
+                      >
+                        <LiaClipboardListSolid
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                          Orders
+                        </span>
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-4 hover:bg-gray-300/50 w-full py-2 transition-all duration-300 ease-in-out pl-4"
+                        onClick={handleItemClick}
+                      >
+                        <CgProfile
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                          Profile
+                        </span>
+                      </Link>
+                      <button
+                        onClick={logoutHandler}
+                        className="flex items-center justify-center gap-4 border border-gray-500/50 rounded-md px-3 py-2 hover:bg-gray-300/50 transition-all duration-300 ease-in-out mx-4"
+                      >
+                        <IoIosLogOut
+                          size={22}
+                          className=" text-[#212b36] text-[18px]"
+                        />
+                        <span className="text-[#212b36] text-[18px] font-figtree font-normal">
+                          Logout
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             </>
           )}
         </div>
-      </div> 
-      
+      </div>
     </div>
   );
 

@@ -60,9 +60,9 @@ const ProductTabs = ({
           {/* Description */}
 
           {activeTab === 1 && (
-            <div className="mt-4 space-y-6 w-full">
-              <div 
-                className="prose" // Use Tailwind's prose class for better typography
+            <div className="mt-4 space-y-6 w-full max-w-full overflow-hidden">
+              <div
+                className="prose max-w-full break-words" // Ensure text wraps and fits within the container
                 dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
               />
             </div>

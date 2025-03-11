@@ -38,7 +38,7 @@ const ProductCard = ({ p }) => {
               />
             </Link>
           </div>
-          <div className="py-3 text-xl flex items-center justify-center">
+          <div className="flex items-center justify-center mt-3">
             <HeartIcon product={p} />
           </div>
         </section>

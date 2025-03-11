@@ -4,7 +4,7 @@ import { CiUser } from "react-icons/ci";
 
 const Sidebar = () => {
   return (
-    <div className="w-72 h-fit border rounded-md text-white p-6 bg-[#FFFFFF]">
+    <div className="hidden xl:block w-72 h-fit border rounded-md text-white p-6 bg-[#FFFFFF]">
       <h2 className="font-semibold text-[23px] font-dosis mb-4 text-[#3C3836]">Dashboard</h2>
       <nav className="space-y-3">
         <NavLink
@@ -23,7 +23,6 @@ const Sidebar = () => {
         >
           <BsHouse /> Orders List
         </NavLink>
-
       </nav>
     </div>
   );
