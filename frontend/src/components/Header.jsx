@@ -7,6 +7,9 @@ import { FaLongArrowAltRight } from "react-icons/fa";
 import Category from "./Category";
 const Header = () => {
   const { data, isLoading, error } = useGetTopProductsQuery();
+
+
+  
   // console.log(data);
 
   if (isLoading) {

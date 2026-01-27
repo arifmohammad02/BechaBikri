@@ -80,15 +80,7 @@ const UserOrder = () => {
                       ₹{order.totalPrice}
                     </td>
                     <td className="text-center">
-                      {order.isPaid ? (
-                        <span className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
-                          Completed
-                        </span>
-                      ) : (
-                        <span className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
-                          Pending
-                        </span>
-                      )}
+                     {order?.paymentStatus}
                     </td>
                     <td className="text-center text-[#3C3836] text-[15px] font-poppins font-normal">
                       {order.isDelivered}

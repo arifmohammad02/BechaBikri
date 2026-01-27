@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import React from "react";
 import {
   Page,
@@ -5,10 +7,7 @@ import {
   View,
   Document,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
-
-// Register Poppins font
 
 // Define styles
 const styles = StyleSheet.create({
@@ -108,19 +107,57 @@ const styles = StyleSheet.create({
 });
 
 const InvoicePDF = ({ order }) => {
-  // Calculate prices
-  const itemsPrice = order?.orderItems.reduce(
-    (acc, item) => acc + item.qty * item.price,
+  // Check if order exists
+  if (!order) {
+    return (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text>No order data available</Text>
+        </Page>
+      </Document>
+    );
+  }
+
+  // Safely access properties with defaults
+  const orderItems = order.orderItems || [];
+  const shippingAddress = order.shippingAddress || {};
+  const user = order.user || {};
+  
+  // Calculate prices with safe defaults
+  const itemsPrice = orderItems.reduce(
+    (acc, item) => acc + (item.qty || 0) * (item.price || 0),
     0
   );
-  const discount = order?.orderItems.reduce(
+  
+  const discount = orderItems.reduce(
     (acc, item) =>
-      acc + (item.discountPercentage / 100) * item.qty * item.price,
+      acc + ((item.discountPercentage || 0) / 100) * (item.qty || 0) * (item.price || 0),
     0
   );
-  const shippingCharge = order?.shippingAddress?.shippingCharge || 0;
+  
+  const shippingCharge = shippingAddress.shippingCharge || 0;
   const totalPrice = itemsPrice - discount + shippingCharge;
   const subTotal = itemsPrice - discount;
+
+  // Format date safely
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return "Invalid Date";
+    }
+  };
+
+  // Calculate item total safely
+  const calculateItemTotal = (item) => {
+    const qty = item.qty || 0;
+    const price = item.price || 0;
+    const discountPercentage = item.discountPercentage || 0;
+    const discountAmount = (discountPercentage / 100) * price;
+    const discountedPrice = price - discountAmount;
+    return (qty * discountedPrice).toFixed(2);
+  };
 
   return (
     <Document>
@@ -131,12 +168,12 @@ const InvoicePDF = ({ order }) => {
         {/* Invoice Details */}
         <View style={styles.invoiceDetails}>
           <View>
-            <Text>Invoice Number: {order.orderId}</Text>
-            <Text>Date: {new Date(order.createdAt).toLocaleDateString()}</Text>
+            <Text>Invoice Number: {order.orderId || "N/A"}</Text>
+            <Text>Date: {formatDate(order.createdAt)}</Text>
           </View>
           <View>
             <Text>Status: {order.isPaid ? "Paid" : "Unpaid"}</Text>
-            <Text>Delivery: {order.isDelivered}</Text>
+            <Text>Delivery: {order.isDelivered ? "Delivered" : "Pending"}</Text>
           </View>
         </View>
 
@@ -146,22 +183,22 @@ const InvoicePDF = ({ order }) => {
           <View style={styles.customerDetails}>
             <View style={styles.customerDetailRow}>
               <Text>Name:</Text>
-              <Text>{order.shippingAddress.name}</Text>
+              <Text>{shippingAddress.name || "N/A"}</Text>
             </View>
             <View style={styles.customerDetailRow}>
               <Text>Email:</Text>
-              <Text>{order.user.email}</Text>
+              <Text>{user.email || "N/A"}</Text>
             </View>
             <View style={styles.customerDetailRow}>
               <Text>Phone:</Text>
-              <Text>{order.shippingAddress.phoneNumber}</Text>
+              <Text>{shippingAddress.phoneNumber || "N/A"}</Text>
             </View>
             <View style={styles.customerDetailRow}>
               <Text>Address:</Text>
               <Text>
-                {order.shippingAddress.address}, {order.shippingAddress.city},{" "}
-                {order.shippingAddress.postalCode},{" "}
-                {order.shippingAddress.country}
+                {shippingAddress.address || ""}, {shippingAddress.city || ""},{" "}
+                {shippingAddress.postalCode || ""},{" "}
+                {shippingAddress.country || ""}
               </Text>
             </View>
           </View>
@@ -183,26 +220,29 @@ const InvoicePDF = ({ order }) => {
                 <Text>Price</Text>
               </View>
             </View>
+            
             {/* Table Rows */}
-            {order.orderItems.map((item, index) => (
-              <View style={styles.tableRow} key={index}>
-                <View style={styles.tableCol}>
-                  <Text>{item.name}</Text>
+            {orderItems.length > 0 ? (
+              orderItems.map((item, index) => (
+                <View style={styles.tableRow} key={index}>
+                  <View style={styles.tableCol}>
+                    <Text>{item.name || "Unnamed Product"}</Text>
+                  </View>
+                  <View style={styles.tableCol}>
+                    <Text>{item.qty || 0}</Text>
+                  </View>
+                  <View style={styles.tableCol}>
+                    <Text>{calculateItemTotal(item)}</Text>
+                  </View>
                 </View>
-                <View style={styles.tableCol}>
-                  <Text>{item.qty}</Text>
-                </View>
-                <View style={styles.tableCol}>
-                  <Text>
-                    {(
-                      item.qty *
-                      (item.price -
-                        (item.discountPercentage / 100) * item.price)
-                    ).toFixed(2)}
-                  </Text>
+              ))
+            ) : (
+              <View style={styles.tableRow}>
+                <View style={[styles.tableCol, { width: "100%" }]}>
+                  <Text>No items in this order</Text>
                 </View>
               </View>
-            ))}
+            )}
           </View>
         </View>
 
@@ -219,7 +259,7 @@ const InvoicePDF = ({ order }) => {
             </View>
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Discount:</Text>
-              <Text style={styles.totalValue}>-00.00</Text>
+              <Text style={styles.totalValue}>-{discount.toFixed(2)}</Text>
             </View>
             <View style={[styles.totalRow, { backgroundColor: "#f0f8ff" }]}>
               <Text style={[styles.totalLabel, { color: "#0174E6" }]}>

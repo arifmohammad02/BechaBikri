@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { useState } from "react";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
@@ -5,6 +6,7 @@ import { Link } from "react-router-dom";
 import {
   useGetOrdersQuery,
   useUpdateOrderStatusMutation,
+  usePayOrderMutation,
 } from "@redux/api/orderApiSlice";
 import AdminMenu from "./AdminMenu";
 
@@ -15,7 +17,11 @@ const OrderList = ({
 }) => {
   const { data: orders, isLoading, error, refetch } = useGetOrdersQuery();
   const [updateOrderStatus] = useUpdateOrderStatusMutation();
+  const [payOrder] = usePayOrderMutation(); // ✅ NEW
+
   const [orderStatuses, setOrderStatuses] = useState({});
+
+  console.log(orderStatuses, orders);
 
   // State for search and filter (only if not in dashboard)
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,6 +42,19 @@ const OrderList = ({
       refetch();
     } catch (error) {
       console.error("Failed to update order status:", error);
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handlePaymentStatusChange = async (orderId, status) => {
+    setUpdatingOrderId(orderId);
+    try {
+      // Send orderId and status to backend
+      await payOrder({ orderId, status }).unwrap();
+      refetch();
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -198,9 +217,14 @@ const OrderList = ({
                       PAID
                     </th>
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border-r">
+                      PAID STATUS
+                    </th>
+                    <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border-r">
                       DELIVERED
                     </th>
-                    <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">STATUS</th>
+                    <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">
+                      STATUS
+                    </th>
                     <th className="text-left px-4 py-3 text-sm sm:text-base md:text-lg font-figtree font-semibold text-black border uppercase">
                       Action
                     </th>
@@ -245,9 +269,46 @@ const OrderList = ({
                         ₹{order.totalPrice}
                       </td>
 
-                      {/* Paid Status */}
+                      {/* ========================= */}
+                      {/* ✅ PAID / DUE (UPDATED) */}
+                      {/* ========================= */}
                       <td className="px-4 py-3">
-                        {order.isPaid ? "Completed" : "Pending"}
+                        <select 
+                          value={
+                            order.paymentStatus ||
+                            (order.isPaid ? "paid" : "due")
+                          }
+                          onChange={(e) =>
+                            handlePaymentStatusChange(order._id, e.target.value)
+                          }
+                          disabled={updatingOrderId === order._id}
+                          className="border p-1 rounded bg-white"
+                        >
+                          <option value="paid">Paid</option>
+                          <option value="due">Due</option>
+                          <option value="pending">Pending</option>
+                          <option value="failed">Failed</option>
+                        </select>
+                      </td>
+                      {/*paid status */}
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold capitalize ${
+                            order.paymentStatus === "paid" || order.isPaid
+                              ? "bg-green-100 text-green-800"
+                              : order.paymentStatus === "due"
+                                ? "bg-red-100 text-red-800"
+                                : order.paymentStatus === "pending"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {order.paymentStatus
+                            ? order.paymentStatus.toUpperCase()
+                            : order.isPaid
+                              ? "PAID"
+                              : "DUE"}
+                        </span>
                       </td>
                       <td className="px-4 py-3">{order.isDelivered}</td>
                       <td className="px-4 py-3">
@@ -321,7 +382,7 @@ const OrderList = ({
                       >
                         {page}
                       </button>
-                    )
+                    ),
                   )}
                 </div>
               </div>

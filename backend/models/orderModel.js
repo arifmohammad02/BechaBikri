@@ -9,6 +9,7 @@ const orderSchema = mongoose.Schema(
       unique: true,
     },
     user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
+ 
     orderItems: [
       {
         name: { type: String, required: true },
@@ -73,8 +74,16 @@ const orderSchema = mongoose.Schema(
 
     isPaid: {
       type: Boolean,
-      required: true,
       default: false,
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["paid", "due", "pending", "failed"],
+      default: function () {
+        // Payment method অনুযায়ী ডিফল্ট status সেট করুন
+        return this.paymentMethod === "Cash on Delivery" ? "due" : "pending";
+      },
     },
 
     paidAt: {
@@ -102,7 +111,7 @@ const orderSchema = mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Order = mongoose.model("Order", orderSchema);

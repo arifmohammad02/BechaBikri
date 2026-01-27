@@ -1,9 +1,9 @@
+/* eslint-disable react/prop-types */
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateOrderMutation,
-  usePayOrderMutation,
-} from "@redux/api/orderApiSlice";
+} from "@redux/api/orderApiSlice"; // শুধু createOrder import করুন
 import { clearCartItems } from "../../redux/features/cart/cartSlice";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -15,7 +15,6 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
-  const [payOrder] = usePayOrderMutation();
   const { cartItems } = cart;
 
   // console.log(cart);
@@ -59,16 +58,20 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
         totalPrice: totalPrice,
       }).unwrap();
 
-      await payOrder({
-        orderId: order._id,
-        details: { paymentMethod: "Cash On Delivery" },
-      }).unwrap();
-      // console.log(order._id);
+      // ✅ payOrder কল করা দরকার নেই - order create করার সময়ই payment status সেট হয়ে যাবে
+      // Cash on Delivery হলে payment status "due" হবে
+      // PayPal হলে "pending" হবে
+      
       toast.success("Order placed successfully!");
       dispatch(clearCartItems());
       navigate(`/order/${order._id}`);
     } catch (error) {
-      toast.error("Failed to place order. Please try again.");
+      console.error("Order creation error:", error);
+      toast.error(
+        error?.data?.message || 
+        error?.data?.error || 
+        "Failed to place order. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

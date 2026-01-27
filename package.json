@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/index.js",
+    "start": "nodemon backend/index.js",
     "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
-    "start": "node backend/index.js"
+    "server": "node backend/index.js",
+    "update:browserslist": "npx update-browserslist-db@latest",
+    "postinstall": "npx update-browserslist-db@latest"
   },
   "author": "mohammad arif",
   "license": "ISC",
@@ -28,7 +31,8 @@
     "mongoose": "^8.8.0",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
-    "nodemon": "^3.1.7",
+    "nodemailer": "^7.0.12",
+    "nodemon": "^3.1.11",
     "path": "^0.12.7",
     "sanitize-html": "^2.14.0",
     "shortid": "^2.2.17",

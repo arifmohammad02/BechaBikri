@@ -1,5 +1,6 @@
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
+import sendEmail from "../utils/sendEmail.js";
 
 // Utility Function
 function calcPrices(orderItems) {
@@ -11,7 +12,7 @@ function calcPrices(orderItems) {
 
   const shippingPrice = orderItems.reduce(
     (acc, item) => acc + (item.shippingCharge ?? 0),
-    0
+    0,
   );
 
   const taxRate = 0.0;
@@ -62,7 +63,7 @@ const createOrder = async (req, res) => {
     // Validate and map the order items
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const matchingItemFromDB = itemsFromDB.find(
-        (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id
+        (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id,
       );
 
       if (!matchingItemFromDB) {
@@ -81,8 +82,13 @@ const createOrder = async (req, res) => {
 
     const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calcPrices(
       dbOrderItems,
-      shippingAddress
+      shippingAddress,
     );
+
+    // Payment status based on payment method
+    const paymentStatus =
+      paymentMethod === "Cash on Delivery" ? "due" : "pending";
+    const isPaid = false; // Default false
 
     const order = new Order({
       orderId: generateOrderId(),
@@ -94,9 +100,32 @@ const createOrder = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
+      paymentStatus, // ✅ নতুন ফিল্ড
+      isPaid, // ✅ ডিফল্ট false
     });
 
     const createdOrder = await order.save();
+
+    // Populate user for email
+    const populatedOrder = await createdOrder.populate(
+      "user",
+      "username email",
+    );
+
+    // -------- Send Email to Customer --------
+    await sendEmail({
+      to: populatedOrder.user.email,
+      subject: "Order Confirmation",
+      text: `Hi ${populatedOrder.user.username},\n\nYour order (${populatedOrder.orderId}) has been placed successfully!\n\nThank you for shopping with us.`,
+    });
+
+    // -------- Send Email to Admin --------
+    await sendEmail({
+      to: process.env.ADMIN_EMAIL,
+      subject: "New Order Placed",
+      text: `New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}. Total: ₹${totalPrice}`,
+    });
+
     res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -104,7 +133,7 @@ const createOrder = async (req, res) => {
 };
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find({}).populate("user", "id username");
+    const orders = await Order.find({}).populate("user", "id username email");
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -199,7 +228,7 @@ const findOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate(
       "user",
-      "username email"
+      "username email",
     );
 
     if (order) {
@@ -212,38 +241,6 @@ const findOrderById = async (req, res) => {
     } else {
       res.status(404);
       throw new Error("Order not found");
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const markOrderAsPaid = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-
-    if (order) {
-      // Use the provided paidAt time or fallback to the current time
-      const paidAtTime = req.body.paidAt
-        ? new Date(req.body.paidAt)
-        : new Date();
-
-      order.isPaid = true;
-      order.paidAt = paidAtTime;
-
-      if (order.paymentMethod !== "Cash on Delivery") {
-        order.paymentResult = {
-          id: req.body.id || "N/A",
-          status: req.body.status || "Completed",
-          update_time: req.body.update_time || paidAtTime.toISOString(),
-          email_address: req.body.payer?.email_address || "N/A",
-        };
-      }
-
-      const updatedOrder = await order.save();
-      return res.status(200).json(updatedOrder);
-    } else {
-      res.status(404).json({ error: "Order not found" });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -284,7 +281,78 @@ const markOrderAsDelivered = async (req, res) => {
   }
 };
 
-// ✅ নতুন ফাংশন: যেকোনো স্ট্যাটাস আপডেট করতে ব্যবহার করা যাবে
+const markOrderAsPaid = async (req, res) => {
+  try {
+    console.log("Request params:", req.params); // Check if id is received
+    console.log("Request body:", req.body); // Check if status is received
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const { status } = req.body; // Should be "paid" or "due"
+
+    // Validate status
+    const validStatuses = ["paid", "due", "pending", "failed"];
+
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ error: "Invalid payment status" });
+    }
+
+    // If no status is provided, use default behavior (old function logic)
+    if (!status) {
+      // Use the provided paidAt time or fallback to the current time
+      const paidAtTime = req.body.paidAt
+        ? new Date(req.body.paidAt)
+        : new Date();
+
+      order.isPaid = true;
+      order.paidAt = paidAtTime;
+
+      if (order.paymentMethod !== "Cash on Delivery") {
+        order.paymentResult = {
+          id: req.body.id || "N/A",
+          status: req.body.status || "Completed",
+          update_time: req.body.update_time || paidAtTime.toISOString(),
+          email_address: req.body.payer?.email_address || "N/A",
+        };
+      }
+    } else {
+      // New logic with status parameter
+      // Update payment status
+      order.paymentStatus = status;
+
+      // Update isPaid based on status
+      order.isPaid = status === "paid";
+
+      // Update paidAt timestamp if paid
+      if (status === "paid") {
+        order.paidAt = req.body.paidAt ? new Date(req.body.paidAt) : new Date();
+
+        if (order.paymentMethod !== "Cash on Delivery") {
+          order.paymentResult = {
+            id: req.body.id || "N/A",
+            status: req.body.status || "Completed",
+            update_time: req.body.update_time || order.paidAt.toISOString(),
+            email_address: req.body.payer?.email_address || "N/A",
+          };
+        }
+      } else {
+        order.paidAt = null;
+        // Clear payment result if status is not paid
+        order.paymentResult = undefined;
+      }
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const updateOrderStatus = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -293,23 +361,24 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const newStatus = req.body.status;
+    const { status } = req.body;
 
-    if (
-      ![
-        "Order Placed",
-        "Processing",
-        "Shipped",
-        "Out for Delivery",
-        "Delivered",
-        "Cancelled",
-      ].includes(newStatus)
-    ) {
+    const validStatuses = [
+      "Order Placed",
+      "Processing",
+      "Shipped",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled",
+    ];
+
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid order status" });
     }
 
-    order.isDelivered = newStatus;
-    if (newStatus === "Delivered") {
+    order.isDelivered = status;
+
+    if (status === "Delivered") {
       order.deliveredAt = new Date();
     }
 

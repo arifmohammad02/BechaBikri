@@ -1,7 +1,7 @@
 import InvoicePDF from "../../components/InvoicePDF";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 import Message from "../../components/Message";
 import Loader from "../../components/Loader";
 import {
@@ -21,8 +21,12 @@ const Order = () => {
     error,
   } = useGetOrderDetailsQuery(orderId);
 
+  // eslint-disable-next-line no-unused-vars
   const [deliverOrder] = useDeliverOrderMutation();
   const { userInfo } = useSelector((state) => state.auth);
+
+  console.log(userInfo);
+  
 
   useEffect(() => {
     refetch();
@@ -31,12 +35,12 @@ const Order = () => {
   // Calculate prices
   const itemsPrice = order?.orderItems.reduce(
     (acc, item) => acc + item.qty * item.price,
-    0
+    0,
   );
   const discount = order?.orderItems.reduce(
     (acc, item) =>
       acc + (item.discountPercentage / 100) * item.qty * item.price,
-    0
+    0,
   );
   const shippingCharge = order?.shippingAddress?.shippingCharge || 0;
   const totalPrice = itemsPrice - discount + shippingCharge;
@@ -54,7 +58,7 @@ const Order = () => {
             Thank you for your purchase!
           </h3>
           <h6 className="text-[16px] font-semibold font-mono max-w-[700px] mx-auto text-[#637381]">
-            Thank you for choosing us! Your purchase is appreciated. We're
+            Thank you for choosing us! Your purchase is appreciated. We&apos;re
             committed to providing top-notch products and service. Stay tuned
             for updates on your order.
           </h6>
@@ -77,7 +81,7 @@ const Order = () => {
                 <p className="text-[#000000] font-figtree font-semibold text-[22px] my-5 ml-3">
                   {order.orderItems.reduce(
                     (total, item) => total + item.qty,
-                    0
+                    0,
                   )}{" "}
                   Items
                 </p>
@@ -211,26 +215,21 @@ const Order = () => {
                   </h2>
                 </div>
                 <p className="mb-2 font-medium text-[#FFFFFF] font-figtree text-[14px]">
-                  <strong>Method:</strong> {order?.paymentMethod}
+                  <strong>Payment Method:</strong> {order?.paymentMethod}
                 </p>
                 <p className="mb-2 font-medium text-[#FFFFFF] font-figtree text-[14px]">
-                  <strong>Status:</strong> {order.isDelivered}
+                  <strong className=" capitalize">Payment Status:</strong> {order.paymentStatus}
                 </p>
                 <p className="mb-2 font-medium text-[#FFFFFF] font-figtree text-[14px]">
-                  <strong>Shipping Fee:</strong> ₹
-                  {order?.shippingAddress?.shippingCharge}
+                  <strong>Delivery Status:</strong> {order.isDelivered}
+                </p>
+                <p className="mb-2 font-medium text-[#FFFFFF] font-figtree text-[14px]">
+                  <strong>Shipping Fee:</strong> {order?.shippingAddress?.shippingCharge}
                 </p>
                 <div className="bg-transparent font-medium text-[#FFFFFF] font-serif">
-                  {order.isPaid ? (
-                    <strong className="font-bold text-[#FFFFFF] font-figtree text-[14px] flex items-center gap-2">
-                      Order Date:{" "}
-                      <p className="font-medium text-[#FFFFFF] font-figtree text-[14px]">
-                        {order?.paidAt}
+                 <p className="font-medium text-[#FFFFFF] font-figtree text-[14px]">
+                     <strong>Order Date:</strong> {order?.paidAt}
                       </p>
-                    </strong>
-                  ) : (
-                    <Message variant="danger">Not paid</Message>
-                  )}
                 </div>
               </div>
 
