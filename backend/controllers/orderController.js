@@ -111,7 +111,7 @@ const createOrder = async (req, res) => {
       "user",
       "username email",
     );
-
+    res.status(201).json(createdOrder);
     // -------- Send Email to Customer --------
     await sendEmail({
       to: populatedOrder.user.email,
@@ -125,8 +125,6 @@ const createOrder = async (req, res) => {
       subject: "New Order Placed",
       text: `New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}. Total: ₹${totalPrice}`,
     });
-
-    res.status(201).json(createdOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
