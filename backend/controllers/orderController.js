@@ -115,21 +115,27 @@ const createOrder = async (req, res) => {
     res.status(201).json(createdOrder);
     // -------- Send Email to Customer --------
     // -------- Send Emails Async (Catch internally) --------
-   await sendEmail({
-     to: populatedOrder.user.email,
-     subject: "Order Confirmation",
-     html: `<h2>Hi ${populatedOrder.user.username},</h2>
-         <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
-         <p>Total: ₹${totalPrice}</p>`,
-   });
+    (async () => {
+      try {
+        await sendEmail({
+          to: populatedOrder.user.email,
+          subject: "Order Confirmation",
+          text: `Hi ${populatedOrder.user.username},\n\nYour order (${populatedOrder.orderId}) has been placed successfully!\n\nThank you for shopping with us.`,
+        });
+      } catch (err) {
+        console.error("Customer email failed:", err.message);
+      }
 
-   await sendEmail({
-     to: process.env.ADMIN_EMAIL,
-     subject: "New Order Placed",
-     html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
-         <p>Total: ₹${totalPrice}</p>`,
-   });
-
+      try {
+        await sendEmail({
+          to: process.env.ADMIN_EMAIL,
+          subject: "New Order Placed",
+          text: `New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}. Total: ₹${totalPrice}`,
+        });
+      } catch (err) {
+        console.error("Admin email failed:", err.message);
+      }
+    })();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
