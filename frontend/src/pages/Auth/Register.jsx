@@ -1,196 +1,184 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import Loader from "../../components/Loader";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useRegisterMutation } from "@redux/api/usersApiSlice";
-import { setCredentials } from "../../redux/features/auth/authSlice";
-import { toast, ToastContainer } from "react-toastify";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import icons
+import { toast } from "react-toastify";
+import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock } from "react-icons/fa";
 
 const Register = () => {
   const [username, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State to toggle confirm password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const [register, { isLoading }] = useRegisterMutation();
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-    // Email regex pattern for basic validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // Input field validation
-    if (!username) {
-      toast.error("Username is required", { autoClose: 2000 });
-      return;
-    }
-    if (!email) {
-      toast.error("Email is required", { autoClose: 2000 });
-      return;
-    }
-    if (!emailPattern.test(email)) {
-      toast.error("Please enter a valid email address", { autoClose: 2000 });
-      return;
-    }
-    if (!password) {
-      toast.error("Password is required", { autoClose: 3000 });
-      return;
-    }
-    if (!confirmPassword) {
-      toast.error("Please confirm your password", { autoClose: 2000 });
-      return;
-    }
-
-    // Password length validation
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters", {
-        autoClose: 3000,
-      });
-      return;
-    }
-
-    // Password matching validation
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match", { autoClose: 2000 });
-      return;
-    }
+    if (!username.trim()) return toast.error("Username is required");
+    if (!email.trim()) return toast.error("Email is required");
+    if (!emailPattern.test(email)) return toast.error("Enter a valid email");
+    if (password.length < 8) return toast.error("Password must be 8+ characters");
+    if (password !== confirmPassword) return toast.error("Passwords do not match");
 
     try {
-      const res = await register({ username, email, password }).unwrap();
-      dispatch(setCredentials({ ...res }));
-      toast.success("User successfully registered", { autoClose: 2000 });
-      navigate("/login");
+      await register({ username, email, password }).unwrap();
+      toast.success("Registration successful! Check email for OTP.");
+      navigate("/verify-otp", { state: { email } });
     } catch (err) {
-      // console.log(err);
-      toast.error(
-        err.data.message || "Registration failed. Please try again.",
-        { autoClose: 2000 }
-      );
+      toast.error(err?.data?.message || err?.error || "Registration failed");
     }
   };
 
   return (
-    <section className="bg-[#F3F6F9] h-[100vh] flex items-center justify-center w-full">
-      <ToastContainer
-        position="top-center"
-        closeOnClick
-        pauseOnHover
-        theme="dark"
-      />
-      <div className="flex justify-center items-center flex-col w-full px-4 mx-auto ">
-        <div className="w-full bg-[#FFFFFF] rounded-md md:w-[500px] border border-gray-300 shadow-md">
-          <div className="p-6 space-y-2 border  rounded-md">
-            <h1 className="text-[24px] font-figtree font-bold text-center text-[#020101]">
-              Sign up
-            </h1>
-            <p className="text-[14px] font-figtree font-normal text-center text-[#242424] mt-5 pb-3">
-              Create an Account
-            </p>
-            <form onSubmit={submitHandler} className="space-y-2" action="#">
-              <div className="pb-4">
-                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
-                  Your name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  value={username}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your Name"
-                  className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
-                  required
-                />
-              </div>
-              <div className="pb-4">
-                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
-                  Your email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="example@gmail.com"
-                  className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
-                  required
-                />
-              </div>
-              <div className="pb-4">
-                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
-                  Password
+    <section className="min-h-screen w-full flex items-center justify-center bg-[#F8FAFC] px-3 pt-24  font-figtree">
+      {/* Background Decor */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-50 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-50 blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-[480px] animate-in fade-in zoom-in duration-500">
+        <div className="bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden">
+          <div className="p-8 md:p-10">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
+                Create Account
+              </h1>
+              <p className="text-gray-500 text-sm font-medium">
+                Join our community and start shopping
+              </p>
+            </div>
+
+            <form onSubmit={submitHandler} className="space-y-5">
+              {/* Name Input */}
+              <div className="group">
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
+                  Full Name
                 </label>
                 <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#007EFC] transition-colors">
+                    <FaUser size={14} />
+                  </span>
                   <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    id="password"
-                    placeholder="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
-                    required
+                    type="text"
+                    value={username}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Username"
+                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm focus:bg-white focus:border-[#007EFC] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-200"
                   />
-                  <div
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#000000]"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FaEyeSlash /> : <FaEye />}
-                  </div>
-                </div>
-              </div>
-              <div className="pb-4">
-                <label className="block mb-2 text-[12px] font-figtree font-bold text-[#212B36] uppercase">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    id="confirmPassword"
-                    placeholder="confirm password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="border border-gray-300 rounded-md py-3 w-full px-3 text-[16px] font-figtree font-normal text-[#212B36] bg-white"
-                    required
-                  />
-                  <div
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-[#000000]"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  </div>
                 </div>
               </div>
 
+              {/* Email Input */}
+              <div className="group">
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#007EFC] transition-colors">
+                    <FaEnvelope size={14} />
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="arixgear@example.com"
+                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm focus:bg-white focus:border-[#007EFC] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="group">
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#007EFC] transition-colors">
+                    <FaLock size={14} />
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm focus:bg-white focus:border-[#007EFC] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="group">
+                <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-400 group-focus-within:text-[#007EFC] transition-colors">
+                    <FaLock size={14} />
+                  </span>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 text-sm focus:bg-white focus:border-[#007EFC] focus:ring-[3px] focus:ring-blue-100 outline-none transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
               <button
                 type="submit"
-                className="w-full text-white font-figtree font-bold text-[16px] outline-none rounded-[4px] px-5 py-2.5 bg-[#007EFC] hover:bg-blue-600 transition-all duration-300"
+                disabled={isLoading}
+                className="w-full bg-[#007EFC] text-white font-bold py-4 rounded-xl shadow-[0_4px_15px_rgba(0,126,252,0.25)] hover:bg-[#006ee0] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
               >
-                {isLoading ? "Registering..." : "Register"}
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Create Account"
+                )}
               </button>
             </form>
-            <div className="pt-6 flex items-center justify-center gap-2">
-              <h6 className="text-[14px] font-figtree font-semibold text-[#212B36]">
+
+            {/* Footer Link */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm font-medium">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="text-[#007EFC] text-[14px] font-figtree font-semibold"
+                  className="text-[#007EFC] font-bold hover:underline underline-offset-4"
                 >
-                  Login
+                  Sign in
                 </Link>
-              </h6>
+              </p>
             </div>
           </div>
         </div>
+        
+        {/* Helper Footer */}
+        <p className="text-center text-gray-400 text-xs mt-6 px-4">
+          By signing up, you agree to our Terms of Service and Privacy Policy.
+        </p>
       </div>
     </section>
   );

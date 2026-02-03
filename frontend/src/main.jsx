@@ -1,18 +1,22 @@
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-unused-vars */
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
-
 import { Route, RouterProvider, createRoutesFromElements } from "react-router";
 import { createBrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
 import Loader from "./components/Loader";
-// import About from "./pages/About";
-// import Contact from "./pages/Contact";
+
+
+
+
 
 // Lazy Loading Components
 const About = lazy(() => import("./pages/About"));
+const VerifyOtp = lazy (() => import("./components/VerifyOtp"))
 const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
@@ -35,6 +39,9 @@ const Order = lazy(() => import("./pages/Orders/Order"));
 const UserOrder = lazy(() => import("./pages/User/UserOrder"));
 const OrderList = lazy(() => import("./pages/Admin/OrderList"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
+const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword"));
+const VerifyResetOtp = lazy (() => import("./pages/Auth/VerifyResetOtp"))
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -55,6 +62,40 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
+      <Route
+        path="/verify-otp"
+        element={
+          <Suspense fallback={<Loader />}>
+            <VerifyOtp />
+          </Suspense>
+        }
+      />
+      <Route
+  path="/forgot-password"
+  element={
+    <Suspense fallback={<Loader />}>
+      <ForgotPassword />
+    </Suspense>
+  }
+/>
+
+<Route
+  path="/verify-reset-otp"
+  element={
+    <Suspense fallback={<Loader />}>
+      <VerifyResetOtp />
+    </Suspense>
+  }
+/>
+
+<Route
+  path="/reset-password" 
+  element={
+    <Suspense fallback={<Loader />}>
+      <ResetPassword />
+    </Suspense>
+  }
+/>
       <Route
         index={true}
         path="/"

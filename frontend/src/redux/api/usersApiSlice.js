@@ -17,6 +17,47 @@ export const userApiSlice = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
+
+    verifyEmail: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_URL}/verify-email`, // আপনার ব্যাকেন্ড এন্ডপয়েন্ট
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    resendOtp: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_URL}/resend-otp`,
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    forgotPassword: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_URL}/forgot-password`,
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    verifyResetOtp: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_URL}/verify-reset-otp`,
+        method: "POST",
+        body: data,
+      }),
+    }),
+
+    resetPassword: builder.mutation({
+      query: (data) => ({
+        url: `${USERS_URL}/reset-password`, // বাড়তি ব্র্যাকেটটি সরিয়ে দেওয়া হয়েছে
+        method: "PUT",
+        body: data,
+      }),
+    }),
+
     profile: builder.mutation({
       query: (data) => ({
         url: `${USERS_URL}/profile`,
@@ -70,4 +111,9 @@ export const {
   useDeleteUserMutation,
   useGetUserDetailsQuery,
   useUpdateUserMutation,
+  useVerifyEmailMutation,
+  useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+  useVerifyResetOtpMutation,
 } = userApiSlice;

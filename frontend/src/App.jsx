@@ -1,6 +1,7 @@
+
 import { Outlet, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css"; // নিশ্চিত করুন এই CSS ইমপোর্ট আছে
 import Navigation from "./pages/Auth/Navigation";
 import Loader from "./components/Loader";
 import { useEffect, useState } from "react";
@@ -9,15 +10,12 @@ import ServiceTag from "./components/ServiceTag";
 
 function App() {
   const [loading, setLoading] = useState(true);
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
 
-  useEffect(() => {
-    if (location.pathname !== "/") {
-    }
-  }, [location.pathname]);
-
+  // ১. Empty Block Statement সমাধান করা হয়েছে (অপ্রয়োজনীয় useEffect সরিয়ে ফেলা হয়েছে)
+  // যদি location change এ বিশেষ কিছু করার না থাকে, তবে এই ব্লকটি দরকার নেই।
+  
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -38,14 +36,6 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <Loader />
-      </div>
-    );
-  }
-
   const shouldShowExtras = ![
     "/login",
     "/register",
@@ -55,17 +45,37 @@ function App() {
     "/admin/productlist",
     "/admin/allproductslist",
     "/admin/orderlist",
-    "/product/update/:_id",
+    "/verify-otp", // এটিও লিস্টে যোগ করতে পারেন যদি এখানে ফুটার না চান
   ].includes(location.pathname);
 
   return (
-    <div>
-      <ToastContainer />
-      <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      <Outlet />
-      {shouldShowExtras && <ServiceTag />}
-      {shouldShowExtras && <Footer />}
-    </div>
+    <>
+      {/* ২. ToastContainer কে Loader এর বাইরে রাখা হয়েছে যাতে এটি সবসময় কাজ করে */}
+      {/* zIndex যোগ করা হয়েছে যাতে এটি সবকিছুর উপরে থাকে */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="dark"
+        pauseOnHover
+        closeOnClick
+        style={{ zIndex: 99999 }} 
+      />
+
+      {loading ? (
+        <div className="flex items-center justify-center h-screen">
+          <Loader />
+        </div>
+      ) : (
+        <div className="relative min-h-screen">
+          <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+          <main>
+            <Outlet />
+          </main>
+          {shouldShowExtras && <ServiceTag />}
+          {shouldShowExtras && <Footer />}
+        </div>
+      )}
+    </>
   );
 }
 
