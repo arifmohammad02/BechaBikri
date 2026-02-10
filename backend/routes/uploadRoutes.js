@@ -22,11 +22,12 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-router.post("/", upload.single("image"), (req, res) => {
-  if (req.file) {
+router.post("/", upload.array("image", 5), (req, res) => {
+  if (req.files && req.files.length > 0) {
+    const urls = req.files.map((file) => file.path);
     res.status(200).send({
       message: "Image uploaded successfully",
-      image: req.file.path, // Cloudinary URL
+      images: urls, // Cloudinary URL
     });
   } else {
     res.status(400).send({ message: "No image file provided" });

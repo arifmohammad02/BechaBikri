@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import AdminMenu from "./AdminMenu";
 import { useNavigate, useParams } from "react-router-dom";
@@ -9,71 +10,50 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
-import CustomReactQuill from "../../components/CustomReactQuill"; // Import the custom wrapper
+import { FaTrash, FaCloudUploadAlt, FaSave, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import CustomReactQuill from "../../components/CustomReactQuill";
 
 const ProductUpdate = () => {
   const params = useParams();
   const navigate = useNavigate();
 
-  // Fetch product data by ID
   const { data: productData, refetch } = useGetProductByIdQuery(params._id);
-
-  // Fetch categories
   const { data: categories = [] } = useFetchCategoriesQuery();
 
-  // State for form fields
-  const [image, setImage] = useState(productData?.image || "");
-  const [name, setName] = useState(productData?.name || "");
-  const [description, setDescription] = useState(productData?.description || "");
-  const [price, setPrice] = useState(productData?.price || "");
-  const [category, setCategory] = useState(productData?.category?._id || "");
-  const [quantity, setQuantity] = useState(productData?.quantity || "");
-  const [brand, setBrand] = useState(productData?.brand || "");
-  const [stock, setStock] = useState(productData?.countInStock || 0);
-  const [discountPercentage, setDiscountPercentage] = useState(
-    productData?.discountPercentage || 0
-  );
-  const [isFeatured, setIsFeatured] = useState(productData?.isFeatured || false);
-  const [offer, setOffer] = useState(productData?.offer || "");
-  const [warranty, setWarranty] = useState(productData?.warranty || "");
-  const [discountedAmount, setDiscountedAmount] = useState(
-    productData?.discountedAmount || 0
-  );
+  const [images, setImages] = useState([]);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [brand, setBrand] = useState("");
+  const [stock, setStock] = useState(0);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [offer, setOffer] = useState("");
+  const [warranty, setWarranty] = useState("");
+  const [discountedAmount, setDiscountedAmount] = useState(0);
 
-  // Loading states
   const [uploadLoading, setUploadLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // RTK Query mutations
   const [uploadProductImage] = useUploadProductImageMutation();
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
 
-  // React Quill configuration
   const modules = {
     toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      ["bold", "italic", "underline", "strike"],
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline"],
       [{ list: "ordered" }, { list: "bullet" }],
       ["link", "image"],
       ["clean"],
     ],
   };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "link",
-    "image",
-  ];
+  const formats = ["header", "bold", "italic", "underline", "list", "bullet", "link", "image"];
 
-  // Sync state with fetched product data
   useEffect(() => {
     if (productData && productData._id) {
       setName(productData.name);
@@ -82,7 +62,7 @@ const ProductUpdate = () => {
       setCategory(productData.category?._id);
       setQuantity(productData.quantity);
       setBrand(productData.brand);
-      setImage(productData.image);
+      setImages(productData.images || []);
       setDiscountPercentage(productData.discountPercentage);
       setIsFeatured(productData.isFeatured);
       setOffer(productData.offer);
@@ -92,64 +72,38 @@ const ProductUpdate = () => {
     }
   }, [productData]);
 
-  // Handle image upload
+  const moveImage = (index, direction) => {
+    const updatedImages = [...images];
+    const newIndex = direction === "left" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= images.length) return;
+    [updatedImages[index], updatedImages[newIndex]] = [updatedImages[newIndex], updatedImages[index]];
+    setImages(updatedImages);
+  };
+
   const uploadFileHandler = async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
     const formData = new FormData();
-    formData.append("image", e.target.files[0]);
+    for (let i = 0; i < files.length; i++) formData.append("image", files[i]);
+
     setUploadLoading(true);
     try {
       const res = await uploadProductImage(formData).unwrap();
-      toast.success("Image uploaded successfully");
-      setImage(res.image);
+      setImages((prev) => [...prev, ...res.images]);
+      toast.success("Images Sync Complete");
     } catch (err) {
-      toast.error("Image upload failed");
+      toast.error("Upload Error");
     } finally {
       setUploadLoading(false);
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Input validation
-    if (!image) {
-      toast.error("Please upload an image.");
-      return;
-    }
-    if (!name || name.trim().length < 3) {
-      toast.error("Name should be at least 3 characters long.");
-      return;
-    }
-    if (!description || description.trim().length < 10) {
-      toast.error("Description should be at least 10 characters long.");
-      return;
-    }
-    if (!price || isNaN(price) || Number(price) <= 0) {
-      toast.error("Please enter a valid price.");
-      return;
-    }
-    if (!category) {
-      toast.error("Please select a category.");
-      return;
-    }
-    if (!quantity || isNaN(quantity) || Number(quantity) <= 0) {
-      toast.error("Please enter a valid quantity.");
-      return;
-    }
-    if (!brand || brand.trim().length < 2) {
-      toast.error("Brand should be at least 2 characters long.");
-      return;
-    }
-    if (!stock || isNaN(stock) || Number(stock) < 0) {
-      toast.error("Please enter a valid stock count.");
-      return;
-    }
-
     setUpdateLoading(true);
     try {
       const formData = new FormData();
-      formData.append("image", image);
+      formData.append("images", JSON.stringify(images));
       formData.append("name", name);
       formData.append("description", description);
       formData.append("price", price);
@@ -164,283 +118,155 @@ const ProductUpdate = () => {
       formData.append("discountedAmount", discountedAmount);
 
       const data = await updateProduct({ productId: params._id, formData }).unwrap();
-
-      if (data?.error) {
-        toast.error(data.error);
-      } else {
-        toast.success(`Product successfully updated`);
-        await refetch(); // Refetch the product data
+      if (data?.error) toast.error(data.error);
+      else {
+        toast.success(`DATA_UPDATED_SUCCESSFULLY`);
+        refetch();
         navigate("/admin/allproductslist");
       }
     } catch (err) {
-      toast.error("Product update failed. Try again.");
+      toast.error("UPDATE_FAILED");
     } finally {
       setUpdateLoading(false);
     }
   };
 
-  // Handle product deletion
   const handleDelete = async () => {
-    const answer = window.confirm("Are you sure you want to delete this product?");
-    if (!answer) return;
-
+    if (!window.confirm("FATAL_ERROR: Permanent Deletion?")) return;
     setDeleteLoading(true);
     try {
-      const { data } = await deleteProduct(params._id).unwrap();
-      toast.success(`"${data.name}" is deleted`);
+      await deleteProduct(params._id).unwrap();
+      toast.success("RECORD_DELETED");
       navigate("/admin/allproductslist");
     } catch (err) {
-      toast.error("Delete failed. Try again.");
+      toast.error("DELETE_FAILED");
     } finally {
       setDeleteLoading(false);
     }
   };
 
-
   return (
-    <div className={`py-10`}>
-      <div className="min-h-screen backdrop:flex flex-col py-10 mt-10">
-        <div className="flex flex-col gap-8 w-full px-4">
-          {/* Admin Menu */}
-          <AdminMenu />
+    <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
+      <div className="flex flex-col 2xl:flex-row">
+        <AdminMenu />
 
-          {/* Product Update/Delete Section */}
-          <div className="w-full bg-white p-5 border-2 2xl:container 2xl:mx-auto">
-            <h1 className="text-[22px] font-bold font-figtree text-black mb-5 border-b pb-3">
-              Update / Delete Product
-            </h1>
-
-            {/* Product Image */}
-            {image && (
-              <div className="text-center mb-6">
-                <img
-                  src={image}
-                  alt="product"
-                  className="mx-auto max-h-52 w-auto rounded-lg border shadow-md hover:shadow-lg transition duration-300"
-                />
-              </div>
-            )}
-
-            {/* Image Upload */}
-            <div className="mb-6">
-              <label className="block w-full text-center text-gray-700 font-bold text-[18px] font-figtree bg-gray-50 border-2 border-dashed border-gray-400 cursor-pointer py-5 rounded-sm">
-                {uploadLoading ? "Uploading..." : "Upload Image"}
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={uploadFileHandler}
-                  className="hidden"
-                />
-              </label>
+        <div className="flex-1 px-4 lg:px-12 pb-20">
+          <div className="max-w-[1400px] mx-auto">
+            {/* Page Header */}
+            <div className="mb-10 border-l-4 border-red-600 pl-6 py-2">
+              <h1 className="text-3xl font-black text-black tracking-tighter uppercase italic">
+                Product / <span className="text-red-600">Edit_Core</span>
+              </h1>
+              <p className="text-[10px] text-gray-500 font-bold tracking-[0.4em] uppercase mt-1">
+                Security Level: Admin | ID: {params._id}
+              </p>
             </div>
 
-            {/* Product Information */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-2 p-3 border rounded-sm text-gray-800 font-figtree font-normal text-[16px] focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="price"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Price
-                </label>
-                <input
-                  type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  min="0"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="quantity"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  min="0"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="brand"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Brand
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="stock"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Count In Stock
-                </label>
-                <input
-                  type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={stock}
-                  onChange={(e) => setStock(e.target.value)}
-                  min="0"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="category"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Category
-                </label>
-                <select
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  onChange={(e) => setCategory(e.target.value)}
-                  value={category}
-                >
-                  <option value="">Choose Category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                    </option>
+            <div className="bg-white border border-gray-100 shadow-2xl p-6 lg:p-10 relative">
+              {/* Image Matrix */}
+              <div className="mb-10">
+                <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-4">Visual_Assets</p>
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 border border-dashed border-gray-200 min-h-[150px] items-center justify-center">
+                  {images.map((img, index) => (
+                    <div key={index} className="relative group border-2 border-white shadow-lg overflow-hidden w-28 h-28 bg-white transition-transform duration-300 hover:scale-105">
+                      <img src={img} alt="product" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => moveImage(index, "left")} disabled={index === 0} className="text-white hover:text-red-500 disabled:opacity-30"><FaArrowLeft size={14}/></button>
+                          <button type="button" onClick={() => moveImage(index, "right")} disabled={index === images.length - 1} className="text-white hover:text-red-500 disabled:opacity-30"><FaArrowRight size={14}/></button>
+                        </div>
+                        <button type="button" onClick={() => setImages(images.filter((_, i) => i !== index))} className="text-red-500 hover:scale-125 transition-transform"><FaTrash size={16}/></button>
+                      </div>
+                    </div>
                   ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="discountPercentage"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Discount Percentage
-                </label>
-                <input
-                  type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={discountPercentage}
-                  onChange={(e) => setDiscountPercentage(e.target.value)}
-                  min="0"
-                  max="100"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="isFeatured"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Featured
-                </label>
-                <input
-                  type="checkbox"
-                  className="px-4 py-2 flex justify-start mt-2"
-                  checked={isFeatured}
-                  onChange={(e) => setIsFeatured(e.target.checked)}
-                />
+                  <label className="w-28 h-28 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-600 hover:bg-red-50 transition-all text-gray-400 hover:text-red-600 group">
+                    <FaCloudUploadAlt size={24} className="group-hover:bounce" />
+                    <span className="text-[8px] font-black uppercase mt-2 tracking-tighter text-center px-1">Add_New_Images</span>
+                    <input type="file" accept="image/*" multiple onChange={uploadFileHandler} className="hidden" />
+                  </label>
+                </div>
+                {uploadLoading && <div className="h-1 bg-red-600 animate-pulse mt-2" />}
               </div>
 
-              <div>
-                <label
-                  htmlFor="offer"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Offer
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={offer}
-                  onChange={(e) => setOffer(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="warranty"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Warranty
-                </label>
-                <input
-                  type="text"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={warranty}
-                  onChange={(e) => setWarranty(e.target.value)}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="discountedAmount"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Discounted Amount
-                </label>
-                <input
-                  type="number"
-                  className="w-full mt-2 p-3 border text-gray-800 font-figtree font-normal text-[16px] rounded-sm focus:outline-none focus:ring-2 focus:ring-pink-500 bg-gray-50 transition  bg-transparent"
-                  value={discountedAmount}
-                  onChange={(e) => setDiscountedAmount(e.target.value)}
-                  min="0"
-                />
-              </div>
-            </div>
+              {/* Data Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+                {[
+                  { label: "PRODUCT_NAME", val: name, set: setName, type: "text" },
+                  { label: "UNIT_PRICE", val: price, set: setPrice, type: "number" },
+                  { label: "QTY_AVAIL", val: quantity, set: setQuantity, type: "number" },
+                  { label: "BRAND_NAME", val: brand, set: setBrand, type: "text" },
+                  { label: "STOCK_COUNT", val: stock, set: setStock, type: "number" },
+                  { label: "OFFER_TEXT", val: offer, set: setOffer, type: "text" },
+                  { label: "WARRANTY_INFO", val: warranty, set: setWarranty, type: "text" },
+                  { label: "DISCOUNT_%", val: discountPercentage, set: setDiscountPercentage, type: "number" },
+                  { label: "DISCOUNT_AMT", val: discountedAmount, set: setDiscountedAmount, type: "number" },
+                ].map((field, idx) => (
+                  <div key={idx} className="group relative">
+                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block transition-colors group-focus-within:text-red-600">
+                      {field.label}
+                    </label>
+                    <input
+                      type={field.type}
+                      value={field.val}
+                      onChange={(e) => field.set(e.target.value)}
+                      className="w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all duration-300"
+                    />
+                  </div>
+                ))}
 
-            <div className="mb-6">
-              <div className="mb-6">
-                <label
-                  htmlFor="description"
-                  className="text-gray-700 font-figtree font-medium text-[18px]"
-                >
-                  Description
-                </label>
-                {/* Replace textarea with React Quill */}
-                <CustomReactQuill
-                  theme="snow"
-                  value={description}
-                  onChange={setDescription}
-                  modules={modules}
-                  formats={formats}
-                  placeholder="Product Description"
-                  className="bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                />
-              </div>
-            </div>
+                <div className="group relative">
+                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">CATEGORY_REF</label>
+                  <select
+                    className="w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer"
+                    onChange={(e) => setCategory(e.target.value)}
+                    value={category}
+                  >
+                    <option value="">SELECT_CATEGORY</option>
+                    {categories.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  </select>
+                </div>
 
-            {/* Buttons */}
-            <div className="flex justify-between items-center gap-4">
-              <button
-                className="text-white bg-black/90 hover:bg-black px-3 py-2 rounded-md font-figtree font-medium text-[16px]"
-                onClick={handleSubmit}
-              >
-                {updateLoading ? "Updating..." : "Update Product"}
-              </button>
-              <button
-                className="text-white bg-red-500/90 hover:bg-red-500 px-3 py-2 rounded-md font-figtree font-medium text-[16px]"
-                onClick={handleDelete}
-              >
-                {deleteLoading ? "Deleting..." : "Delete Product"}
-              </button>
+                <div className="flex items-center gap-4 pt-6">
+                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase">FEATURE_STATUS</label>
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="w-5 h-5 accent-red-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Description Editor */}
+              <div className="mb-12">
+                <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">Product_Specs_Description</label>
+                <div className="border border-gray-100 hover:border-red-600 transition-colors">
+                  <CustomReactQuill
+                    theme="snow"
+                    value={description}
+                    onChange={setDescription}
+                    modules={modules}
+                    formats={formats}
+                    className="min-h-[250px] font-mono text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row justify-end gap-4 border-t border-gray-100 pt-10">
+                <button
+                  onClick={handleDelete}
+                  className="px-10 py-4 bg-white border-2 border-black text-black font-black uppercase tracking-[0.2em] text-[12px] hover:bg-red-600 hover:border-red-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <FaTrash size={14} /> {deleteLoading ? "Purging..." : "Delete_System_Record"}
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  className="px-10 py-4 bg-black text-white font-black uppercase tracking-[0.2em] text-[12px] hover:bg-red-600 shadow-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <FaSave size={14} /> {updateLoading ? "Syncing..." : "Push_Updates"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

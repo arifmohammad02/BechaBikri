@@ -7,6 +7,8 @@ import {
   getUserOrders,
   countTotalOrders,
   calculateTotalSales,
+  getSalesSummaryByStatus,
+  getDeliverySummary,
   calcualteTotalSalesByDate,
   findOrderById,
   markOrderAsPaid,
@@ -26,6 +28,12 @@ router.route("/mine").get(authenticate, getUserOrders);
 router.route("/total-orders").get(countTotalOrders);
 router.route("/total-orders-by-date").get(countTotalOrdersByDate);
 router.route("/total-sales").get(calculateTotalSales);
+router
+  .route("/sales-summary")
+  .get(authenticate, authorizeAdmin, getSalesSummaryByStatus);
+router
+    .route("/delivery-summary")
+    .get(authenticate, authorizeAdmin, getDeliverySummary);
 router.route("/total-sales-by-date").get(calcualteTotalSalesByDate);
 router.route("/:id").get(authenticate, findOrderById);
 router.route("/:id/pay").put(authenticate, markOrderAsPaid);

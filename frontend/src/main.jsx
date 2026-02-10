@@ -9,6 +9,7 @@ import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
 import Loader from "./components/Loader";
+import AllNotifications from "./components/AllNotifications";
 
 
 
@@ -93,6 +94,15 @@ const router = createBrowserRouter(
   element={
     <Suspense fallback={<Loader />}>
       <ResetPassword />
+    </Suspense>
+  }
+/>
+
+<Route
+  path="/all-notifications" 
+  element={
+    <Suspense fallback={<Loader />}>
+      <AllNotifications />
     </Suspense>
   }
 />

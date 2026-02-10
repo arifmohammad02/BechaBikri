@@ -1,5 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useGetProductsQuery } from "@redux/api/productApiSlice";
+import { motion } from "framer-motion"; // অ্যানিমেশনের জন্য
 import Loader from "../components/Loader";
 import Message from "../components/Message";
 import Header from "../components/Header";
@@ -11,51 +12,87 @@ const Home = () => {
   const { data, isLoading, isError } = useGetProductsQuery({ keyword });
 
   return (
-    <div className="bg-white min-h-screen h-full px-3 md:px-0">
-      <div className="">
-        {!keyword ? <Header /> : null}
-        <div className="container mx-auto py-4 pt-6">
-          {isLoading ? (
-            <Loader />
-          ) : isError ? (
-            <Message variant="danger">
-              {isError?.data.message || isError.error}
-            </Message>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-5 mt-8">
-                <div className="text-center w-full">
-                  <h1 className="text-[24px] md:text-[48px] font-figtree font-bold text-center text-[#212B36]">
-                    Special Products
-                  </h1>
-                  <p className="text-[14px] md:text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
-                    Lorem ipsum dolor, sit amet consectetur adipisicing elit.
-                    Repellendus, distinctio.
-                  </p>
-                </div>
-              </div>
+    <div className="bg-white min-h-screen">
+      {!keyword ? <Header /> : null}
 
-              <div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-5 w-full">
-                  {data.products.map((product) => (
-                    <div key={product._id}>
-                      <Product product={product} />
-                    </div>
-                  ))}
+      <div className="container mx-auto px-4 py-16">
+        {isLoading ? (
+          <Loader />
+        ) : isError ? (
+          <Message variant="danger">
+            {isError?.data?.message || isError.error}
+          </Message>
+        ) : (
+          <>
+            {/* 🟢 Section Header - লোগোর স্টাইলে সাজানো */}
+            <div className="flex flex-col items-center mb-16">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                className="text-center"
+              >
+                <span className="text-blue-600 font-mono font-bold tracking-[0.4em] uppercase text-xs">
+                  Exclusive Collection
+                </span>
+                <h1 className="text-3xl md:text-5xl font-mono font-black text-[#212B36] mt-2 mb-4 tracking-tighter">
+                  Special <span className="text-[#B88E2F]">Products</span>
+                </h1>
+                
+                {/* লোগোর সেই সিগনেচার আন্ডারলাইন */}
+                <div className="flex justify-center">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    whileInView={{ width: "80px" }}
+                    transition={{ duration: 1 }}
+                    className="h-[3px] bg-gradient-to-r from-blue-600 to-[#B88E2F] rounded-full"
+                  />
                 </div>
-                <Link
-                  to="/shop"
-                  className="flex justify-center items-center mb-5"
+                
+                <p className="max-w-xl mx-auto text-gray-500 font-figtree font-normal mt-6 leading-relaxed">
+                  Discover the next generation of tech gadgets at AriX GeaR. 
+                  Where premium quality meets cutting-edge innovation.
+                </p>
+              </motion.div>
+            </div>
+
+            {/* 🟢 Product Grid - স্মুথ অ্যাপেয়ারেন্স */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 1 }}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8"
+            >
+              {data.products.map((product, index) => (
+                <motion.div 
+                  key={product._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  <button className="bg-blue-600 hover:bg-blue-600/90 font-serif font-medium text-lg rounded-md py-2 px-4 text-white mt-5 flex items-center">
-                    View All
-                    <FaLongArrowAltRight className="ml-2" />
-                  </button>
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
+                  <Product product={product} />
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* 🟢 View All Button - সার্ভিস ট্যাগের ড্যাশড স্টাইল */}
+            <div className="flex justify-center mt-20">
+              <Link to="/shop">
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="group relative flex items-center gap-3 bg-[#212B36] text-white px-8 py-4 rounded-xl font-mono font-bold uppercase tracking-widest text-sm overflow-hidden transition-all"
+                >
+                  {/* হোভার করলে নীল রঙের একটা গ্লো আসবে */}
+                  <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  <span className="relative z-10">View All Gadgets</span>
+                  <FaLongArrowAltRight className="relative z-10 group-hover:translate-x-2 transition-transform duration-300" />
+                </motion.button>
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

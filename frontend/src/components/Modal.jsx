@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 const Modal = ({ isOpen, onClose, children }) => {
     return (
       <div className="">

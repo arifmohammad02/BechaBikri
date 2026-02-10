@@ -1,79 +1,103 @@
+/* eslint-disable react/prop-types */
 import { Link } from "react-router-dom";
-import React, { useState } from "react";
 import HeartIcon from "./HeartIcon";
-import { FaArrowRight } from "react-icons/fa6";
-// import AddToCartButton from "../../components/AddToCartButton";
+import { FaArrowRight, FaBagShopping, FaEye } from "react-icons/fa6";
+import { motion } from "framer-motion";
 
 const SmallProduct = ({ product }) => {
   const truncateName = (name) => {
-    const words = name.split(" ");
-    if (words.length > 6) {
-      return words.slice(0, 6).join(" ") + "...";
-    }
-    return name;
+    return name.length > 25 ? name.substring(0, 25) + "..." : name;
   };
 
-  // Calculate discounted price and discount amount
+  const displayImage =
+    Array.isArray(product?.images) && product.images.length > 0
+      ? product.images[0]
+      : product?.image || "/placeholder.jpg";
+
   const discountedPrice =
     product.discountPercentage > 0
       ? product.price - (product.price * product.discountPercentage) / 100
       : product.price;
 
-  return (
-    <div className="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow">
-      <Link to={`/product/${product._id}`}>
-        <div className="relative">
-          <img className="cursor-pointer w-full rounded-md object-cover xs:h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 p-5" src={product.image} alt={product.name} />
+  const productPath = `/product/${product.slug || product._id}`;
 
-          {/* Discount Badge */}
+  return (
+    <div className="group relative w-full bg-white rounded-[1.5rem] p-3 border border-gray-100 hover:border-blue-100 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] transition-all duration-500 ease-in-out">
+      
+      {/* 🟢 ১. ইমেজ কন্টেইনার (বড় কার্ডের মতো সেন্টারড আইকন সহ) */}
+      <div className="relative aspect-square overflow-hidden rounded-[1.2rem] bg-[#fcfcfc]">
+        <Link to={productPath}>
+          <motion.img
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.6 }}
+            className="w-full h-full object-contain p-4"
+            src={displayImage}
+            alt={product.name}
+          />
+        </Link>
+
+        {/* ব্যাজ */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.discountPercentage > 0 && (
-            <span className="absolute top-2 left-2 bg-[#B88E2F] font-poppins text-white text-xs font-semibold px-2 py-1 rounded">
-              -{product.discountPercentage}% Off
+            <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-md shadow-lg uppercase">
+              {product.discountPercentage}% OFF
             </span>
           )}
         </div>
-      </Link>
 
-      {/* Heart Icon */}
-      <div className="flex items-center justify-center">
-        <HeartIcon product={product} />
-      </div>
-
-      <div className="px-5 pb-5">
-        <div className="flex items-center justify-center gap-1">
-          <Link to={`/product/${product._id}`}>
-            <h5 className="text-[16px] font-figtree font-semibold tracking-tight text-[#242424] text-center text-ellipsis overflow-hidden">
-              {truncateName(product.name)}
-            </h5>
+        {/* 🟢 মাঝখানের আইকনগুলো (বড় কার্ডের মতো ডিজাইন) */}
+        <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+          <Link to={productPath} className="p-2.5 bg-white/90 backdrop-blur-md rounded-lg text-gray-800 hover:bg-blue-600 hover:text-white transition-all shadow-lg">
+            <FaEye size={14} />
           </Link>
+          <button className="p-2.5 bg-white/90 backdrop-blur-md rounded-lg text-gray-800 hover:bg-[#B88E2F] hover:text-white transition-all shadow-lg">
+            <FaBagShopping size={14} />
+          </button>
         </div>
 
-        <div className="flex items-center flex-col">
-          {/* Discounted Price and Original Price */}
-          <div className="flex items-center gap-1">
-            <span className="text-sm md:text-lg font-poppins font-semibold text-[#3A3A3A]">
-              ₹{discountedPrice.toFixed(2)}
+        {/* Heart Icon (Top Right) */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 translate-y-[-5px] group-hover:translate-y-0 transition-all duration-300">
+          <HeartIcon product={product} />
+        </div>
+      </div>
+
+      {/* 🟢 ২. টেক্সট কন্টেন্ট (সেন্টারড ডিজাইন) */}
+      <div className="px-1 py-4 text-center">
+        <span className="text-[8px] font-black text-blue-600/60 uppercase tracking-[0.3em] font-mono">
+          {product?.brand || "AriX GeaR"}
+        </span>
+        
+        <Link to={productPath}>
+          <h5 className="text-[14px] font-mono font-bold text-gray-800 mt-1 hover:text-blue-600 transition-colors line-clamp-1">
+            {truncateName(product.name)}
+          </h5>
+        </Link>
+
+        {/* প্রাইস */}
+        <div className="mt-2 flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px] font-black text-gray-900">
+              ৳{Math.round(discountedPrice).toLocaleString("en-BD")}
             </span>
             {product.discountPercentage > 0 && (
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-poppins text-[#9F9F9F] line-through">
-                  ₹{product.price}
-                </span>
-              </div>
+              <span className="text-[10px] text-gray-400 line-through">
+                ৳{product.price.toLocaleString("en-BD")}
+              </span>
             )}
           </div>
+        </div>
 
-          {/* <AddToCartButton product={product} /> */}
-          <Link to={`/product/${product._id}`} className="my-3">
-            <div className="relative font-poppins inline-flex items-center justify-center w-full py-1 px-1 overflow-hidden font-medium text-[#B88E2F] transition duration-300 ease-out border-2 border-[#B88E2F] rounded-md shadow-md group">
-              <span className="absolute inset-0 flex items-center justify-center w-full h-full text-white duration-300 -translate-x-full bg-[#B88E2F] group-hover:translate-x-0 ease">
-                <FaArrowRight className="w-3 h-3 text-current" />
-              </span>
-              <span className="absolute flex items-center font-sans font-semibold justify-center w-full h-full text-[#B88E2F] transition-all duration-300 transform group-hover:translate-x-full ease text-xs">
-                View Details
-              </span>
-              <span className="relative invisible">View Details</span>
-            </div>
+        {/* 🟢 ৩. বটম অ্যাকশন (Details with Line Animation) */}
+        <div className="mt-4 pt-2 border-t border-gray-50">
+          <Link
+            to={productPath}
+            className="group/btn relative flex items-center justify-center gap-2 w-full py-1 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-blue-600 transition-all"
+          >
+            <span>Details</span>
+            <FaArrowRight className="text-[9px] group-hover/btn:translate-x-1 transition-transform" />
+            
+            {/* Signature Underline - সেন্টারে */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-[2px] w-0 bg-gradient-to-r from-blue-600 to-[#B88E2F] group-hover/btn:w-1/2 transition-all duration-500" />
           </Link>
         </div>
       </div>

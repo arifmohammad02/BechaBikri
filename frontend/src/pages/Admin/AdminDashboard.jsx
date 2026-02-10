@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import Chart from "react-apexcharts";
 import { useGetUsersQuery } from "@redux/api/usersApiSlice";
 import {
@@ -5,6 +7,8 @@ import {
   useGetTotalSalesByDateQuery,
   useGetTotalSalesQuery,
   useGetTotalOrdersByDateQuery,
+  useGetSalesSummaryByStatusQuery,
+  useGetDeliverySummaryQuery,
 } from "@redux/api/orderApiSlice";
 
 import { useState, useEffect } from "react";
@@ -13,68 +17,89 @@ import OrderList from "./OrderList";
 
 const AdminDashboard = () => {
   const { data: sales, isLoading } = useGetTotalSalesQuery();
-  const { data: customers, isLoading: loading } = useGetUsersQuery();
-  const { data: orders, isLoading: loadingTwo } = useGetTotalOrdersQuery();
+  const { data: customers } = useGetUsersQuery();
+  const { data: orders } = useGetTotalOrdersQuery();
   const { data: salesDetail } = useGetTotalSalesByDateQuery();
   const { data: ordersByDate } = useGetTotalOrdersByDateQuery();
   const { data: salesByDate } = useGetTotalSalesByDateQuery();
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split("T")[0];
+  const { data: statusSummary } = useGetSalesSummaryByStatusQuery();
+  const { data: deliverySummary } = useGetDeliverySummaryQuery();
 
-  const todayOrders =
-    ordersByDate?.find((item) => item._id === today)?.totalOrders || 0;
-  const todaySales =
-    salesByDate?.find((item) => item._id === today)?.totalSales || 0;
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
+  const todayOrders = ordersByDate?.find((item) => item._id === today)?.totalOrders || 0;
+  const todaySales = salesByDate?.find((item) => item._id === today)?.totalSales || 0;
 
+  const getStatusData = (status) => {
+    const data = statusSummary?.find((item) => item._id === status);
+    return { amount: data?.totalSales || 0, count: data?.orderCount || 0 };
+  };
+
+  const getDeliveryCount = (status) => {
+    return deliverySummary?.find((item) => item._id === status)?.count || 0;
+  };
+
+  const getDeliveryData = (status) => {
+    const data = deliverySummary?.find((item) => item._id === status);
+    return {
+      count: data?.count || 0,
+      amount: data?.totalAmount || 0, // ✅ ব্যাকএন্ড থেকে আসা টাকা
+    };
+  };
+
+  // ✅ নতুন Area Chart কনফিগারেশন (Premium Look)
   const [state, setState] = useState({
     options: {
       chart: {
-        type: "line",
+        type: "area", // এরিয়া চার্ট যা দেখতে অনেক স্মুথ
+        toolbar: { show: false },
+        dropShadow: {
+          enabled: true,
+          top: 10,
+          left: 0,
+          blur: 4,
+          color: "#6366F1",
+          opacity: 0.1,
+        },
       },
-      tooltip: {
-        theme: "dark",
+      fill: {
+        type: "gradient",
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.5,
+          opacityTo: 0,
+          stops: [0, 90, 100],
+        },
       },
-      colors: ["#00E396"],
-      dataLabels: {
-        enabled: true,
-      },
-      stroke: {
-        curve: "smooth",
-      },
-      title: {
-        text: "Sales Trend",
-        align: "left",
-        font_size: "24px",
-        font_weight: "medium",
-        font_family: "'Poppins', sans-serif",
-      },
+      colors: ["#6366F1"], // Indigo Theme
+      dataLabels: { enabled: false },
+      stroke: { curve: "smooth", width: 3 }, // মসৃণ বাঁকানো রেখা
       grid: {
-        borderColor: "#ccc",
-      },
-      markers: {
-        size: 1,
+        borderColor: "#f1f1f1",
+        strokeDashArray: 4,
+        xaxis: { lines: { show: true } },
       },
       xaxis: {
         categories: [],
-        title: {
-          text: "Date",
-        },
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { style: { colors: "#9ca3af", fontWeight: 500 } },
       },
       yaxis: {
-        title: {
-          text: "Sales",
+        labels: {
+          style: { colors: "#9ca3af", fontWeight: 500 },
+          formatter: (value) => `৳${value}`,
         },
-        min: 0,
       },
-      legend: {
-        position: "top",
-        horizontalAlign: "right",
-        floating: true,
-        offsetY: -25,
-        offsetX: -5,
+      markers: {
+        size: 5,
+        colors: ["#6366F1"],
+        strokeColors: "#fff",
+        strokeWidth: 2,
+        hover: { size: 7 },
       },
+      tooltip: { theme: "dark", x: { show: true } },
     },
-    series: [{ name: "Sales", data: [] }],
+    series: [{ name: "Revenue", data: [] }],
   });
 
   useEffect(() => {
@@ -88,117 +113,126 @@ const AdminDashboard = () => {
         ...prevState,
         options: {
           ...prevState.options,
-          xaxis: {
-            categories: formattedSalesDate.map((item) => item.x),
-          },
+          xaxis: { categories: formattedSalesDate.map((item) => item.x) },
         },
-
-        series: [
-          { name: "Sales", data: formattedSalesDate.map((item) => item.y) },
-        ],
+        series: [{ name: "Revenue", data: formattedSalesDate.map((item) => item.y) }],
       }));
     }
   }, [salesDetail]);
 
   return (
-    <div className="bg-[#FFFFFF] container mx-auto">
+    <div className="bg-[#FAFBFE] min-h-screen container mx-auto transition-all duration-500">
       <AdminMenu />
-      <section className={`py-10 mt-20 `}>
-        {/* Summary Cards */}
-        <div className="flex flex-wrap justify-center gap-6 px-3 md:px-0">
-          {/* Sales Card */}
-          <div className="relative border border-gray-200 rounded-lg p-6 bg-white shadow-sm w-64">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 bottom-2 h-20 w-1 bg-blue-500 rounded-full"></div>
-            <div className="flex flex-col items-start justify-center mt-2">
-              <p className="font-medium text-[14px] font-roboto text-[#878A99] uppercase">
-                Sales Today
-              </p>
-              <span className="font-semibold text-[22px] font-roboto text-[#0C192C]">
-                {salesByDate ? todaySales.toFixed(2) : "Loading..."}
-              </span>
+      <section className="py-10 mt-20 px-4 md:px-6">
+        
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
+          <StatCard title="Sales Today" value={todaySales} color="bg-blue-500" loading={!salesByDate} />
+          <StatCard title="Total Earnings" value={sales?.totalSales} color="bg-indigo-600" loading={isLoading} />
+          <StatCard title="Customers" value={customers?.length} color="bg-amber-400" loading={!customers} isCount />
+          <StatCard title="Orders (Today)" value={todayOrders} color="bg-emerald-500" loading={!ordersByDate} isCount />
+          <StatCard title="All Orders" value={orders?.totalOrders} color="bg-rose-500" loading={isLoading} isCount />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* Breakdowns Column */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <h2 className="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-indigo-600 rounded-full"></div> Payment Summary
+              </h2>
+              <div className="space-y-3">
+                <StatusRow label="Paid" data={getStatusData("paid")} color="text-emerald-600" bg="bg-emerald-50/50" />
+                <StatusRow label="Due (COD)" data={getStatusData("due")} color="text-blue-600" bg="bg-blue-50/50" />
+                <StatusRow label="Pending" data={getStatusData("pending")} color="text-amber-600" bg="bg-amber-50/50" />
+                <StatusRow label="Failed" data={getStatusData("failed")} color="text-rose-600" bg="bg-rose-50" />
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+             <h2 className="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-orange-500 rounded-full"></div> Logistics Breakdown
+              </h2>
+              <div className="grid grid-cols-1 gap-3"> {/* ভালো রিডাবিলিটির জন্য grid-cols-1 করা হয়েছে */}
+                <DeliveryMiniCard label="Order Placed" data={getDeliveryData("Order Placed")} color="text-gray-600" bg="bg-gray-50" />
+                <DeliveryMiniCard label="Processing" data={getDeliveryData("Processing")} color="text-blue-600" bg="bg-blue-50" />
+                <DeliveryMiniCard label="Shipped" data={getDeliveryData("Shipped")} color="text-purple-600" bg="bg-purple-50" />
+                <DeliveryMiniCard label="Out for Delivery" data={getDeliveryData("Out for Delivery")} color="text-orange-600" bg="bg-orange-50" />
+                <DeliveryMiniCard label="Delivered" data={getDeliveryData("Delivered")} color="text-emerald-600" bg="bg-emerald-50" />
+                <DeliveryMiniCard label="Cancelled" data={getDeliveryData("Cancelled")} color="text-rose-600" bg="bg-rose-50" />
+              </div>
             </div>
           </div>
 
-          <div className="relative border border-gray-200 rounded-lg p-6 bg-white shadow-sm w-64">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 bottom-2 h-20 w-1 bg-purple-400 rounded-full"></div>
-            <div className="flex flex-col items-start justify-center mt-2">
-              <p className="font-medium text-[14px] font-roboto text-[#878A99] uppercase">
-                Total Earnings
-              </p>
-              <span className="font-semibold text-[22px] font-roboto text-[#0C192C]">
-                {isLoading ? "Loading..." : sales.totalSales.toFixed(2)}
-              </span>
+          {/* Area Chart Section - Expanded */}
+          <div className="lg:col-span-3 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-bold text-gray-800">Revenue Flow</h2>
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                  <span className="w-3 h-3 bg-indigo-500 rounded-full"></span> Sales Trend
+                </span>
+              </div>
             </div>
-          </div>
-
-          {/* Customers Card */}
-          <div className="relative border border-gray-200 rounded-lg p-6 bg-white shadow-sm w-64">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 bottom-2 h-20 w-1 bg-yellow-400 rounded-full"></div>
-            <div className="flex flex-col items-start justify-center mt-2">
-              <p className="font-medium text-[14px] font-roboto text-[#878A99] uppercase">
-                Customers
-              </p>
-              <span className="font-semibold text-[22px] font-roboto text-[#0C192C]">
-                {isLoading ? "Loading..." : customers?.length}
-              </span>
-            </div>
-          </div>
-
-          <div className="relative border border-gray-200 rounded-lg p-6 bg-white shadow-sm w-64">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 bottom-2 h-20 w-1 bg-teal-500 rounded-full"></div>
-            <div className="flex flex-col items-start justify-center mt-2">
-              <p className="font-medium text-[14px] font-roboto text-[#878A99] uppercase">
-                Orders (Today)
-              </p>
-              <span className="font-semibold text-[22px] font-roboto text-[#0C192C]">
-                {ordersByDate ? todayOrders : "Loading..."}
-              </span>
-            </div>
-          </div>
-
-          {/* Orders Card */}
-          <div className="relative border border-gray-200 rounded-lg p-6 bg-white shadow-sm w-64">
-            <div className="absolute left-2 top-1/2 -translate-y-1/2 bottom-2 h-20 w-1 bg-green-500 rounded-full"></div>
-            <div className="flex flex-col items-start justify-center mt-2">
-              <p className="font-medium text-[14px] font-roboto text-[#878A99] uppercase">
-                All Orders
-              </p>
-              <span className="font-semibold text-[22px] font-roboto text-[#0C192C]">
-                {isLoading ? "Loading..." : orders?.totalOrders}
-              </span>
-            </div>
+            <Chart options={state.options} series={state.series} type="area" height={350} />
           </div>
         </div>
 
-        {/* Chart Section */}
-        <div className="flex justify-center mt-16 px-4">
-          <div className="w-full sm:w-[90%] lg:w-[70%]">
-            <Chart
-              options={state.options}
-              series={state.series}
-              type="bar"
-              width="100%"
-              className="border bg-white p-5"
-            />
+        {/* Transactions Section */}
+        <div className="mt-10 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
+          <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+            <h2 className="text-lg font-bold text-gray-800">Recent Transactions</h2>
+            <button className="px-4 py-2 bg-gray-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors">View All</button>
           </div>
-        </div>
-
-        {/* Order List Section */}
-        <div className="mt-8">
-          <div className="overflow-auto">
-            <h2 className="text-[18px] font-figtree font-bold text-black ml-5">
-              Recent Orders
-            </h2>
-            <OrderList
-              showAdminMenu={false}
-              className="p-0"
-              isDashboard={true}
-            />
+          <div className="overflow-x-auto">
+            <OrderList showAdminMenu={false} className="p-0" isDashboard={true} />
           </div>
         </div>
       </section>
     </div>
   );
 };
+
+// --- Sub Components ---
+
+const StatCard = ({ title, value, color, loading, isCount }) => (
+  <div className="group border border-gray-50 rounded-3xl p-6 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    <div className={`w-10 h-10 ${color} bg-opacity-10 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
+      <div className={`w-2 h-2 ${color} rounded-full`}></div>
+    </div>
+    <p className="font-semibold text-[11px] text-gray-400 uppercase tracking-widest">{title}</p>
+    <p className="font-bold text-2xl text-gray-800 mt-1">
+      {loading ? "..." : isCount ? value : `৳${Number(value).toLocaleString()}`}
+    </p>
+  </div>
+);
+
+const StatusRow = ({ label, data, color, bg }) => (
+  <div className={`flex items-center justify-between p-3.5 rounded-2xl ${bg} transition-all hover:bg-opacity-100`}>
+    <div>
+      <p className={`font-bold text-[12px] ${color}`}>{label}</p>
+      <p className="text-[10px] text-gray-400 font-medium">{data.count} Orders</p>
+    </div>
+    <p className="font-bold text-gray-800">৳{Number(data.amount).toLocaleString()}</p>
+  </div>
+);
+
+const DeliveryMiniCard = ({ label, data, color, bg }) => (
+  <div className={`${bg} p-3.5 rounded-2xl border border-transparent hover:border-white transition-all duration-300 flex justify-between items-center group`}>
+    <div>
+      <p className={`text-[10px] uppercase font-bold tracking-tight opacity-70 ${color}`}>{label}</p>
+      <p className="text-lg font-black text-gray-800 leading-none mt-1">
+        {data.count} <span className="text-[10px] font-medium text-gray-400">Orders</span>
+      </p>
+    </div>
+    <div className="text-right">
+      <p className="text-[10px] text-gray-400 font-medium">Value</p>
+      <p className="font-bold text-gray-800 text-sm">
+        ৳{Number(data.amount).toLocaleString()}
+      </p>
+    </div>
+  </div>
+);
 
 export default AdminDashboard;

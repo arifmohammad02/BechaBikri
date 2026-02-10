@@ -1,11 +1,11 @@
+/* eslint-disable react/prop-types */
 import { Link } from "react-router-dom";
-import { AiOutlineArrowRight } from "react-icons/ai";
-import { FaCartShopping } from "react-icons/fa6";
+import { FaArrowRight, FaBagShopping, FaEye } from "react-icons/fa6";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/features/cart/cartSlice";
 import { toast } from "react-toastify";
 import HeartIcon from "./HeartIcon";
-import { useState } from "react";
+import { motion } from "framer-motion";
 
 const ProductCard = ({ p }) => {
   const dispatch = useDispatch();
@@ -15,69 +15,94 @@ const ProductCard = ({ p }) => {
     toast.success("Item added successfully");
   };
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  const displayImage =
+    Array.isArray(p?.images) && p.images.length > 0
+      ? p.images[0]
+      : p?.image || "/placeholder.jpg";
 
-  // Toggle function to expand or collapse the text
-  const toggleName = () => {
-    setIsExpanded(!isExpanded);
-  };
+  const productPath = `/product/${p._id}`;
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg border hover:border-[#B88E2F] transition-all duration-300">
-      <div className="p-2 sm:p-4">
-        <section className="relative overflow-hidden rounded-lg">
-          <div className="w-full">
-            <Link to={`/product/${p._id}`}>
-              <span className="absolute bottom-10 right-3 bg-purple-100 text-[#B88E2F] text-xs font-medium px-2 py-0.5 rounded-full">
-                {p?.brand}
+    <div className="group relative w-full bg-white rounded-[1.5rem] p-3 border border-gray-100 hover:border-blue-100 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] transition-all duration-500 ease-in-out">
+      
+      {/* 🟢 ১. ইমেজ কন্টেইনার (SmallProduct এর মতো হুবহু ডিজাইন) */}
+      <div className="relative aspect-square overflow-hidden rounded-[1.2rem] bg-[#fcfcfc]">
+        <Link to={productPath}>
+          <motion.img
+            whileHover={{ scale: 1.1 }}
+            transition={{ duration: 0.6 }}
+            className="w-full h-full object-contain p-4"
+            src={displayImage}
+            alt={p.name}
+          />
+        </Link>
+
+        {/* ব্যাজ (যদি ডিসকাউন্ট থাকে) */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {p.discountPercentage > 0 && (
+            <span className="bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-md shadow-lg uppercase">
+              {p.discountPercentage}% OFF
+            </span>
+          )}
+        </div>
+
+        {/* 🟢 মাঝখানের আইকনগুলো (Eye এবং Bag) */}
+        <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+          <Link to={productPath} className="p-2.5 bg-white/90 backdrop-blur-md rounded-lg text-gray-800 hover:bg-blue-600 hover:text-white transition-all shadow-lg">
+            <FaEye size={14} />
+          </Link>
+          <button 
+            onClick={() => addToCartHandler(p, 1)}
+            className="p-2.5 bg-white/90 backdrop-blur-md rounded-lg text-gray-800 hover:bg-[#B88E2F] hover:text-white transition-all shadow-lg"
+          >
+            <FaBagShopping size={14} />
+          </button>
+        </div>
+
+        {/* Heart Icon (Top Right) */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 translate-y-[-5px] group-hover:translate-y-0 transition-all duration-300">
+          <HeartIcon product={p} />
+        </div>
+      </div>
+
+      {/* 🟢 ২. টেক্সট কন্টেন্ট (সেন্টারড ডিজাইন) */}
+      <div className="px-1 py-4 text-center">
+        <span className="text-[8px] font-black text-blue-600/60 uppercase tracking-[0.3em] font-mono">
+          {p?.brand || "AriX GeaR"}
+        </span>
+        
+        <Link to={productPath}>
+          <h5 className="text-[14px] font-mono font-bold text-gray-800 mt-1 hover:text-blue-600 transition-colors line-clamp-1">
+            {p.name}
+          </h5>
+        </Link>
+
+        {/* প্রাইস */}
+        <div className="mt-2 flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px] font-black text-gray-900">
+              ৳{p?.price?.toLocaleString("en-BD")}
+            </span>
+            {p.discountPercentage > 0 && p.oldPrice && (
+              <span className="text-[10px] text-gray-400 line-through">
+                ৳{p.oldPrice.toLocaleString("en-BD")}
               </span>
-              <img
-                className="cursor-pointer w-full rounded-md object-cover xs:h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80"
-                src={p.image}
-                alt={p.name}
-              />
-            </Link>
+            )}
           </div>
-          <div className="flex items-center justify-center mt-3">
-            <HeartIcon product={p} />
-          </div>
-        </section>
+        </div>
 
-        <div>
-          <div>
-            <h5 className="text-xl font-semibold text-[#242424] mb-1 truncate">
-              {isExpanded ? p?.name : `${p?.name.substring(0, 20)}`}
-              <button
-                className="text-[#B88E2F] text-xs ml-2"
-                onClick={toggleName}
-              >
-                {isExpanded ? "Read Less" : "Read More"}
-              </button>
-            </h5>
-            <p className="text-lg  font-medium font-poppins text-[#242424">
-              {p?.price?.toLocaleString("en-IN", {
-                style: "currency",
-                currency: "INR",
-              })}
-            </p>
-          </div>
-
-          <section className="flex justify-between items-center">
-            <Link
-              to={`/product/${p._id}`}
-              className="px-2  font-poppins font-medium py-2 inline-flex items-center xs:text-sm xs:py-2 xs:px-2 sm:px-4 sm:py-2 sm:text-base bg-[#B88E2F]  text-white bg-gradient-to-r outline-none"
-            >
-              Read More
-              <AiOutlineArrowRight className="ml-2 w-4 h-4" />
-            </Link>
-
-            <button
-              className="px-2 py-2 inline-flex items-center bg-[#FAF3EA] rounded-full hover:bg-gray-200"
-              onClick={() => addToCartHandler(p, 1)}
-            >
-              <FaCartShopping size={25} className="text-[#B88E2F]" />
-            </button>
-          </section>
+        {/* 🟢 ৩. বটম অ্যাকশন (Details with Underline Animation) */}
+        <div className="mt-4 pt-2 border-t border-gray-50">
+          <Link
+            to={productPath}
+            className="group/btn relative flex items-center justify-center gap-2 w-full py-1 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-blue-600 transition-all"
+          >
+            <span>Details</span>
+            <FaArrowRight className="text-[9px] group-hover/btn:translate-x-1 transition-transform" />
+            
+            {/* Signature Underline */}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-[2px] w-0 bg-gradient-to-r from-blue-600 to-[#B88E2F] group-hover/btn:w-1/2 transition-all duration-500" />
+          </Link>
         </div>
       </div>
     </div>

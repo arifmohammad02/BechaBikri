@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import Order from "../models/orderModel.js";
 import Product from "../models/productModel.js";
 import sendEmail from "../utils/sendEmail.js";
+import { createAndSendNotification } from "./notificationController.js";
 
 // Utility Function
 function calcPrices(orderItems) {
@@ -74,6 +76,8 @@ const createOrder = async (req, res) => {
       return {
         ...itemFromClient,
         product: itemFromClient._id,
+        name: matchingItemFromDB.name,
+        slug: matchingItemFromDB.slug,
         price: matchingItemFromDB.price,
         shippingCharge: shippingAddress?.shippingCharge ?? 0,
         _id: undefined,
@@ -100,11 +104,21 @@ const createOrder = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
-      paymentStatus, // ✅ নতুন ফিল্ড
-      isPaid, // ✅ ডিফল্ট false
+      paymentStatus,
+      isPaid,
     });
 
     const createdOrder = await order.save();
+
+    // Notification Pathan
+    await createAndSendNotification(req, {
+      userId: order.user,
+      title: "Order Placed! 🛒",
+      message: `Your order #${order.orderId} has been confirmed.`,
+      type: "order",
+      actionUrl: `/user-orders`,
+      sendEmailFlag: true,
+    });
 
     // Populate user for email
     const populatedOrder = await createdOrder.populate(
@@ -194,26 +208,58 @@ const calculateTotalSales = async (req, res) => {
   }
 };
 
+const getSalesSummaryByStatus = async (req, res) => {
+  try {
+    const summary = await Order.aggregate([
+      {
+        $group: {
+          _id: "$paymentStatus", // paid, due, pending, failed
+          totalSales: { $sum: { $toDouble: "$totalPrice" } },
+          orderCount: { $sum: 1 },
+        },
+      },
+    ]);
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getDeliverySummary = async (req, res) => {
+  try {
+    const summary = await Order.aggregate([
+      {
+        $group: {
+          _id: "$isDelivered", // আপনার মডেলের enum ফিল্ড
+          count: { $sum: 1 },
+          totalAmount: { $sum: { $toDouble: "$totalPrice" } },
+        },
+      },
+    ]);
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
 const calcualteTotalSalesByDate = async (req, res) => {
   try {
     const salesByDate = await Order.aggregate([
-      {
-        $match: {
-          isPaid: true,
-        },
-      },
       {
         $group: {
           _id: {
             $dateToString: {
               format: "%Y-%m-%d",
-              date: "$paidAt",
+              date: "$createdAt",
               timezone: "Asia/Dhaka",
             },
           },
-          totalSales: { $sum: "$totalPrice" },
+          totalSales: { $sum: { $toDouble: "$totalPrice" } },
         },
       },
+      { $sort: { _id: 1 } }, // গ্রাফের জন্য পুরানো থেকে নতুন সর্ট
     ]);
 
     res.json(salesByDate);
@@ -228,10 +274,11 @@ const getLocalTime = (utcTime) => {
 
 const findOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate(
-      "user",
-      "username email",
-    );
+    const { id } = req.params;
+
+    const query = mongoose.isValidObjectId(id) ? { _id: id } : { orderId: id };
+
+    const order = await Order.findOne(query).populate("user", "username email");
 
     if (order) {
       const response = {
@@ -245,16 +292,16 @@ const findOrderById = async (req, res) => {
       throw new Error("Order not found");
     }
   } catch (error) {
+    // টার্মিনালে চেক করার জন্য কনসোল লগ
+    console.error("Backend Error in findOrderById:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
-
 const markOrderAsDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
 
     if (order) {
-      // নতুন স্ট্যাটাসটি রিকোয়েস্ট থেকে নিতে হবে, ডিফল্ট 'Delivered' সেট করা হলো
       const newStatus = req.body.status || "Delivered";
 
       if (
@@ -285,33 +332,27 @@ const markOrderAsDelivered = async (req, res) => {
 
 const markOrderAsPaid = async (req, res) => {
   try {
-    console.log("Request params:", req.params); // Check if id is received
-    console.log("Request body:", req.body); // Check if status is received
-
     const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const { status } = req.body; // Should be "paid" or "due"
-
-    // Validate status
+    const { status } = req.body;
     const validStatuses = ["paid", "due", "pending", "failed"];
 
     if (status && !validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid payment status" });
     }
 
-    // If no status is provided, use default behavior (old function logic)
     if (!status) {
-      // Use the provided paidAt time or fallback to the current time
+      // ডিফল্ট লজিক (সরাসরি পেইড করা হলে)
       const paidAtTime = req.body.paidAt
         ? new Date(req.body.paidAt)
         : new Date();
-
       order.isPaid = true;
       order.paidAt = paidAtTime;
+      order.paymentStatus = "paid";
 
       if (order.paymentMethod !== "Cash on Delivery") {
         order.paymentResult = {
@@ -322,17 +363,12 @@ const markOrderAsPaid = async (req, res) => {
         };
       }
     } else {
-      // New logic with status parameter
-      // Update payment status
+      // স্ট্যাটাস অনুযায়ী আপডেট
       order.paymentStatus = status;
-
-      // Update isPaid based on status
       order.isPaid = status === "paid";
 
-      // Update paidAt timestamp if paid
       if (status === "paid") {
         order.paidAt = req.body.paidAt ? new Date(req.body.paidAt) : new Date();
-
         if (order.paymentMethod !== "Cash on Delivery") {
           order.paymentResult = {
             id: req.body.id || "N/A",
@@ -343,17 +379,48 @@ const markOrderAsPaid = async (req, res) => {
         }
       } else {
         order.paidAt = null;
-        // Clear payment result if status is not paid
         order.paymentResult = undefined;
       }
     }
 
     const updatedOrder = await order.save();
+
+    // --- নোটিফিকেশন লজিক (সকল স্ট্যাটাসের জন্য) ---
+    let notificationConfig = {
+      userId: updatedOrder.user,
+      type: "order",
+      actionUrl: `/order/${updatedOrder.orderId}`,
+      sendEmailFlag: true,
+    };
+
+    if (updatedOrder.paymentStatus === "paid") {
+      notificationConfig.title = "Payment Received ✅";
+      notificationConfig.message = `Payment for order #${updatedOrder.orderId} is successful.`;
+    } else if (updatedOrder.paymentStatus === "due") {
+      notificationConfig.title = "Payment Due ⏳";
+      notificationConfig.message = `Payment is due for order #${updatedOrder.orderId}. Please complete it soon.`;
+    } else if (updatedOrder.paymentStatus === "pending") {
+      notificationConfig.title = "Payment Pending ⌛";
+      notificationConfig.message = `Your payment for order #${updatedOrder.orderId} is currently pending.`;
+    } else if (updatedOrder.paymentStatus === "failed") {
+      notificationConfig.title = "Payment Failed ❌";
+      notificationConfig.message = `Unfortunately, the payment for order #${updatedOrder.orderId} has failed.`;
+    }
+
+    // নোটিফিকেশন পাঠানো (যদি টাইটেল সেট হয়ে থাকে)
+    if (notificationConfig.title) {
+      await createAndSendNotification(req, notificationConfig);
+    }
+
     res.json(updatedOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+
+
 
 const updateOrderStatus = async (req, res) => {
   try {
@@ -363,8 +430,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const { status } = req.body;
-
+    const { status } = req.body; // যেমন: "Shipped" বা "Delivered"
     const validStatuses = [
       "Order Placed",
       "Processing",
@@ -385,6 +451,17 @@ const updateOrderStatus = async (req, res) => {
     }
 
     const updatedOrder = await order.save();
+
+    // ✅ স্ট্যাটাস আপডেট নোটিফিকেশন পাঠানো (Paid হওয়ার প্রয়োজন নেই, যেকোনো স্ট্যাটাসেই যাবে)
+    await createAndSendNotification(req, {
+      userId: updatedOrder.user,
+      title: `Order Status: ${status}`,
+      message: `Your order #${updatedOrder.orderId} has been updated to ${status}.`,
+      type: "order",
+      actionUrl: `/order/${updatedOrder.orderId}`,
+      sendEmailFlag: true,
+    });
+
     res.json(updatedOrder);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -397,10 +474,12 @@ export {
   getUserOrders,
   countTotalOrders,
   calculateTotalSales,
+  getSalesSummaryByStatus,
   calcualteTotalSalesByDate,
   findOrderById,
   markOrderAsPaid,
   markOrderAsDelivered,
   countTotalOrdersByDate,
+  getDeliverySummary,
   updateOrderStatus,
 };

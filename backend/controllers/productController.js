@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
 import sanitizeHtml from "sanitize-html";
+
 
 const sanitizeDescription = (description) => {
   return sanitizeHtml(description, {
@@ -27,72 +29,88 @@ const sanitizeDescription = (description) => {
 
 const addProduct = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const fields = req.fields;
+    let { name, description, price, category, quantity, brand, images } = fields;
 
-    // Validation
-    switch (true) {
-      case !name:
-        return res.json({ error: "Name is required" });
-      case !brand:
-        return res.json({ error: "Brand is required" });
-      case !description:
-        return res.json({ error: "Description is required" });
-      case !price:
-        return res.json({ error: "Price is required" });
-      case !category:
-        return res.json({ error: "Category is required" });
-      case !quantity:
-        return res.json({ error: "Quantity is required" });
+    // ১. ভ্যালিডেশন
+    if (!name || !brand || !description || !price || !category || !quantity) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    let imagesArray = [];
+    if (images) {
+      imagesArray = typeof images === "string" ? JSON.parse(images) : images;
+      if (!Array.isArray(imagesArray)) imagesArray = [imagesArray];
+    }
+
+    if (imagesArray.length === 0) {
+      return res.status(400).json({ error: "At least one image is required" });
     }
 
     const sanitizedDescription = sanitizeDescription(description);
 
     const product = new Product({
-      ...req.fields,
+      ...fields,
       description: sanitizedDescription,
+      images: imagesArray, // ডাটাবেসে [img1, img2, img3] আকারে যাবে
+      image: imagesArray[0],
+      isFeatured: fields.isFeatured === "true" || fields.isFeatured === true,
+      price: Number(price),
+      quantity: Number(quantity),
+      countInStock: Number(fields.countInStock) || 0,
     });
+
     await product.save();
-    res.json(product);
+    res.status(201).json(product);
   } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
+    console.error("Product Creation Error:", error);
+    res.status(400).json({ error: error.message });
   }
 });
 
+
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
-    const { name, description, price, category, quantity, brand } = req.fields;
+    const fields = req.fields;
+    let { name, description, price, category, quantity, brand, images, isFeatured } = fields;
 
-    // Validation
-    switch (true) {
-      case !name:
-        return res.json({ error: "Name is required" });
-      case !brand:
-        return res.json({ error: "Brand is required" });
-      case !description:
-        return res.json({ error: "Description is required" });
-      case !price:
-        return res.json({ error: "Price is required" });
-      case !category:
-        return res.json({ error: "Category is required" });
-      case !quantity:
-        return res.json({ error: "Quantity is required" });
+    // ভ্যালিডেশন
+    if (!name || !brand || !description || !price || !category || !quantity) {
+      return res.status(400).json({ error: "Required fields are missing" });
+    }
+
+    // ইমেজের অ্যারে প্রসেসিং
+    let imagesArray = [];
+    if (images) {
+      imagesArray = typeof images === "string" ? JSON.parse(images) : images;
+      if (!Array.isArray(imagesArray)) imagesArray = [imagesArray];
     }
 
     const sanitizedDescription = sanitizeDescription(description);
 
+    const updatedFields = {
+      ...fields,
+      description: sanitizedDescription,
+      images: imagesArray, 
+      isFeatured: isFeatured === "true" || isFeatured === true,
+      price: Number(price),
+      quantity: Number(quantity),
+    };
+
     const product = await Product.findByIdAndUpdate(
       req.params.id,
-      { ...req.fields, description: sanitizedDescription },
-      { new: true }
+      updatedFields,
+      { new: true, runValidators: true }
     );
 
-    await product.save();
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
 
     res.json(product);
   } catch (error) {
-    console.error(error);
-    res.status(400).json(error.message);
+    console.error("Update Product Error:", error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -136,7 +154,13 @@ const fetchProducts = asyncHandler(async (req, res) => {
 
 const fetchProductById = asyncHandler(async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null },
+        { slug: req.params.id },
+      ],
+    });
+
     if (product) {
       return res.json(product);
     } else {
@@ -175,7 +199,7 @@ const addProductReview = asyncHandler(async (req, res) => {
 
     // Check if the user has already reviewed the product
     const alreadyReviewed = product.reviews.some(
-      (review) => review.user.toString() === req.user._id.toString()
+      (review) => review.user.toString() === req.user._id.toString(),
     );
 
     if (alreadyReviewed) {

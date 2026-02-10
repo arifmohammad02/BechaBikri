@@ -1,52 +1,87 @@
-import React from "react";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion"; // অ্যানিমেশনের জন্য
 
 const Category = () => {
   const { data, error, isLoading } = useFetchCategoriesQuery();
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center py-10">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <div className="text-center text-red-500 py-10 font-mono">Failed to load categories.</div>;
   }
 
-  // Ensure data is an array and has items
   if (!Array.isArray(data) || data.length === 0) {
-    return <div>No categories found.</div>;
+    return <div className="text-center py-10 text-gray-400 font-mono">No categories found.</div>;
   }
 
   return (
-    <div className="container mx-auto py-12">
-      <div className="text-center">
-        <h1 className="text-[48px] font-figtree font-bold text-center text-[#212B36]">
-          Categories
-        </h1>
-        <p className="text-[16px] font-figtree font-normal text-center text-[#212B36] mb-6">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Repellendus,
-          distinctio.
-        </p>
+    <div className="container mx-auto py-16 px-4">
+      {/* 🟢 Section Header */}
+      <div className="flex flex-col items-center mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center"
+        >
+          <span className="text-blue-600 font-mono font-bold tracking-[0.4em] uppercase text-[10px]">
+            Browse by
+          </span>
+          <h2 className="text-3xl md:text-4xl font-mono font-black text-[#212B36] mt-2 mb-3 tracking-tighter">
+            Smart <span className="text-[#B88E2F]">Categories</span>
+          </h2>
+          {/* Signature Gradient Line */}
+          <div className="flex justify-center">
+            <div className="h-[3px] w-12 bg-gradient-to-r from-blue-600 to-[#B88E2F] rounded-full" />
+          </div>
+        </motion.div>
       </div>
-      <div className="flex items-center justify-center gap-12 flex-wrap ">
-        {data.map((category) => (
-          <Link
-            to={`/shop?category=${category._id}`} // Pass category ID as query parameter
+
+      {/* 🟢 Category Grid */}
+      <div className="flex items-center justify-center gap-6 md:gap-12 flex-wrap">
+        {data.map((category, index) => (
+          <motion.div
             key={category._id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.1 }}
           >
-            <div className="relative w-36 h-36 rounded-full overflow-hidden border-[3px] hover:border-blue-400 hover:scale-105 transition-all duration-300 group">
-              <div className="absolute inset-0 bg-[#DFDFE3] bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 z-20"></div>
-              <img
-                src={category.image}
-                alt={category.name}
-                className="w-full h-full rounded-full object-cover z-10 transition-transform duration-200 group-hover:scale-105"
-              />
-            </div>
-            <h4 className="text-[14px] font-figtree text-[#212B36] font-semibold mt-4 text-center">
-              {category.name}
-            </h4>
-          </Link>
+            <Link
+              to={`/shop?category=${category._id}`}
+              className="group flex flex-col items-center"
+            >
+              {/* Category Image Container */}
+              <div className="relative w-28 h-28 md:w-36 md:h-36">
+                {/* Rotating Border on Hover */}
+                <div className="absolute inset-0 border-2 border-dashed border-blue-200 rounded-[2rem] group-hover:rotate-45 group-hover:border-blue-500 transition-all duration-700" />
+                
+                <div className="absolute inset-2 overflow-hidden rounded-[1.8rem] bg-gray-50 border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-500">
+                  <img
+                    src={category.image || "/placeholder.jpg"}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-blue-900/0 group-hover:bg-blue-600/10 transition-all duration-300" />
+                </div>
+              </div>
+
+              {/* Category Name */}
+              <h4 className="text-[13px] md:text-[15px] font-mono text-[#212B36] font-black mt-5 text-center uppercase tracking-wider group-hover:text-blue-600 transition-colors">
+                {category.name}
+              </h4>
+              
+              {/* Small dot below name */}
+              <div className="w-1 h-1 bg-[#B88E2F] rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+          </motion.div>
         ))}
       </div>
     </div>

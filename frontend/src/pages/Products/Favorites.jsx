@@ -3,76 +3,112 @@ import { selectFavoriteProduct } from "../../redux/features/favorite/favoriteSli
 import Product from "./Product";
 import { useEffect, useState } from "react";
 import Loader from "../../components/Loader";
-import { LuShoppingBag } from "react-icons/lu";
+import { LuHeart } from "react-icons/lu"; // ফেভারিটের জন্য হার্ট আইকন বেটার
 import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRightLong } from "react-icons/fa6"; // Vite এরর এড়াতে সঠিক ইমপোর্ট
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Favorites = () => {
   const favorites = useSelector(selectFavoriteProduct);
-
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading delay
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer); // Cleanup timer
+    }, 800);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="bg-white py-3">
+    <div className="bg-[#FDFDFD] min-h-screen pb-20">
       {isLoading ? (
         <Loader />
       ) : (
-        <div className="mt-[100px]">
-          <div className="py-8 bg-[#E8E8E8]">
-            <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
-              <Link
-                to="/"
-                className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
-              >
-                Home
-              </Link>
-              <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
-                /
-              </span>
-              <span className="text-[#9B9BB4] font-medium font-serif text-[14px] md:text-[18px]">
-              Favorite
-              </span>
+        <div className="mt-[105px]">
+          {/* 🟢 ১. স্টাইলিশ হেডার (Cart পেজের সাথে ম্যাচ করে) */}
+          <div className="py-10 bg-white border-b border-gray-100 shadow-sm">
+            <div className="container mx-auto px-4">
+              <h1 className="text-2xl font-bold border-l-4 border-red-600 pl-4 text-gray-800 uppercase tracking-widest font-mono">
+                Wishlist <span className="text-red-600">Vault</span>
+              </h1>
+              <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] ml-5">
+                <Link to="/" className="hover:text-red-600 transition-colors">Home</Link>
+                <span>/</span>
+                <span className="text-gray-900 font-black tracking-widest">Favorites</span>
+              </div>
             </div>
           </div>
-          <div className="font-poppins text-white w-full container mx-auto flex">
-            <div className=" flex justify-center items-center w-full py-10">
-          
-              {favorites.length === 0 ? (
-                <div className="flex flex-col items-center gap-4">
-                  <p>
-                    <LuShoppingBag className="w-28 h-28 text-black" />
-                  </p>
-                  <span className="text-[30px] font-medium font-sans text-center text-black">
-                    Your Favorite is empty{" "}
-                  </span>
-                  <p className=" max-w-96 text-center text-black">
-                    Add products while you shop, so they'll be ready for
-                    checkout later.{" "}
-                  </p>
-                  <button className="flex items-center gap-3 font-poppins bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#8b784c] transition-all ease-in-out duration-300">
-                    <Link to="/shop">Go To Shop</Link>
-                    <FaArrowRight />
+
+          <div className="container mx-auto px-4 mt-12">
+            {favorites.length === 0 ? (
+              /* 🟢 ২. এম্পটি স্টেট (Smooth Animation) */
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border border-gray-50 shadow-sm"
+              >
+                <div className="relative mb-6">
+                  <LuHeart className="w-20 h-20 text-gray-100" />
+                  <motion.div 
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="absolute inset-0 bg-red-500/5 blur-xl rounded-full"
+                  />
+                </div>
+                <h2 className="text-2xl font-mono font-black text-gray-800 uppercase tracking-tighter mb-3">
+                  Your Vault is Empty
+                </h2>
+                <p className="max-w-xs text-center text-gray-400 text-sm font-mono mb-10 leading-relaxed">
+                  No tactical gear saved yet. Explore the shop to add items to your wishlist.
+                </p>
+                <Link to="/shop">
+                  <button className="flex items-center gap-3 bg-black text-white py-4 px-10 rounded-2xl font-mono font-black uppercase text-xs tracking-widest hover:bg-red-600 transition-all duration-500 shadow-lg active:scale-95">
+                    Go To Shop <FaArrowRight />
                   </button>
+                </Link>
+              </motion.div>
+            ) : (
+              /* 🟢 ৩. প্রোডাক্ট গ্রিড (Ease-in Transition) */
+              <div className="space-y-8">
+                <div className="flex items-center justify-between px-2">
+                   <span className="font-mono text-xs font-black text-gray-400 uppercase tracking-[0.3em]">
+                     {favorites.length} Items Saved
+                   </span>
                 </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 px-3 sm:px-0 mt-10">
-                  {favorites.map((product) => (
-                    <div key={product._id} className=" ">
-                      <Product product={product} />
-                    </div>
-                  ))}
+                
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+                >
+                  <AnimatePresence>
+                    {favorites.map((product) => (
+                      <motion.div
+                        key={product._id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.3 }}
+                        className="hover:translate-y-[-5px] transition-transform duration-300"
+                      >
+                        <Product product={product} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* ব্যাক বাটন */}
+                <div className="pt-10 border-t border-gray-100">
+                  <Link to="/shop" className="inline-flex items-center gap-3 text-gray-400 hover:text-black font-mono text-[11px] font-black uppercase tracking-widest transition-all group">
+                    <FaArrowRightLong className="rotate-180 group-hover:-translate-x-2 transition-transform" />
+                    Continue Gear Hunting
+                  </Link>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}

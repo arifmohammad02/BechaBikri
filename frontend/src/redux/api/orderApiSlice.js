@@ -18,10 +18,10 @@ export const orderApiSlice = apiSlice.injectEndpoints({
     }),
 
     payOrder: builder.mutation({
-      query: ({ orderId, details ,status}) => ({
+      query: ({ orderId, details, status }) => ({
         url: `${ORDERS_URL}/${orderId}/pay`,
         method: "PUT",
-        body: { details,status },
+        body: { details, status },
       }),
     }),
 
@@ -66,6 +66,17 @@ export const orderApiSlice = apiSlice.injectEndpoints({
     getTotalOrdersByDate: builder.query({
       query: () => `${ORDERS_URL}/total-orders-by-date`,
     }),
+
+    getSalesSummaryByStatus: builder.query({
+      query: () => `${ORDERS_URL}/sales-summary`,
+      keepUnusedDataFor: 5,
+    }),
+
+    getDeliverySummary: builder.query({
+      query: () => `${ORDERS_URL}/delivery-summary`,
+      keepUnusedDataFor: 5,
+    }),
+
     updateOrderStatus: builder.mutation({
       query: ({ orderId, status }) => ({
         url: `${ORDERS_URL}/${orderId}/status`,
@@ -81,6 +92,8 @@ export const {
   useGetTotalSalesQuery,
   useGetTotalSalesByDateQuery,
   useGetTotalOrdersByDateQuery,
+  useGetSalesSummaryByStatusQuery,
+  useGetDeliverySummaryQuery,
   // ------------------
   useCreateOrderMutation,
   useGetOrderDetailsQuery,

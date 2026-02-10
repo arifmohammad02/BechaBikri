@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaPlus, FaMinus, FaTag } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../redux/features/cart/cartSlice";
 import { LuShoppingBag } from "react-icons/lu";
-// import Shipping from "./Orders/Shipping";
 import { IoMdClose } from "react-icons/io";
-import { FaArrowLeftLong } from "react-icons/fa6";
-import { FaLongArrowAltRight } from "react-icons/fa";
+import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -32,225 +31,228 @@ const Cart = () => {
     }
   };
 
-  // Function to calculate the discounted price
-  const calculateDiscountedPrice = (product) => {
-    if (product.discountPercentage > 0) {
+  const calculateDiscountedPrice = (item) => {
+    if (item.discountPercentage > 0) {
       return (
-        product.price -
-        (product.price * product.discountPercentage) / 100
+        item.price -
+        (item.price * item.discountPercentage) / 100
       ).toFixed(2);
     }
-    return product.price.toFixed(2);
+    return item.price.toFixed(2);
   };
 
+  const subtotal = cartItems.reduce(
+    (acc, item) => acc + item.qty * Number(calculateDiscountedPrice(item)),
+    0,
+  );
+
+  const totalSavings = cartItems.reduce((acc, item) => {
+    if (item.discountPercentage > 0) {
+      const savingsPerItem = (item.price * item.discountPercentage) / 100;
+      return acc + item.qty * savingsPerItem;
+    }
+    return acc;
+  }, 0);
+
   return (
-    <div className="mt-[100px]">
-      <div className="py-8 bg-[#E8E8E8]">
-        <div className="container mx-auto flex items-center gap-2 px-3 sm:px-0">
-          <Link
-            to="/"
-            className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]"
-          >
-            Home
-          </Link>
-          <span className="text-[#000000] font-medium font-serif text-[14px] md:text-[18px]">
-            /
-          </span>
-          <span className="text-[#9B9BB4] font-medium font-serif text-[14px] md:text-[18px]">
-            Shopping Cart
-          </span>
+    <div className="mt-[105px] bg-[#F9F9F9] min-h-screen pb-20">
+      {/* 🟢 ১. স্টাইলিশ হেডার (আপনার দেওয়া ডিজাইন অনুযায়ী) */}
+      <div className="py-10 bg-white border-b border-gray-100 shadow-sm">
+        <div className="container mx-auto px-4">
+          <h1 className="text-2xl font-bold border-l-4 border-red-600 pl-4 text-gray-800 uppercase tracking-widest font-mono">
+            Shopping <span className="text-red-600">Bag</span>
+          </h1>
+          <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] ml-5">
+            <Link to="/" className="hover:text-red-600">
+              Home
+            </Link>
+            <span>/</span>
+            <span className="text-gray-900 font-black">Checkout Terminal</span>
+          </div>
         </div>
       </div>
-      <div className="container flex justify-between items-center mx-auto mt-8 pb-12">
+
+      <div className="container mx-auto mt-12 px-4">
         {cartItems.length === 0 ? (
-          <div className="w-full flex justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <p>
-                <LuShoppingBag className="w-28 h-28" />
-              </p>
-              <span className="text-[30px] font-medium font-sans text-center">
-                Your cart is empty
-              </span>
-              <p className=" max-w-96 text-center">
-                Add products while you shop, so they'll be ready for checkout
-                later.
-              </p>
-              <button className="flex items-center gap-3 bg-[#B88E2F] text-white py-3 px-5 rounded-md hover:bg-[#a1926d] transition-all ease-in-out duration-300">
-                <Link to="/shop">Go To Shop</Link>
-                <FaArrowRight />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-gray-100 shadow-xl"
+          >
+            <LuShoppingBag className="w-20 h-20 text-gray-200 mb-6" />
+            <h2 className="text-2xl font-mono font-black text-gray-800 uppercase tracking-tighter mb-6">
+              Shopping Bag
+            </h2>
+            <Link to="/shop">
+              <button className="flex items-center gap-3 bg-black text-white py-4 px-10 rounded-xl font-mono font-black uppercase text-xs tracking-widest hover:bg-red-600 transition-all shadow-lg">
+                Go to Shop <FaArrowRight />
               </button>
-            </div>
-          </div>
+            </Link>
+          </motion.div>
         ) : (
-          <div className="w-full px-3 sm:px-0">
-            <div className="w-full">
-              <h1 className="uppercase text-[22px] font-bold font-mono text-[#3C3836] pb-6 text-center md:text-left">
-                Shopping Cart
-              </h1>
-              {/* Cart Table */}
-              <div>
-                <table className="w-full overflow-hidden">
-                  <thead className="hidden md:table-header-group">
-                    <tr className="border-b">
-                      <th className="py-4 text-left font-bold text-[20px] font-mono uppercase text-[#3C3836]">
-                        Product
-                      </th>
-                      <th className="py-4 px-6 text-center font-bold text-[20px] font-mono uppercase text-[#3C3836]">
-                        Price
-                      </th>
-                      <th className="py-4 px-6 text-center font-bold text-[20px] font-mono uppercase text-[#3C3836]">
-                        Quantity
-                      </th>
-                      <th className="py-4 px-6 text-center font-bold text-[20px] font-mono uppercase text-[#3C3836]">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {cartItems.map((item) => (
-                      <tr
-                        key={item._id}
-                        className="border-b border-gray-300 flex flex-col items-center md:table-row"
-                      >
-                        {/* Product Info */}
-                        <td className="py-4 px-6 flex flex-col md:flex-row items-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-                          <button
-                            className="text-black text-xl hover:text-red-700 transition-colors duration-200 mb-2 md:mb-0 md:mr-4"
-                            onClick={() => removeFromCartHandler(item._id)}
-                          >
-                            <IoMdClose />
-                          </button>
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 mb-2 md:mb-0 md:mr-4"
-                          />
-                          <Link
-                            to={`/product/${item._id}`}
-                            className="text-[#000000] text-center text-[14px] md:text-[16px] font-mono font-medium"
-                          >
-                            {item.name}
-                          </Link>
-                        </td>
-
-                        {/* Price */}
-                        <td className="py-4 px-6 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold text-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-                          ₹{" "}
-                          {item.discountPercentage > 0
-                            ? calculateDiscountedPrice(item)
-                            : item.price.toFixed(2)}
-                        </td>
-
-                        {/* Quantity */}
-                        <td className="py-4 px-6 text-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-                          <div className="flex items-center justify-center space-x-2">
-                            {/* Decrease Quantity Button */}
-                            <button
-                              className={`w-8 h-8 font-bold border rounded-full text-[#000000] text-[14px] md:text-[16px] font-mono ${
-                                item.qty > 1
-                                  ? "text-black border-gray-400"
-                                  : "text-gray-400 border-gray-300 cursor-not-allowed"
-                              }`}
-                              onClick={() =>
-                                item.qty > 1 &&
-                                addToCartHandler(item, item.qty - 1)
-                              }
-                              disabled={item.qty === 1}
-                            >
-                              -
-                            </button>
-
-                            {/* Quantity Display */}
-                            <span className="w-10 h-10 inline-flex items-center justify-center border rounded-full bg-gray-100 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold">
-                              {item.qty}
-                            </span>
-
-                            {/* Increase Quantity Button */}
-                            <button
-                              className="w-8 h-8 font-bold border border-gray-400 rounded-full text-[#000000] text-[14px] md:text-[16px] font-mono hover:bg-gray-100"
-                              onClick={() =>
-                                addToCartHandler(item, item.qty + 1)
-                              }
-                            >
-                              +
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Total */}
-                        <td className="py-4 px-6 text-[#000000] text-[14px] md:text-[16px] font-mono font-bold text-center">
-                          ₹{" "}
-                          {(
-                            item.qty *
-                            (item.discountPercentage > 0
-                              ? calculateDiscountedPrice(item)
-                              : item.price)
-                          ).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Summary Section as Table */}
-              <div className="flex flex-col lg:flex-row  justify-between">
-                <div className="w-full lg:max-w-[40rem]">
-                  <Link
-                    to="/"
-                    className="flex items-center gap-2 text-[#000000] text-[14px] md:text-[18px] font-mono font-bold mt-5"
+          <div className="flex flex-col xl:flex-row gap-10">
+            {/* 🟢 ২. আইটেম লিস্ট */}
+            <div className="flex-1 space-y-6">
+              <AnimatePresence mode="popLayout">
+                {cartItems.map((item) => (
+                  <motion.div
+                    key={item._id}
+                    layout
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center gap-6 group hover:border-red-200 transition-all duration-300"
                   >
-                    <FaArrowLeftLong className="text-[#000000] text-xs" />
-                    <span>Continue Shopping</span>
-                  </Link>
-                </div>
-                <div className="mt-8 w-full lg:max-w-[30rem] p-3 border-[1px] broder-opacity-50 rounded-md">
-                  <div className="min-w-full text-black rounded-md  ">
-                    <div>
-                      {/* Subtotal */}
-                      <div className="py-4 text-[#000000] text-[16px] font-mono font-bold text-right flex justify-between">
-                        Subtotal:
-                        <span className="text-[#000000] text-[14px] md:text-[20px] font-mono font-bold">
-                          ₹
-                          {cartItems
-                            .reduce(
-                              (acc, item) =>
-                                acc +
-                                item.qty *
-                                  (item.discountPercentage > 0
-                                    ? calculateDiscountedPrice(item)
-                                    : item.price),
-                              0
-                            )
-                            .toFixed(2)}
-                        </span>
-                      </div>
+                    {/* ইমেজ ও ডিসকাউন্ট ব্যাজ */}
+                    <div className="relative w-32 h-32 bg-gray-50 rounded-xl overflow-hidden flex-shrink-0">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-500"
+                      />
+                      {item.discountPercentage > 0 && (
+                        <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg animate-pulse">
+                          {item.discountPercentage}% OFF
+                        </div>
+                      )}
+                    </div>
 
-                      <h3 className="text-[#98928E] text-[16px] font-mono font-bold">
-                        Shipping calculated at checkout
+                    {/* ইনফো */}
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="text-lg font-mono font-black text-gray-900 uppercase group-hover:text-red-600 transition-colors">
+                        {item.name}
                       </h3>
-
-                      {/* Checkout Button */}
-                      <div className="py-2 px-4 bg-[#ED174A] text-center w-fit rounded-md mt-5">
-                        <button
-                          className={`flex items-center gap-1 text-[#ffffff] text-[14px] md:text-[16px] font-mono font-bold ${
-                            cartItems.length === 0
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          disabled={cartItems.length === 0}
-                          onClick={checkoutHandler}
-                        >
-                          Go To Checkout{" "}
-                          <span className="font-normal">
-                            <FaLongArrowAltRight />
+                      <div className="flex items-center justify-center md:justify-start gap-3 mt-1">
+                        <span className="text-red-600 font-black font-mono">
+                          ৳
+                          {Number(
+                            calculateDiscountedPrice(item),
+                          ).toLocaleString()}
+                        </span>
+                        {item.discountPercentage > 0 && (
+                          <span className="text-gray-400 text-xs line-through">
+                            ৳{item.price.toLocaleString()}
                           </span>
-                        </button>
+                        )}
                       </div>
                     </div>
+
+                    {/* কোয়ান্টিটি কন্ট্রোলার */}
+                    <div className="flex items-center bg-gray-50 p-1 rounded-xl border border-gray-100">
+                      <button
+                        onClick={() =>
+                          item.qty > 1 && addToCartHandler(item, item.qty - 1)
+                        }
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:text-red-600 transition-all shadow-sm"
+                      >
+                        <FaMinus size={10} />
+                      </button>
+                      <span className="w-10 text-center font-mono font-black">
+                        {item.qty}
+                      </span>
+                      <button
+                        onClick={() => addToCartHandler(item, item.qty + 1)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:text-red-600 transition-all shadow-sm"
+                      >
+                        <FaPlus size={10} />
+                      </button>
+                    </div>
+
+                    {/* আইটেম টোটাল */}
+                    <div className="md:w-32 text-center md:text-right">
+                      <p className="text-xl font-mono font-black text-gray-900 tracking-tighter">
+                        ৳
+                        {(
+                          item.qty * Number(calculateDiscountedPrice(item))
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => removeFromCartHandler(item._id)}
+                      className="p-2 text-gray-300 hover:text-red-600 hover:rotate-90 transition-all"
+                    >
+                      <IoMdClose size={24} />
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 text-gray-400 hover:text-red-600 font-mono text-[11px] font-black uppercase tracking-widest mt-4 transition-all"
+              >
+                <FaArrowLeftLong /> Return to Shop
+              </Link>
+            </div>
+
+            {/* 🟢 ৩. প্রিমিয়াম সামারি কার্ড */}
+            <div className="xl:w-[400px]">
+              <div className="sticky top-28">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-black text-white rounded-[2rem] p-8 shadow-2xl border border-gray-800"
+                >
+                  <h3 className="text-xl font-bold mb-8 border-l-4 border-red-600 pl-3 uppercase tracking-wider font-mono">
+                    Order Summary
+                  </h3>
+
+                  <div className="space-y-4 font-mono text-sm">
+                    <div className="flex justify-between text-gray-500">
+                      <span>Subtotal</span>
+                      <span className="text-white">
+                        ৳{(subtotal + totalSavings).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {totalSavings > 0 && (
+                      <motion.div
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        className="flex justify-between text-green-500 bg-green-500/10 p-3 rounded-xl border border-green-500/20"
+                      >
+                        <span className="flex items-center gap-2 font-black uppercase text-[10px]">
+                          <FaTag /> You Saved
+                        </span>
+                        <span className="font-black">
+                          - ৳{totalSavings.toLocaleString()}
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <div className="flex justify-between text-gray-500">
+                      <span>Estimated Shipping</span>
+                      <span className="text-[10px] italic">
+                        Calculated Next)
+                      </span>
+                    </div>
+
+                    <div className="h-px bg-gray-800 my-6" />
+
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs text-gray-500 uppercase font-black">
+                        Total Amount
+                      </span>
+                      <span className="text-3xl font-black text-red-600 tracking-tighter">
+                        ৳{subtotal.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                </div>
+
+                  <button
+                    disabled={cartItems.length === 0}
+                    onClick={checkoutHandler}
+                    className="w-full group mt-10 flex items-center justify-center gap-3 bg-red-600 py-5 rounded-xl font-mono font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-500 shadow-xl"
+                  >
+                    Checkout{" "}
+                    <FaArrowRightLong className="group-hover:translate-x-2 transition-transform" />
+                  </button>
+
+                  <p className="mt-6 text-[9px] text-center text-gray-600 uppercase tracking-widest font-bold">
+                    Encrypted Gear Transaction
+                  </p>
+                </motion.div>
               </div>
             </div>
           </div>

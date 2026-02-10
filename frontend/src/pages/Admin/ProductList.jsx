@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,21 +8,19 @@ import {
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
 import AdminMenu from "./AdminMenu";
-import { FaSpinner } from "react-icons/fa6";
-import ReactQuill from "react-quill"; // Import React Quill
-import "react-quill/dist/quill.snow.css"; // Import Quill styles
-
+import { FaSpinner, FaCloudUploadAlt, FaPlus, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import ReactQuill from "react-quill"; 
+import "react-quill/dist/quill.snow.css";
 
 const ProductList = () => {
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState([]);
   const [name, setName] = useState("");
-  const [description, setDescription] = useState(""); // State for rich text description
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [quantity, setQuantity] = useState("");
   const [brand, setBrand] = useState("");
   const [stock, setStock] = useState(0);
-  const [imageUrl, setImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [discountPercentage, setDiscountPercentage] = useState(0);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -34,53 +33,42 @@ const ProductList = () => {
   const [createProduct] = useCreateProductMutation();
   const { data: categories } = useFetchCategoriesQuery();
 
-  // React Quill modules and formats configuration
   const modules = {
     toolbar: [
-      [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
-      ["bold", "italic", "underline", "strike"], // Bold, italic, etc.
-      [{ list: "ordered" }, { list: "bullet" }], // Lists
-      ["link", "image"], // Links and images
-      ["clean"], // Remove formatting
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link", "image"],
+      ["clean"],
     ],
   };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "link",
-    "image",
-  ];
+  const formats = ["header", "bold", "italic", "underline", "list", "bullet", "link", "image"];
+
+  const moveImage = (index, direction) => {
+    const updatedImages = [...images];
+    const newIndex = direction === "left" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= images.length) return;
+    [updatedImages[index], updatedImages[newIndex]] = [updatedImages[newIndex], updatedImages[index]];
+    setImages(updatedImages);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Basic validation
-    if (!image) return toast.error("Image is required.");
-    if (!name || name.trim() === "") return toast.error("Name is required.");
-    if (!price || isNaN(price) || price <= 0)
-      return toast.error("Valid price is required.");
-    if (!quantity || isNaN(quantity) || quantity < 0)
-      return toast.error("Valid quantity is required.");
-    if (!brand || brand.trim() === "") return toast.error("Brand is required.");
-    if (!description || description.trim() === "")
-      return toast.error("Description is required.");
-    if (stock === "" || isNaN(stock) || stock < 0)
-      return toast.error("Valid stock count is required.");
-    if (!category || category.trim() === "")
-      return toast.error("Category is required.");
+    if (images.length === 0) return toast.error("At least one image is required.");
+    if (!name.trim()) return toast.error("Name is required.");
+    if (!price || price <= 0) return toast.error("Valid price is required.");
+    if (!quantity || quantity < 0) return toast.error("Valid quantity is required.");
+    if (!brand.trim()) return toast.error("Brand is required.");
+    if (!description.trim() || description === "<p><br></p>") return toast.error("Description is required.");
+    if (!category) return toast.error("Category is required.");
 
     try {
       setLoading(true);
       const productData = new FormData();
-      productData.append("image", image);
+      productData.append("images", JSON.stringify(images));
       productData.append("name", name);
-      productData.append("description", description); // Rich text description
+      productData.append("description", description);
       productData.append("price", price);
       productData.append("category", category);
       productData.append("quantity", quantity);
@@ -92,311 +80,169 @@ const ProductList = () => {
       productData.append("warranty", warranty);
       productData.append("discountedAmount", discountedAmount);
 
-      const { data } = await createProduct(productData);
-
-      if (data.error) {
-        toast.error("Product creation failed. Try Again.");
+      const res = await createProduct(productData).unwrap();
+      if (res.error) {
+        toast.error(res.error);
       } else {
-        toast.success(`${data.name} is created`);
-        navigate("/");
+        toast.success(`${res.name} is created`);
+        navigate("/admin/allproductslist");
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Product creation failed. Try Again.");
+      toast.error(error?.data?.error || "Product creation failed.");
     } finally {
       setLoading(false);
     }
   };
 
   const uploadFileHandler = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     const formData = new FormData();
-    formData.append("image", e.target.files[0]);
-    setLoading(true);
+    for (let i = 0; i < files.length; i++) formData.append("image", files[i]);
 
+    setLoading(true);
     try {
       const res = await uploadProductImage(formData).unwrap();
-      toast.success(res.message);
-      setImage(res.image);
-      setImageUrl(res.image);
+      setImages((prevImages) => [...prevImages, ...res.images]);
+      toast.success(res.message || "Images Sync Complete");
     } catch (error) {
-      toast.error(error?.data?.message || error.error);
+      toast.error("Upload failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div
-      className={`bg-gray-100 h-screen transition-all duration-300 flex-1 2xl:pl-7 pt-32`}
-    >
-      <div className="flex flex-col justify-center items-center p-5">
-        {/* Admin Menu */}
+    <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
+      <div className="flex flex-col 2xl:flex-row">
+        {/* Admin Menu preserves original placement logic */}
         <AdminMenu />
 
-        <div className="p-5 bg-white rounded-sm border border-gray-400 w-full 2xl:container 2xl:mx-auto">
-          <h2 className="text-[22px] font-bold font-figtree text-black mb-6 border-b border-gray-300 pb-3">
-            Create Product
-          </h2>
-
-          {/* Image Upload */}
-          {imageUrl && (
-            <div className="text-center mb-5">
-              <img
-                src={imageUrl}
-                alt="product"
-                className="block mx-auto max-h-[200px] h-[200px] w-auto rounded-lg border border-gray-300 shadow-md hover:shadow-lg transition-all duration-300 object-contain"
-              />
-            </div>
-          )}
-
-          <div className="mb-5">
-            <label className="block text-gray-600 font-figtree font-medium text-[22px] mb-2 text-center cursor-pointer py-5 border-dashed border-2 border-gray-300 rounded-sm hover:bg-gray-200 transition-all duration-300">
-              {loading ? "Uploading..." : image ? image.name : "Upload Image"}
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={uploadFileHandler}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          {/* Product Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
-            <div>
-              <label
-                htmlFor="name"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Name
-              </label>
-              <input
-                type="text"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={name}
-                placeholder="Product Name"
-                onChange={(e) => setName(e.target.value)}
-              />
+        <div className="flex-1 px-4 lg:px-12 pb-20">
+          <div className="max-w-[1400px] mx-auto">
+            {/* Header Section */}
+            <div className="mb-10 border-l-4 border-red-600 pl-6 py-2">
+              <h1 className="text-3xl font-black text-black tracking-tighter uppercase">
+                Create <span className="text-red-600">New Product</span>
+              </h1>
+              <p className="text-[10px] text-gray-500 font-bold tracking-[0.4em] uppercase mt-1">
+                AriX GeaR Management System | Node_Active
+              </p>
             </div>
 
-            <div>
-              <label
-                htmlFor="price"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Price
-              </label>
-              <input
-                min="0"
-                inputMode="numeric"
-                type="number"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                placeholder="Product Price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="quantity"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Quantity
-              </label>
-              <input
-                min="0"
-                inputMode="numeric"
-                type="number"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={quantity}
-                placeholder="Product Quantity"
-                onChange={(e) => setQuantity(e.target.value)}
-              />
-            </div>
-          </div>
+            <div className="bg-white border border-gray-100 shadow-2xl p-6 lg:p-10 relative overflow-hidden">
+              
+              {/* Modern Image Matrix Preview */}
+              <div className="mb-10">
+                <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-4">Gallery_Assets</p>
+                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 border border-dashed border-gray-200 min-h-[160px] items-center justify-center rounded-sm">
+                  {images.map((img, index) => (
+                    <div key={index} className="relative group border-2 border-white shadow-md overflow-hidden w-32 h-32 bg-white transition-all duration-300 hover:scale-105">
+                      <img src={img} alt="product" className="h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="flex gap-3">
+                          <button type="button" onClick={() => moveImage(index, "left")} disabled={index === 0} className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"><FaArrowLeft size={14}/></button>
+                          <button type="button" onClick={() => moveImage(index, "right")} disabled={index === images.length - 1} className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"><FaArrowRight size={14}/></button>
+                        </div>
+                        <button type="button" onClick={() => setImages(images.filter((_, i) => i !== index))} className="text-red-500 hover:scale-125 transition-transform"><FaTrash size={18}/></button>
+                      </div>
+                      <div className="absolute bottom-0 left-0 bg-black/50 text-white text-[8px] px-1 italic">POS_{index + 1}</div>
+                    </div>
+                  ))}
+                  
+                  <label className="w-32 h-32 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-600 hover:bg-red-50 transition-all text-gray-400 hover:text-red-600 group rounded-sm">
+                    {loading ? <FaSpinner className="animate-spin" size={24} /> : <FaCloudUploadAlt size={24} className="group-hover:translate-y-[-4px] transition-transform" />}
+                    <span className="text-[8px] font-black uppercase mt-2 tracking-tighter text-center">Batch_Upload</span>
+                    <input type="file" accept="image/*" multiple onChange={uploadFileHandler} className="hidden" />
+                  </label>
+                </div>
+              </div>
 
-          {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
-            <div>
-              <label
-                htmlFor="brand"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Brand
-              </label>
-              <input
-                type="text"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={brand}
-                placeholder="Product Brand"
-                onChange={(e) => setBrand(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="stock"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Count In Stock
-              </label>
-              <input
-                type="text"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={stock}
-                placeholder="Product Stock"
-                onChange={(e) => setStock(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="category"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Category
-              </label>
-              <select
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="" className="text-gray-600 text-xl">
-                  Choose Category
-                </option>
-                {categories?.map((c) => (
-                  <option
-                    key={c._id}
-                    value={c._id}
-                    className="text-gray-600 font-figtree font-semibold text-[14px]"
-                  >
-                    {c.name}
-                  </option>
+              {/* Input Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10 mb-12">
+                {[
+                  { label: "Product_Identifier", val: name, set: setName, type: "text", placeholder: "E.g. Mech-Keyboard X1" },
+                  { label: "Price_Unit_(USD)", val: price, set: setPrice, type: "number", placeholder: "0.00" },
+                  { label: "Total_Quantity", val: quantity, set: setQuantity, type: "number", placeholder: "100" },
+                  { label: "Brand_Mark", val: brand, set: setBrand, type: "text", placeholder: "AriX GeaR" },
+                  { label: "Initial_Stock", val: stock, set: setStock, type: "number", placeholder: "0" },
+                  { label: "Active_Offer", val: offer, set: setOffer, type: "text", placeholder: "Seasonal Sale" },
+                  { label: "Warranty_Period", val: warranty, set: setWarranty, type: "text", placeholder: "24 Months" },
+                  { label: "Discount_Ratio_%", val: discountPercentage, set: setDiscountPercentage, type: "number", placeholder: "0" },
+                  { label: "Markdown_Amount", val: discountedAmount, set: setDiscountedAmount, type: "number", placeholder: "0" },
+                ].map((field, idx) => (
+                  <div key={idx} className="group relative">
+                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block group-focus-within:text-red-600 transition-colors">
+                      {field.label}
+                    </label>
+                    <input
+                      type={field.type}
+                      value={field.val}
+                      placeholder={field.placeholder}
+                      onChange={(e) => field.set(e.target.value)}
+                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all duration-300 placeholder:font-normal placeholder:text-gray-300"
+                    />
+                  </div>
                 ))}
-              </select>
+
+                <div className="group relative">
+                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">Classification</label>
+                  <select
+                    className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer appearance-none"
+                    onChange={(e) => setCategory(e.target.value)}
+                    value={category}
+                  >
+                    <option value="">SELECT_CATEGORY</option>
+                    {categories?.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-4 pt-6">
+                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase italic">Mark_As_Featured</label>
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="w-5 h-5 accent-red-600 cursor-pointer shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Rich Text Editor Section */}
+              <div className="mb-12">
+                <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">Product_Specifications_Data</label>
+                <div className="border border-gray-100 hover:border-red-600 transition-all duration-500 rounded-sm overflow-hidden bg-white">
+                  <ReactQuill
+                    theme="snow"
+                    value={description}
+                    onChange={setDescription}
+                    modules={modules}
+                    formats={formats}
+                    placeholder="Describe the power of this gear..."
+                    className="min-h-[250px] font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Submit Action */}
+              <div className="flex justify-end border-t border-gray-100 pt-10">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className={`
+                    group relative px-12 py-4 bg-black text-white font-black uppercase tracking-[0.3em] text-[13px] 
+                    overflow-hidden transition-all duration-500 active:scale-95
+                    ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-red-600 hover:shadow-[0_10px_20px_rgba(220,38,38,0.2)]"}
+                  `}
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    {loading ? <FaSpinner className="animate-spin" /> : <FaPlus />}
+                    {loading ? "Processing_Data..." : "Deploy_Product"}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Additional Fields for New Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-3">
-            <div>
-              <label
-                htmlFor="discountPercentage"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Discount Percentage
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={discountPercentage}
-                placeholder="Product Discount Percentage"
-                onChange={(e) => setDiscountPercentage(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="isFeatured"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Is Featured
-              </label>
-              <input
-                type="checkbox"
-                className="px-4 py-2 flex justify-start mt-2"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div>
-              <label
-                htmlFor="offer"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Offer
-              </label>
-              <input
-                type="text"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={offer}
-                placeholder="Product Offer"
-                onChange={(e) => setOffer(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="warranty"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Warranty
-              </label>
-              <input
-                type="text"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={warranty}
-                placeholder="Product Warranty"
-                onChange={(e) => setWarranty(e.target.value)}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="discountedAmount"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Discounted Amount
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="px-4 py-2 w-full border border-gray-300 rounded-sm bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-                value={discountedAmount}
-                placeholder="Discounted Amount"
-                onChange={(e) => setDiscountedAmount(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <div className="">
-              <label
-                htmlFor="description"
-                className="text-gray-700 font-figtree font-medium text-[18px]"
-              >
-                Description
-              </label>
-              {/* Replace textarea with React Quill */}
-              <ReactQuill
-                theme="snow"
-                value={description}
-                onChange={setDescription}
-                modules={modules}
-                formats={formats}
-                placeholder="Product Description"
-                className="bg-white text-gray-800 font-figtree font-normal text-[16px] outline-none focus:ring-2 focus:ring-pink-600 transition-all duration-300 mt-2"
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`text-lg font-semibold text-white w-fit
-              duration-300 px-3 py-2 rounded ${
-                loading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-black hover:bg-black active:bg-pink-800"
-              } ${loading ? "" : "hover:shadow-lg active:shadow-xl"}`}
-          >
-            {loading ? (
-              <FaSpinner className="animate-spin h-5 w-5 text-white" />
-            ) : (
-              "Submit"
-            )}
-          </button>
         </div>
       </div>
     </div>

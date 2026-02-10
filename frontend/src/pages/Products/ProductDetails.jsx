@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+/* eslint-disable no-unused-vars */
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
@@ -11,259 +12,204 @@ import Loader from "../../components/Loader";
 import Message from "../../components/Message";
 import ProductTabs from "./ProductTabs";
 import Ratings from "./Ratings";
-import { FaCheck } from "react-icons/fa";
+import { FaCheckCircle, FaTruck, FaShieldAlt, FaUndo } from "react-icons/fa";
 import AddToCartButton from "../../components/AddToCartButton";
+import { motion } from "framer-motion";
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [activeImage, setActiveImage] = useState("");
 
   const categoriesQuery = useFetchCategoriesQuery();
-
-  const {
-    data: product,
-    isLoading,
-    refetch,
-    error,
-  } = useGetProductDetailsQuery(productId);
+  const { data: product, isLoading, refetch, error } = useGetProductDetailsQuery(productId);
   const { userInfo } = useSelector((state) => state.auth);
+  const [createReview, { isLoading: loadingProductReview }] = useCreateReviewMutation();
 
-  const [createReview, { isLoading: loadingProductReview }] =
-    useCreateReviewMutation();
+  useEffect(() => {
+    if (product) {
+      const allImages = product.images?.length > 0 ? product.images : product.image ? [product.image] : [];
+      if (allImages.length > 0) setActiveImage(allImages[0]);
+    }
+  }, [product]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
     try {
-      await createReview({
-        productId,
-        rating,
-        comment,
-      }).unwrap();
+      await createReview({ productId, rating, comment }).unwrap();
       refetch();
       toast.success("Review created successfully");
+      setComment("");
+      setRating(0);
     } catch (error) {
-      const errorMessage =
-        error?.data?.message || error.message || "An unexpected error occurred";
-      toast.error(errorMessage);
+      toast.error(error?.data?.message || "Error creating review");
     }
   };
 
-  const discountedPrice =
-    product?.price && product?.discountPercentage
-      ? product.price - (product.price * product.discountPercentage) / 100
-      : product?.price || 0;
+  const discountedPrice = product?.price && product?.discountPercentage
+    ? product.price - (product.price * product.discountPercentage) / 100
+    : product?.price || 0;
 
-  const discountAmount =
-    product?.price && product?.discountPercentage
-      ? (product.price * product.discountPercentage) / 100
-      : 0;
+  const discountAmount = product?.price && product?.discountPercentage
+    ? (product.price * product.discountPercentage) / 100
+    : 0;
 
-  // Determine shipping charge safely
-  const shipping =
-    product?.shippingCharge !== undefined
-      ? product.shippingCharge === 0
-        ? "Free Shipping"
-        : `৳${product.shippingCharge}`
-      : "Shipping not available";
-
-  // Guard against undefined product data
   if (isLoading) return <Loader />;
-  if (error) {
-    return (
-      <Message variant="danger">
-        {error?.data?.message || "Failed to load product details"}
-      </Message>
-    );
-  }
-
-  // Guard against undefined product data
-  if (isLoading) return <Loader />;
-  if (error) {
-    return (
-      <Message variant="danger">
-        {error?.data?.message || "Failed to load product details"}
-      </Message>
-    );
-  }
-
-  if (!product) {
-    return <Message variant="danger">Product not found.</Message>;
-  }
+  if (error) return <Message variant="danger">{error?.data?.message || "Failed to load product"}</Message>;
+  if (!product) return <Message variant="danger">Product not found.</Message>;
 
   return (
-    <div className="">
-      <div className="py-8 bg-[#E8E8E8] mt-[100px]">
-        <div className="container mx-auto flex items-center gap-3 md:gap-5 ">
-          <Link
-            to="/"
-            className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]"
-          >
-            Home
+    <div className="bg-[#FDFDFD] min-h-screen">
+      {/* 🟢 ১. আধুনিক ব্রেডক্রাম্ব */}
+      <div className="py-6 bg-[#F9F1E7]/30 border-b border-gray-100 mt-[100px]">
+        <div className="container mx-auto px-4 flex items-center gap-3 text-sm md:text-base font-mono">
+          <Link to="/" className="text-gray-500 hover:text-blue-600 transition-colors">Home</Link>
+          <span className="text-gray-400">/</span>
+          <Link to="/shop" className="text-gray-500 hover:text-blue-600">
+            {categoriesQuery.data?.find((item) => item._id === product.category)?.name || "Shop"}
           </Link>
-          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
-            /
-          </span>
-          <Link
-            to="/shop"
-            className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]"
-          >
-            {categoriesQuery.data &&
-              categoriesQuery.data.find((item) => item._id === product.category)
-                ?.name}
-          </Link>
-          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
-            /
-          </span>
-          <span className="text-[#000000] font-medium font-poppins text-[14px] md:text-[18px]">
-            {product.name}
-          </span>
+          <span className="text-gray-400">/</span>
+          <span className="text-blue-600 font-bold truncate max-w-[200px]">{product.name}</span>
         </div>
       </div>
-      <div className="bg-white min-h-screen h-full pt-8 px-3 xs:px-0 container mx-auto">
-        {/* Product Section */}
-        <div className="flex flex-col">
-          <div className="py-8 bg-white md:py-16 antialiased border border-gray-300 rounded-md overflow-hidden">
-            <div className="max-w-screen-xl px-2 md:px-4 mx-auto 2xl:px-0">
-              <div className="lg:grid lg:grid-cols-2 lg:gap-8 xl:gap-16">
-                <div className="shrink-0 max-w-md lg:max-w-lg mx-auto bg-white overflow-hidden">
-                  <img
-                    className="w-full"
-                    src={product.image}
-                    alt={product.name}
-                  />
+
+      <div className="container mx-auto px-4 py-10 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          
+          {/* 🟢 ২. ইমেজ গ্যালারি সেকশন (Left) */}
+          <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-5">
+            {/* থাম্বনেইল লিস্ট */}
+            <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-y-auto pb-2 md:pb-0 scrollbar-hide">
+              {(product.images?.length > 0 ? product.images : [product.image]).map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImage(img)}
+                  className={`relative flex-shrink-0 w-20 h-20 rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
+                    activeImage === img ? "border-blue-600 scale-105 shadow-md" : "border-gray-100 opacity-70"
+                  }`}
+                >
+                  <img src={img} className="w-full h-full object-cover" alt="thumb" />
+                </button>
+              ))}
+            </div>
+
+            {/* মেইন ইমেজ */}
+            <div className="flex-1 relative bg-white border border-gray-100 rounded-[2rem] overflow-hidden group shadow-sm h-[400px] md:h-[600px]">
+              <motion.img
+                key={activeImage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                src={activeImage}
+                alt={product.name}
+                className="w-full h-full object-contain p-6 md:p-10 transition-transform duration-500 group-hover:scale-105"
+              />
+              {product.discountPercentage > 0 && (
+                <div className="absolute top-5 left-5 bg-red-500 text-white text-xs font-black px-4 py-1.5 rounded-full shadow-lg">
+                  -{product.discountPercentage}% OFF
                 </div>
+              )}
+            </div>
+          </div>
 
-                <div>
-                  <h5 className="text-base text-[#B88E2F] font-medium font-poppins">
-                    {product.isFeatured ? "Sale!" : "New!"}
-                  </h5>
-                  <div className="border-b-[1px] border-opacity-5">
-                    <h1 className="text-[28px] font-Dosis font-semibold text-[#202435]">
-                      {product.name}
-                    </h1>
+          {/* 🟢 ৩. প্রোডাক্ট ডিটেইলস (Right) */}
+          <div className="lg:col-span-5 space-y-8">
+            <div className="space-y-4">
+              <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                {product.brand || "AriX Gear"}
+              </span>
+              <h1 className="text-3xl md:text-4xl font-mono font-black text-gray-900 leading-tight">
+                {product.name}
+              </h1>
 
-                    {/* Review Rating and Count */}
-                    <div className="flex items-center gap-3">
-                      <div className="">
-                        <p className="text-[#C2C2D3] text-[13px] font-inter font-normal">
-                          Brand:{" "}
-                          <span className="text-[#223994] text-[13px] font-inter font-normal">
-                            {product.brand}
-                          </span>
-                        </p>
-                      </div>
-                      <span className="border h-9 border-opacity-5 "></span>
-                      <div className="my-4 flex items-center space-x-1">
-                        <Ratings value={product.rating} />
-                        <span className="text-[#9F9F9F] text-[12px] font-medium font-poppins">
-                          ({product.numReviews}{" "}
-                          {product.numReviews === 1 ? "Review" : "Reviews"})
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col md:flex-row md:items-center gap-3 my-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[30px] text-[#98928E] font-normal font-poppins line-through">
-                        ₹{product.price}
-                      </span>
-                      {product.discountPercentage > 0 && (
-                        <>
-                          <span className="text-[30px] text-[#ED1D24] font-semibold font-poppins">
-                            ₹{discountedPrice?.toFixed(2)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    <span className="text-[16px] font-normal font-Inter bg-[#FF013D] text-[#FFFFFF] px-2 py-1 w-fit mt-5 md:mt-0">
-                      Save{" "}
-                      <span className="font-semibold text-[25px]">
-                        ₹{discountAmount.toFixed(2)}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="text-base font-normal font-poppins text-[#9F9F9F]">
-                    <p className="text-[#00B858] text-[12px] font-poppins bg-[#E5F8ED] font-bold w-fit px-3 py-1 rounded-lg">
-                      {product.countInStock > 0 ? "IN STOCK" : "Out of Stock"}
-                    </p>
-                   
-                  </div>
+              <div className="flex items-center gap-4 py-2 border-y border-gray-50">
+                <Ratings value={product.rating} />
+                <span className="text-xs font-mono text-gray-400">
+                  ({product.numReviews} Reviews)
+                </span>
+                <span className="h-4 w-[1px] bg-gray-200"></span>
+                <span className={`text-xs font-bold ${product.countInStock > 0 ? "text-green-500" : "text-red-500"}`}>
+                  {product.countInStock > 0 ? "● IN STOCK" : "● OUT OF STOCK"}
+                </span>
+              </div>
+            </div>
 
-                  {/* Actions */}
-                  <div className="mt-6 flex items-center space-x-4">
-                    <AddToCartButton
-                      product={product}
-                      qty={1}
-                      buttonText="Add to Cart"
-                      addedText="Added to Cart"
-                      isOrderNow={true} // This enables the "Order Now" button
-                    />
-                  </div>
+            {/* প্রাইস সেকশন */}
+            <div className="bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="text-4xl font-mono font-black text-gray-900">
+                  ৳{discountedPrice?.toLocaleString("en-BD")}
+                </span>
+                {product.discountPercentage > 0 && (
+                  <span className="text-xl text-gray-400 line-through font-mono">
+                    ৳{product.price?.toLocaleString("en-BD")}
+                  </span>
+                )}
+              </div>
+              {product.discountPercentage > 0 && (
+                <p className="text-red-500 text-sm font-bold">
+                  You Save: ৳{discountAmount.toLocaleString("en-BD")}
+                </p>
+              )}
+            </div>
+
+            {/* অ্যাড টু কার্ট */}
+            <div className="flex flex-col gap-4">
+              <AddToCartButton
+                product={product}
+                qty={1}
+                buttonText="Add to Cart"
+                addedText="Added to Cart"
+                isOrderNow={true}
+              />
+            </div>
+
+            {/* ট্রাস্ট ব্যাজ সেকশন */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-6 border-t border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl"><FaTruck /></div>
+                <div className="text-xs">
+                  <p className="font-black text-gray-900">পণ্য হাতে পেয়ে টাকা দিন</p>
+                  <p className="text-gray-500 uppercase font-mono tracking-tighter">Cash on Delivery</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-green-50 text-green-600 rounded-xl"><FaShieldAlt /></div>
+                <div className="text-xs">
+                  <p className="font-black text-gray-900">১০০% অরিজিনাল পন্য</p>
+                  <p className="text-gray-500 uppercase font-mono tracking-tighter">Authentic Gear</p>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="container mx-auto mt-8 py-4">
-            <div className="space-y-4 font-poppins font-normal">
-              <div className="flex items-start space-x-3">
-                <FaCheck />
-                <label className="text-sm text-black/80">
-                  পন্যটি কিনতে “অর্ডার করুন” বাটনে চাপুন
-                </label>
-              </div>
-              <div className="flex items-start space-x-3">
-                <FaCheck />
-                <label className="text-sm text-black/80">
-                  পুরো বাংলাদেশে হোম ডেলিভিরি মাধ্যমে পণ্য পৌঁছানো হয়
-                </label>
-              </div>
-              <div className="flex items-start space-x-3">
-                <FaCheck />
-                <label className="text-sm text-black/80">
-                  ১টাকাও এডভান্স নেওয়া হয় না
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mt-10 p-4 border border-opacity-10 shadow-sm">
-              <div className="text-sm text-gray-600">
-                <span className="text-[16px] md:text-xl text-[#242424] font-semibold font-poppins">
-                  Guaranteed Delivery
-                </span>
-                <span className="mx-2">|</span>
-                <span className="text-[14px] md:text-[15px]  text-[#242424] font-medium font-poppins">
-                  No Advance
-                </span>
-              </div>
-
-              <div className="flex items-center space-x-4">
-                <img
-                  src={product.image}
-                  alt="COD Delivery"
-                  className="h-8 w-8 md:h-12 md:w-12 rounded-lg"
-                />
-                <span className="text-[18px] md:text-2xl first-line:text-[#B88E2F] font-extrabold font-Dosis">
-                  ক্যাশ অন ডেলিভারি
-                </span>
-              </div>
+            
+            {/* বিশেষ নির্দেশনাবলী */}
+            <div className="bg-[#B88E2F]/5 p-5 rounded-2xl border border-[#B88E2F]/20 space-y-3">
+              {[
+                "পন্যটি কিনতে “অর্ডার করুন” বাটনে চাপুন",
+                "পুরো বাংলাদেশে হোম ডেলিভিরি সুবিধা",
+                "১ টাকাও অগ্রিম দিতে হবে না"
+              ].map((text, i) => (
+                <div key={i} className="flex items-center gap-3 text-sm font-medium text-gray-700">
+                  <FaCheckCircle className="text-[#B88E2F]" />
+                  <span>{text}</span>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
 
-          {/* Review Section */}
-          <div className="w-full mt-8 ">
-            <ProductTabs
-              loadingProductReview={loadingProductReview}
-              userInfo={userInfo}
-              submitHandler={submitHandler}
-              rating={rating}
-              setRating={setRating}
-              comment={comment}
-              setComment={setComment}
-              product={product}
-            />
-          </div>
+        {/* 🟢 ৪. ট্যাব এবং রিভিউ সেকশন */}
+        <div className="mt-20">
+          <ProductTabs
+            loadingProductReview={loadingProductReview}
+            userInfo={userInfo}
+            submitHandler={submitHandler}
+            rating={rating}
+            setRating={setRating}
+            comment={comment}
+            setComment={setComment}
+            product={product}
+          />
         </div>
       </div>
     </div>

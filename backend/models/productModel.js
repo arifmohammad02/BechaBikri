@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 const { ObjectId } = mongoose.Schema;
+import slugify from "slugify";
 
 // Review Schema
 const reviewSchema = mongoose.Schema(
@@ -20,7 +21,8 @@ const reviewSchema = mongoose.Schema(
 const productSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
-    image: { type: String, required: true },
+    slug: { type: String, unique: true, lowercase: true },
+    images: [{ type: String, required: true }],
     brand: { type: String, required: true },
     quantity: { type: Number, required: true },
     category: { type: ObjectId, ref: "Category", required: true },
@@ -39,8 +41,15 @@ const productSchema = mongoose.Schema(
     // specifications: [{ type: String }], // 10 specifications or features
     discountedAmount: { type: Number, default: 0 }, // Discounted Amount
   },
-  { timestamps: true }
+  { timestamps: true },
 );
+
+productSchema.pre("save", function (next) {
+  if (this.isModified("name")) {
+    this.slug = slugify(this.name, { lower: true, strict: true });
+  }
+  next();
+});
 
 
 

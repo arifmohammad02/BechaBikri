@@ -1,13 +1,13 @@
 /* eslint-disable react/prop-types */
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  useCreateOrderMutation,
-} from "@redux/api/orderApiSlice"; // শুধু createOrder import করুন
+import { useCreateOrderMutation } from "@redux/api/orderApiSlice";
 import { clearCartItems } from "../../redux/features/cart/cartSlice";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import OrderSummery from "../../components/OrderSummery";
+import { motion } from "framer-motion";
+import { HiOutlineShoppingBag } from "react-icons/hi";
 
 const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const cart = useSelector((state) => state.cart);
@@ -16,8 +16,6 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
   const { cartItems } = cart;
-
-  // console.log(cart);
 
   const calculateDiscountedPrice = (product) => {
     if (product.discountPercentage > 0) {
@@ -43,10 +41,9 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const totalPrice = (subtotal + shippingCharge).toFixed(2);
 
   const placeOrderHandler = async () => {
-    if (!validateFields()) {
-      return;
-    }
-    onPlaceOrder(); // শিপিং ডিটেইলস নিশ্চিত করা
+    if (!validateFields()) return;
+    
+    onPlaceOrder();
     try {
       setIsLoading(true);
       const order = await createOrder({
@@ -58,64 +55,78 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
         totalPrice: totalPrice,
       }).unwrap();
 
-      // ✅ payOrder কল করা দরকার নেই - order create করার সময়ই payment status সেট হয়ে যাবে
-      // Cash on Delivery হলে payment status "due" হবে
-      // PayPal হলে "pending" হবে
-      
-      toast.success("Order placed successfully!");
+      toast.success("Order placed successfully! 🚀");
       dispatch(clearCartItems());
       navigate(`/order/${order._id}`);
     } catch (error) {
-      console.error("Order creation error:", error);
-      toast.error(
-        error?.data?.message || 
-        error?.data?.error || 
-        "Failed to place order. Please try again."
-      );
+      toast.error(error?.data?.message || "Failed to place order.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // console.log(cartItems);
-
   return (
-    <div className="border border-opacity-65 rounded-xl py-5 px-6">
-      <h1 className="text-[22px] font-bold font-mono uppercase text-black text-center mb-3">
-        Your Order Summery
-      </h1>
-      <div>
+    <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="bg-blue-600 p-2 rounded-xl text-white">
+          <HiOutlineShoppingBag size={24} />
+        </div>
+        <h1 className="text-xl font-mono font-black uppercase text-gray-900 tracking-tighter">
+          Order <span className="text-blue-600">Summary</span>
+        </h1>
+      </div>
+
+      <div className="mb-8 max-h-[300px] overflow-y-auto custom-scrollbar">
         <OrderSummery />
       </div>
-      <div className="border-b border-gray-300 mb-5">
-        <div className="py-2 text-[#000000] text-[16px] font-mono font-semibold text-right flex justify-between ">
-          Subtotal:
-          <span className="text-[#000000] text-[14px] md:text-[18px] font-mono font-medium">
-            ₹{subtotal.toFixed(2)}
-          </span>
+
+      <div className="space-y-4 border-t border-b border-gray-50 py-6 mb-6">
+        <div className="flex justify-between items-center text-sm font-mono text-gray-500 font-bold">
+          <span>SUBTOTAL</span>
+          <span className="text-gray-900 font-black">৳{subtotal.toFixed(2)}</span>
         </div>
-        <div className="py-2 text-[#000000] text-[16px] font-mono font-semibold text-right flex justify-between ">
-          Shipping Fee
-          <span>₹{shippingCharge.toFixed(2)}</span>
-        </div>
-      </div>
-      <div>
-        <div className="py-4 text-[#000000] text-[20px] font-mono font-bold text-right flex justify-between ">
-          Total
-          <span className="text-[#000000] text-[14px] md:text-[21px] font-mono font-bold">
-            ₹{totalPrice}
-          </span>
+        <div className="flex justify-between items-center text-sm font-mono text-gray-500 font-bold">
+          <span>SHIPPING FEE</span>
+          <span className="text-gray-900 font-black">৳{shippingCharge.toFixed(2)}</span>
         </div>
       </div>
-      <button
+
+      <div className="flex justify-between items-center mb-8">
+        <span className="text-lg font-mono font-black text-gray-900 uppercase">Total Amount</span>
+        <div className="text-right">
+          <span className="text-2xl font-mono font-black text-blue-600">
+            ৳{totalPrice}
+          </span>
+          <p className="text-[10px] text-gray-400 font-mono uppercase tracking-widest mt-1 italic">
+            VAT included (if applicable)
+          </p>
+        </div>
+      </div>
+
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={placeOrderHandler}
-        className={`px-4 py-4 w-full text-white text-[20px] font-normal font-serif bg-[#ED174A] hover:bg-[#223994] transition-all duration-300 ease-in-out rounded ${
-          isLoading ? "opacity-50" : ""
-        }`}
         disabled={isLoading}
+        className={`w-full py-5 rounded-2xl font-mono font-black text-lg uppercase tracking-widest shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3 ${
+          isLoading 
+          ? "bg-gray-200 text-gray-500 cursor-not-allowed" 
+          : "bg-blue-600 text-white hover:bg-black"
+        }`}
       >
-        {isLoading ? "Placing Order..." : "Place Order"}
-      </button>
+        {isLoading ? (
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Processing...
+          </div>
+        ) : (
+          "Confirm Order"
+        )}
+      </motion.button>
+      
+      <p className="text-center text-[11px] text-gray-400 font-mono mt-4 uppercase tracking-tighter">
+        By placing order, you agree to our <span className="underline cursor-pointer">Terms & Conditions</span>
+      </p>
     </div>
   );
 };

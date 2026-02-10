@@ -1,13 +1,11 @@
-import React from "react";
-import { IoMdClose } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { addToCart } from "../redux/features/cart/cartSlice";
+import { FaMinus, FaPlus } from "react-icons/fa6";
 
 const OrderSummery = () => {
   const cart = useSelector((state) => state.cart);
   const { cartItems } = cart;
-
   const dispatch = useDispatch();
 
   const addToCartHandler = (product, qty) => {
@@ -15,92 +13,114 @@ const OrderSummery = () => {
   };
 
   const calculateDiscountedPrice = (product) => {
-    if (product.discountPercentage > 0) {
-      return (
-        product.price -
-        (product.price * product.discountPercentage) / 100
-      ).toFixed(2);
-    }
-    return product.price.toFixed(2);
+    return product.discountPercentage > 0
+      ? product.price - (product.price * product.discountPercentage) / 100
+      : product.price;
   };
 
   return (
-    <div className="container mx-auto mt-8">
-      <div className=" ">
-        {cartItems.map((item) => (
-          <div
-            key={item._id}
-            className="border-b border-gray-300 flex flex-col items-center md:flex-row"
-          >
-            {/* Product Info */}
-            <div className="py-4  flex flex-col md:flex-row items-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-16 h-16 object-cover rounded-lg border border-gray-200 mb-2 md:mb-0 md:mr-4"
-              />
-              <Link
-                to={`/product/${item._id}`}
-                className="text-[#000000] text-center text-[14px] md:text-[14px] font-mono font-medium flex items-center"
-              >
-                {item.name}<span className="flex items-center"><IoMdClose className="text-[10px]"/>{item.qty}</span>
-              </Link>
-            </div>
+    <div className="w-full bg-white rounded-[2rem] p-2 transition-all duration-500">
+      <div className="flex items-center justify-between mb-6 px-2">
+        <h3 className="text-xl font-mono font-black text-gray-900 uppercase tracking-tighter">
+          Items <span className="text-blue-600 ml-1">({cartItems.length})</span>
+        </h3>
+        <Link 
+          to="/cart" 
+          className="text-[11px] font-mono font-black text-blue-600 hover:text-black uppercase tracking-widest border-b-2 border-blue-100 hover:border-black transition-all"
+        >
+          Edit Cart
+        </Link>
+      </div>
 
-            {/* Price */}
-            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold text-center border-b-[1px] md:border-b-0 w-full md:w-auto flex items-center gap-[2px]">
-            <span>₹</span>
-              {item.discountPercentage > 0
-                ? calculateDiscountedPrice(item)
-                : item.price.toFixed(2)}
-            </div>
+      {/* 🚫 Scrollbar Removed but scrollable */}
+      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
 
-            {/* Quantity */}
-            <div className="py-4 px-6 text-center border-b-[1px] md:border-b-0 w-full md:w-auto">
-              <div className="flex items-center justify-center space-x-2">
-                {/* Decrease Quantity Button */}
-                <button
-                  className={`w-5 h-5 font-bold border rounded-full text-[#000000] text-[14px] md:text-[14px] font-mono ${
-                    item.qty > 1
-                      ? "text-black border-gray-400"
-                      : "text-gray-400 border-gray-300 cursor-not-allowed"
-                  }`}
-                  onClick={() =>
-                    item.qty > 1 && addToCartHandler(item, item.qty - 1)
-                  }
-                  disabled={item.qty === 1}
+        {cartItems.map((item) => {
+          const displayImage = Array.isArray(item?.images) && item.images.length > 0 
+            ? item.images[0] 
+            : item?.image || "/placeholder.jpg";
+
+          const unitPrice = calculateDiscountedPrice(item);
+
+          return (
+            <div
+              key={item._id}
+              className="group relative flex items-center gap-4 p-3 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300"
+            >
+              {/* Product Image */}
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-xl bg-white border border-gray-100">
+                <img
+                  src={displayImage}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+
+              {/* Info Section */}
+              <div className="flex-1">
+                <Link
+                  to={`/product/${item._id}`}
+                  className="text-sm font-mono font-black text-gray-800 hover:text-blue-600 transition-colors line-clamp-1 uppercase tracking-tighter"
                 >
-                  -
-                </button>
+                  {item.name}
+                </Link>
+                
+                <div className="flex items-center justify-between mt-2">
+                  {/* Quantity Stepper */}
+                  <div className="flex items-center bg-white border border-gray-100 p-1 rounded-lg shadow-sm">
+                    <button
+                      className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-blue-600 transition-all disabled:opacity-20"
+                      onClick={() => item.qty > 1 && addToCartHandler(item, item.qty - 1)}
+                      disabled={item.qty === 1}
+                    >
+                      <FaMinus size={8} />
+                    </button>
+                    <span className="px-3 text-xs font-mono font-black text-gray-800">
+                      {item.qty}
+                    </span>
+                    <button
+                      className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-blue-600 transition-all"
+                      onClick={() => addToCartHandler(item, item.qty + 1)}
+                    >
+                      <FaPlus size={8} />
+                    </button>
+                  </div>
 
-                {/* Quantity Display */}
-                <span className="w-6 h-6 inline-flex items-center justify-center border rounded-full bg-gray-100 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold">
-                  {item.qty}
-                </span>
-
-                {/* Increase Quantity Button */}
-                <button
-                  className="w-5 h-5 font-bold border border-gray-400 rounded-full text-[#000000] text-[14px] md:text-[14px] font-mono hover:bg-gray-100"
-                  onClick={() => addToCartHandler(item, item.qty + 1)}
-                >
-                  +
-                </button>
+                  {/* Price */}
+                  <div className="text-right">
+                    <p className="text-sm font-mono font-black text-gray-900">
+                      ৳{(item.qty * unitPrice).toLocaleString("en-BD")}
+                    </p>
+                    {item.discountPercentage > 0 && (
+                      <p className="text-[9px] font-mono font-bold text-green-500 uppercase">
+                        Saved ৳{Math.round((item.price - unitPrice) * item.qty)}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* Total */}
-            <div className="py-4 px-6 text-[#000000] text-[14px] md:text-[14px] font-mono font-bold text-center flex items-center gap-[2px]">
-             <span>₹</span>
-              {(
-                item.qty *
-                (item.discountPercentage > 0
-                  ? calculateDiscountedPrice(item)
-                  : item.price)
-              ).toFixed(2)}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Empty State */}
+      {cartItems.length === 0 && (
+        <div className="py-10 text-center">
+          <p className="font-mono text-gray-400 text-sm uppercase tracking-widest">Cart is empty</p>
+          <Link 
+            to="/shop" 
+            className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white text-xs font-mono font-black rounded-xl hover:bg-black transition-all"
+          >
+            Go To Shop
+          </Link>
+        </div>
+      )}
     </div>
   );
 };

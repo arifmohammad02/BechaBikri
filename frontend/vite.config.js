@@ -5,19 +5,23 @@ import path from 'path';
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server:{
+  server: {
     proxy: {
-      '/api': 'http://localhost:8000',
+      "/api": "http://localhost:8000",
       "/uploads": "http://localhost:8000",
-    }
+      "/socket.io": {
+        target: "http://localhost:8000",
+        ws: true,
+      },
+    },
   },
   resolve: {
     alias: {
       // Add alias for your redux folder
-      '@redux': path.resolve(__dirname, 'src/redux'),
+      "@redux": path.resolve(__dirname, "src/redux"),
     },
   },
   build: {
     sourcemap: false, // Disable source maps in build
   },
-})
+});

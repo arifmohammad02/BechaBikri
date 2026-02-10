@@ -1,17 +1,33 @@
 /** @type {import('tailwindcss').Config} */
+/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       animation: {
         ripple: "ripple 0.6s linear",
+        swing: "swing 2s ease-in-out infinite",
+        "ping-slow": "ping 2s cubic-bezier(0, 0, 0.2, 1) infinite",
       },
       keyframes: {
+        "bounce-short": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-3px)" },
+          "bounce-short": "bounce-short 1s ease-in-out infinite",
+        },
         ripple: {
           to: {
             transform: "scale(2)",
             opacity: "0",
           },
+        },
+
+        swing: {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "20%": { transform: "rotate(15deg)" },
+          "40%": { transform: "rotate(-10deg)" },
+          "60%": { transform: "rotate(5deg)" },
+          "80%": { transform: "rotate(-5deg)" },
         },
       },
       colors: {
@@ -28,10 +44,10 @@ export default {
           900: "#1e3a8a",
           950: "#172554",
         },
+        brand: "#B88E2F", // আপনার লোগোর গোল্ডেন কালারটি এখানে সেট করে দিলাম
       },
       screens: {
         xs: "420px",
-        // => @media (min-width: 640px) { ... }
       },
       fontFamily: {
         roboto: ["Roboto", "sans-serif"],
