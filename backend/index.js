@@ -29,6 +29,7 @@ startNotificationCleanupJob();
 const app = express(); // ১. আগে app তৈরি করতে হবে
 const httpServer = createServer(app); // ২. তারপর httpServer তৈরি হবে
 const port = process.env.PORT || 8000;
+const HOST = "0.0.0.0";
 
 // --- Socket.io Setup ---
 const io = new Server(httpServer, {
@@ -79,6 +80,7 @@ const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 if (process.env.NODE_ENV === "production") {
+  console.log("Production mode active: Serving Frontend...");
   app.use(express.static(path.join(__dirname, "/frontend/dist")));
   app.get("*", (req, res) =>
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
@@ -91,7 +93,7 @@ if (process.env.NODE_ENV === "production") {
 
 // ৪. app.listen এর জায়গায় httpServer.listen ব্যবহার করুন
 httpServer.listen(port, () => {
-  console.log(`🚀 Server running on port: ${port}`);
+ console.log(`🚀 Server running on http://${HOST}:${port}`);
 });
 
 export { io, onlineUsers };
