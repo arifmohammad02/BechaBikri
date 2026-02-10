@@ -1,15 +1,10 @@
-// --- Imports ---
+// packages
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { Server } from "socket.io";
-
-// config
-import connectDB from "./config/db.js";
-import connectCloudunary from "./config/cloudinary.js";
-import { startNotificationCleanupJob } from "./jobs/notificationCleanup.js";
 
 // routes
 import userRoutes from "./routes/userRoutes.js";
@@ -19,19 +14,28 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 
+// utils
+import connectDB from "./config/db.js";
+import connectCloudunary from "./config/cloudinary.js";
+import { startNotificationCleanupJob } from "./jobs/notificationCleanup.js";
 
-// --- Initializations ---
+// configuration
 dotenv.config();
+const port = process.env.PORT || 5000;
+const __dirname = path.resolve();
+
+// connect to database & jobs
 connectDB();
 connectCloudunary();
 startNotificationCleanupJob();
 
-const app = express(); // ১. আগে app তৈরি করতে হবে
-const httpServer = createServer(app); // ২. তারপর httpServer তৈরি হবে
-const port = process.env.PORT || 8000;
-const HOST = "0.0.0.0";
+// create express app
+const app = express();
 
-// --- Socket.io Setup ---
+// create http server
+const httpServer = createServer(app);
+
+// socket.io setup
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
@@ -58,16 +62,16 @@ io.on("connection", (socket) => {
   });
 });
 
-// ৩. app.set সকেটের পরে করতে হবে
+// app settings
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-// --- Middlewares ---
+// middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// --- Routes ---
+// routes setup
 app.use("/api/users", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
@@ -75,25 +79,17 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// --- Static Files & Production Setup ---
-const __dirname = path.resolve();
+// static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-if (process.env.NODE_ENV === "production") {
-  console.log("Production mode active: Serving Frontend...");
-  app.use(express.static(path.join(__dirname, "/frontend/dist")));
-  app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
-  );
-} else {
-  app.get("/", (req, res) => {
-    res.send("API is running...");
-  });
-}
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+});
 
-// ৪. app.listen এর জায়গায় httpServer.listen ব্যবহার করুন
+// listen
 httpServer.listen(port, () => {
- console.log(`🚀 Server running on http://${HOST}:${port}`);
+  console.log(`🚀 Server running on port: ${port}`);
 });
 
 export { io, onlineUsers };
