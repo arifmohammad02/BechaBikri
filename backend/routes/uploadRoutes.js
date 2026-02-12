@@ -17,17 +17,22 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "uploads",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [{ width: 1200, quality: "auto", fetch_format: "auto" }],
   },
 });
 
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, 
+});
 
-router.post("/", upload.array("image", 5), (req, res) => {
+router.post("/", upload.array("image", 10), (req, res) => {
   if (req.files && req.files.length > 0) {
     const urls = req.files.map((file) => file.path);
     res.status(200).send({
       message: "Image uploaded successfully",
       images: urls, // Cloudinary URL
+      url: urls[0],
     });
   } else {
     res.status(400).send({ message: "No image file provided" });

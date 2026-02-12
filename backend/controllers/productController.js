@@ -3,7 +3,6 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
 import sanitizeHtml from "sanitize-html";
 
-
 const sanitizeDescription = (description) => {
   return sanitizeHtml(description, {
     allowedTags: [
@@ -20,9 +19,19 @@ const sanitizeDescription = (description) => {
       "ol",
       "li",
       "a",
+      "img",
+      "table",
+      "thead",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+      "br",
+      "blockquote",
     ],
     allowedAttributes: {
-      a: ["href", "target"],
+      a: ["href", "target", "rel"],
+      img: ["src", "alt", "width", "height", "style"],
     },
   });
 };
@@ -30,11 +39,30 @@ const sanitizeDescription = (description) => {
 const addProduct = asyncHandler(async (req, res) => {
   try {
     const fields = req.fields;
-    let { name, description, price, category, quantity, brand, images } = fields;
+    const {
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      brand,
+      images,
+      shippingType,
+      keyFeatures,
+      specifications,
+    } = fields;
 
     // ১. ভ্যালিডেশন
-    if (!name || !brand || !description || !price || !category || !quantity) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (
+      !name ||
+      !brand ||
+      !description ||
+      !price ||
+      !category ||
+      !quantity ||
+      !shippingType
+    ) {
+      return res.status(400).json({ error: "Required fields are missing" });
     }
 
     let imagesArray = [];
@@ -47,17 +75,42 @@ const addProduct = asyncHandler(async (req, res) => {
       return res.status(400).json({ error: "At least one image is required" });
     }
 
-    const sanitizedDescription = sanitizeDescription(description);
+    let specsJson = specifications
+      ? typeof specifications === "string"
+        ? JSON.parse(specifications)
+        : specifications
+      : [];
+    let featuresJson = keyFeatures
+      ? typeof keyFeatures === "string"
+        ? JSON.parse(keyFeatures)
+        : keyFeatures
+      : [];
+
+
+    const shippingData = {
+      shippingType,
+      insideDhakaCharge: Number(fields.insideDhakaCharge) || 80,
+      outsideDhakaCharge: Number(fields.outsideDhakaCharge) || 150,
+      fixedShippingCharge: Number(fields.fixedShippingCharge) || 0,
+      freeShippingThreshold: Number(fields.freeShippingThreshold) || 0,
+      isFreeShippingActive:
+        fields.isFreeShippingActive === "true" ||
+        fields.isFreeShippingActive === true,
+    };
 
     const product = new Product({
       ...fields,
-      description: sanitizedDescription,
+      description: sanitizeDescription(description),
       images: imagesArray, // ডাটাবেসে [img1, img2, img3] আকারে যাবে
       image: imagesArray[0],
+      specifications: specsJson,
+      keyFeatures: featuresJson,
       isFeatured: fields.isFeatured === "true" || fields.isFeatured === true,
       price: Number(price),
       quantity: Number(quantity),
       countInStock: Number(fields.countInStock) || 0,
+      weight: Number(fields.weight) || 0.5,
+      shippingDetails: shippingData,
     });
 
     await product.save();
@@ -68,15 +121,52 @@ const addProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
     const fields = req.fields;
-    let { name, description, price, category, quantity, brand, images, isFeatured } = fields;
+    let {
+      name, // নাম বাদ পড়েছিল
+      description,
+      price,
+      category,
+      quantity,
+      images,
+      shippingType,
+      fixedShippingCharge,
+      freeShippingThreshold,
+      insideDhakaCharge,
+      outsideDhakaCharge,
+      weight,
+      isFeatured,
+      isFreeShippingActive,
+      specifications,
+      keyFeatures,
+    } = fields;
 
     // ভ্যালিডেশন
-    if (!name || !brand || !description || !price || !category || !quantity) {
-      return res.status(400).json({ error: "Required fields are missing" });
+    if (
+      !name ||
+      !description ||
+      !price ||
+      !category ||
+      !quantity ||
+      !shippingType
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Required basic fields are missing" });
+    }
+
+    if (
+      fixedShippingCharge === undefined ||
+      freeShippingThreshold === undefined ||
+      insideDhakaCharge === undefined ||
+      outsideDhakaCharge === undefined ||
+      weight === undefined
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Shipping configuration fields are required" });
     }
 
     // ইমেজের অ্যারে প্রসেসিং
@@ -86,21 +176,42 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       if (!Array.isArray(imagesArray)) imagesArray = [imagesArray];
     }
 
-    const sanitizedDescription = sanitizeDescription(description);
+
+    const shippingData = {
+      shippingType: fields.shippingType,
+      insideDhakaCharge: Number(fields.insideDhakaCharge),
+      outsideDhakaCharge: Number(fields.outsideDhakaCharge),
+      fixedShippingCharge: Number(fields.fixedShippingCharge),
+      freeShippingThreshold: Number(fields.freeShippingThreshold),
+      isFreeShippingActive:
+        isFreeShippingActive === "true" || isFreeShippingActive === true,
+    };
 
     const updatedFields = {
       ...fields,
-      description: sanitizedDescription,
-      images: imagesArray, 
+      description: sanitizeDescription(description),
+      images: imagesArray,
+      specifications: specifications
+        ? typeof specifications === "string"
+          ? JSON.parse(specifications)
+          : specifications
+        : [],
+      keyFeatures: keyFeatures
+        ? typeof keyFeatures === "string"
+          ? JSON.parse(keyFeatures)
+          : keyFeatures
+        : [],
       isFeatured: isFeatured === "true" || isFeatured === true,
       price: Number(price),
       quantity: Number(quantity),
+      weight: Number(fields.weight),
+      shippingDetails: shippingData,
     };
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       updatedFields,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!product) {
@@ -138,13 +249,16 @@ const fetchProducts = asyncHandler(async (req, res) => {
       : {};
 
     const count = await Product.countDocuments({ ...keyword });
-    const products = await Product.find({ ...keyword }).limit(pageSize);
+    const products = await Product.find({ ...keyword })
+      .populate("category")
+      .limit(pageSize)
+      .sort({ createdAt: -1 });
 
     res.json({
       products,
       page: 1,
       pages: Math.ceil(count / pageSize),
-      hasMore: false,
+      hasMore: count > pageSize,
     });
   } catch (error) {
     console.error(error);
@@ -159,7 +273,7 @@ const fetchProductById = asyncHandler(async (req, res) => {
         { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null },
         { slug: req.params.id },
       ],
-    });
+    }).populate("category");
 
     if (product) {
       return res.json(product);

@@ -19,6 +19,10 @@ import {
 const AllProducts = () => {
   const { data: products, isLoading, isError, refetch } = useAllProductsQuery();
 
+
+  console.log('====================================');
+  console.log(products);
+  console.log('====================================');
   const [searchTerm, setSearchTerm] = useState("");
 
   const [sortConfig, setSortConfig] = useState({
@@ -101,8 +105,8 @@ const AllProducts = () => {
 
             <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between border-l-4 border-red-600 pl-6 py-2 gap-4">
               <div>
-                <h1 className="text-3xl font-black text-black tracking-tighter uppercase italic">
-                  Inventory / <span className="text-red-600">All_Assets</span>
+                <h1 className="text-3xl font-black text-black tracking-tighter uppercase">
+                  All Product_<span className="text-red-600">List</span>
                 </h1>
 
                 <p className="text-[10px] text-gray-500 font-bold tracking-[0.4em] uppercase mt-1">

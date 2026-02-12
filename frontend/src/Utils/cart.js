@@ -3,29 +3,84 @@ export const addDecimals = (num) => {
 };
 
 export const updateCart = (state, shippingAddress = {}) => {
-
-  // Calculate the items price
   state.itemsPrice = addDecimals(
-    state.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0)
+    state.cartItems.reduce((acc, item) => {
+      const discountPercent =
+        item.discountPercentage || item.disdiscountPercentage || 0;
+      const discount = (item.price * discountPercent) / 100;
+      const priceAfterDiscount = item.price - discount;
+      return acc + priceAfterDiscount * item.qty;
+    }, 0),
   );
 
-  // Calculate the shipping price
-  state.shippingPrice = addDecimals(
-    shippingAddress?.shippingCharge ?? 0  // Ensure fallback if undefined
-  );
+  let totalWeight = 0;
+  let maxFixedShipping = 0; 
+  let baseShippingRate = 0;
 
-  // Calculate the tax price
-  state.taxPrice = addDecimals(Number((0.0 * state.itemsPrice).toFixed(2)));
+  const isInsideDhaka = shippingAddress?.city
+    ?.trim()
+    .toLowerCase()
+    .includes("dhaka");
 
-  // Calculate the total price
-  state.totalPrice = (
+  const freeThreshold =
+    state.cartItems.length > 0
+      ? Math.max(
+          ...state.cartItems.map((i) => {
+            const s = i.shippingDetails || {};
+            return s.isFreeShippingActive
+              ? Number(s.freeShippingThreshold) || 999999
+              : 999999;
+          }),
+        )
+      : 999999;
+
+
+  let finalShippingPrice = 0;
+
+ if (Number(state.itemsPrice) < freeThreshold) {
+   state.cartItems.forEach((item) => {
+     const s = item.shippingDetails || {};
+
+     if (s.shippingType === "fixed") {
+       const currentFixed = Number(s.fixedShippingCharge) || 0;
+       if (currentFixed > maxFixedShipping) {
+         maxFixedShipping = currentFixed;
+       }
+     } else if (s.shippingType === "weight-based") {
+       totalWeight += (Number(item.weight) || 0.5) * item.qty;
+       const rate = isInsideDhaka
+         ? Number(s.insideDhakaCharge) || 80
+         : Number(s.outsideDhakaCharge) || 150;
+
+       if (rate > baseShippingRate) {
+         baseShippingRate = rate;
+       }
+     }
+   });
+
+   let weightBasedCharge = 0;
+   if (totalWeight > 0) {
+     weightBasedCharge = baseShippingRate;
+     if (totalWeight > 1) {
+       weightBasedCharge += Math.ceil(totalWeight - 1) * 20;
+     }
+   }
+
+   finalShippingPrice = weightBasedCharge + maxFixedShipping;
+ } else {
+   finalShippingPrice = 0;
+ }
+
+  state.shippingPrice = addDecimals(finalShippingPrice);
+  state.taxPrice = addDecimals(Number(0.0 * state.itemsPrice));
+
+
+  state.totalPrice = addDecimals(
     Number(state.itemsPrice) +
-    Number(state.shippingPrice) +
-    Number(state.taxPrice)
-  ).toFixed(2);
+      Number(state.shippingPrice) +
+      Number(state.taxPrice),
+  );
 
-  // Save the cart to localStorage
   localStorage.setItem("cart", JSON.stringify(state));
-
   return state;
 };

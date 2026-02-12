@@ -54,6 +54,8 @@ export default {
         poppins: ["Poppins", "sans-serif"],
         dosis: ["Dosis", "sans-serif"],
         figtree: ["Figtree", "sans-serif"],
+        playfair: ["Playfair Display", "serif"],
+        lora: ["Lora", "serif"],
       },
     },
   },

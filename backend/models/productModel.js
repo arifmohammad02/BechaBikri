@@ -27,19 +27,37 @@ const productSchema = mongoose.Schema(
     quantity: { type: Number, required: true },
     category: { type: ObjectId, ref: "Category", required: true },
     description: { type: String, required: true },
+    keyFeatures: [{ type: String }],
+    specifications: [
+      {
+        label: String,
+        value: String,
+      },
+    ],
+    descriptionImages: [{ type: String }],
     reviews: [reviewSchema],
     rating: { type: Number, required: true, default: 0 },
     numReviews: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true, default: 0 },
     countInStock: { type: Number, required: true, default: 0 },
-
-    // New features added
-    discountPercentage: { type: Number, default: 0 }, // Discount Percentage
-    isFeatured: { type: Boolean, default: false }, // Is Featured
-    offer: { type: String, default: "" }, // Offer (e.g., discount on certain conditions)
-    warranty: { type: String, default: "" }, // Warranty information (e.g., "2 years")
-    // specifications: [{ type: String }], // 10 specifications or features
-    discountedAmount: { type: Number, default: 0 }, // Discounted Amount
+    discountPercentage: { type: Number, default: 0 },
+    isFeatured: { type: Boolean, default: false },
+    offer: { type: String, default: "" },
+    warranty: { type: String, default: "" },
+    discountedAmount: { type: Number, default: 0 },
+    weight: { type: Number, default: 0.5 },
+    shippingDetails: {
+      shippingType: {
+        type: String,
+        enum: ["weight-based", "fixed", "free"],
+        default: "weight-based",
+      },
+      fixedShippingCharge: { type: Number, default: 0 },
+      freeShippingThreshold: { type: Number, default: 99999 },
+      insideDhakaCharge: { type: Number, default: 80 },
+      outsideDhakaCharge: { type: Number, default: 150 },
+      isFreeShippingActive: { type: Boolean, default: false },
+    },
   },
   { timestamps: true },
 );

@@ -3,8 +3,7 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { Route, RouterProvider, createRoutesFromElements } from "react-router";
-import { createBrowserRouter } from "react-router-dom";
+import { Route, RouterProvider, createRoutesFromElements,createBrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
@@ -281,7 +280,18 @@ const router = createBrowserRouter(
         />
       </Route>
     </Route>
-  )
+  ),
+  {
+    /* ১. Future Flags: এই অংশটি আপনার কনসোলের সব Router ওয়ার্নিং বন্ধ করে দিবে */
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+    },
+  }
 );
 
 createRoot(document.getElementById("root")).render(

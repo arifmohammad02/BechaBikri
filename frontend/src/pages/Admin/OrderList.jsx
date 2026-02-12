@@ -70,7 +70,7 @@ const OrderList = ({ showAdminMenu = true, className = "pt-36", isDashboard = fa
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
   return (
-    <div className={`w-full min-h-screen bg-[#FDFDFD] font-mono ${className}`}>
+    <div className={`w-full h-fit bg-[#FDFDFD] pb-10 font-mono ${className}`}>
       <div className="container mx-auto px-4 sm:px-6">
         {isLoading ? (
           <Loader />
@@ -83,7 +83,7 @@ const OrderList = ({ showAdminMenu = true, className = "pt-36", isDashboard = fa
             {!isDashboard && (
               <div className="mb-8">
                 <h1 className="text-3xl font-black tracking-tighter border-l-4 border-red-600 pl-4 uppercase text-black">
-                  Terminal <span className="text-red-600">Order Logs</span>
+                  All <span className="text-red-600">Order_List</span>
                 </h1>
               </div>
             )}

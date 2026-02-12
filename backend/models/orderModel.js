@@ -9,7 +9,7 @@ const orderSchema = mongoose.Schema(
       unique: true,
     },
     user: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
- 
+
     orderItems: [
       {
         name: { type: String, required: true },
@@ -18,6 +18,15 @@ const orderSchema = mongoose.Schema(
         price: { type: Number, required: true },
         discountPercentage: { type: Number, default: 0 },
         offer: { type: String, default: "" },
+        weight: { type: Number, default: 0 },
+        shippingDetails: {
+          shippingType: { type: String },
+          fixedShippingCharge: { type: Number },
+          freeShippingThreshold: { type: Number },
+          insideDhakaCharge: { type: Number },
+          outsideDhakaCharge: { type: Number },
+          isFreeShippingActive: { type: Boolean, default: false },
+        },
         product: {
           type: mongoose.Schema.Types.ObjectId,
           required: true,
@@ -33,7 +42,7 @@ const orderSchema = mongoose.Schema(
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
       phoneNumber: { type: String, required: true },
-      shippingCharge: { type: Number, default: 0 },
+      // shippingCharge: { type: Number, default: 0 },
     },
 
     paymentMethod: {

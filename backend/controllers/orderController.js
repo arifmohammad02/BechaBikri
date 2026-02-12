@@ -5,32 +5,102 @@ import sendEmail from "../utils/sendEmail.js";
 import { createAndSendNotification } from "./notificationController.js";
 
 // Utility Function
-function calcPrices(orderItems) {
-  const itemsPrice = orderItems.reduce((acc, item) => {
-    const discount = (item.price * item.discountPercentage) / 100;
+// function calcPrices(orderItems, shippingAddress) {
+//   const itemsPrice = orderItems.reduce((acc, item) => {
+//     const discount = (item.price * item.discountPercentage) / 100;
+//     const discountedPrice = item.price - discount;
+//     return acc + discountedPrice * item.qty;
+//   }, 0);
+
+//   const shippingPrice = orderItems.reduce(
+//     (acc, item) => acc + (item.shippingCharge ?? 0),
+//     0,
+//   );
+
+//   const taxRate = 0.0;
+//   const taxPrice = (itemsPrice * taxRate).toFixed(2);
+
+//   const totalPrice = (
+//     itemsPrice +
+//     shippingPrice +
+//     parseFloat(taxPrice)
+//   ).toFixed(2);
+
+//   return {
+//     itemsPrice: itemsPrice.toFixed(2),
+//     shippingPrice: shippingPrice.toFixed(2),
+//     taxPrice,
+//     totalPrice,
+//   };
+// }
+
+function calcPrices(dbOrderItems, shippingAddress) {
+  const itemsPrice = dbOrderItems.reduce((acc, item) => {
+    const discount = (item.price * (item.discountPercentage || 0)) / 100;
     const discountedPrice = item.price - discount;
     return acc + discountedPrice * item.qty;
   }, 0);
 
-  const shippingPrice = orderItems.reduce(
-    (acc, item) => acc + (item.shippingCharge ?? 0),
-    0,
-  );
+  let totalWeight = 0;
+  let maxFixedShipping = 0; // সংশোধিত
+  let baseShippingRate = 0;
+
+  const isInsideDhaka = shippingAddress?.city?.toLowerCase().includes("dhaka");
+
+  dbOrderItems.forEach((item) => {
+    const s = item.shippingDetails;
+
+    if (s?.shippingType === "fixed") {
+      // ✅ Qty দিয়ে গুণ করা রিমুভ করা হয়েছে
+      const currentFixed = s.fixedShippingCharge || 0;
+      if (currentFixed > maxFixedShipping) maxFixedShipping = currentFixed;
+    } else if (s?.shippingType === "weight-based") {
+      totalWeight += (item.weight || 0.5) * item.qty;
+      const rate = isInsideDhaka
+        ? s.insideDhakaCharge || 80
+        : s.outsideDhakaCharge || 150;
+
+      if (rate > baseShippingRate) baseShippingRate = rate;
+    }
+  });
+
+const activeThresholds = dbOrderItems
+  .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
+  .map((i) => Number(i.shippingDetails?.freeShippingThreshold) || 999999);
+
+const freeThreshold =
+  activeThresholds.length > 0
+    ? Math.min(...activeThresholds) 
+    : 999999;
+
+  let finalShippingPrice = 0;
+
+  // 🚩 থ্রেশহোল্ড চেক
+  if (itemsPrice < freeThreshold) {
+    let dynamicShippingPrice = 0;
+    if (totalWeight > 0) {
+      dynamicShippingPrice = baseShippingRate;
+      if (totalWeight > 1) {
+        const extraWeight = Math.ceil(totalWeight - 1);
+        dynamicShippingPrice += extraWeight * 20;
+      }
+    }
+    // যদি ফ্রি না হয় তবেই চার্জ যোগ হবে
+    finalShippingPrice = dynamicShippingPrice + maxFixedShipping;
+  } else {
+    // থ্রেশহোল্ড কমপ্লিট হলে চার্জ ০
+    finalShippingPrice = 0;
+  }
 
   const taxRate = 0.0;
-  const taxPrice = (itemsPrice * taxRate).toFixed(2);
-
-  const totalPrice = (
-    itemsPrice +
-    shippingPrice +
-    parseFloat(taxPrice)
-  ).toFixed(2);
+  const taxPrice = itemsPrice * taxRate;
+  const totalPrice = itemsPrice + finalShippingPrice + taxPrice;
 
   return {
     itemsPrice: itemsPrice.toFixed(2),
-    shippingPrice: shippingPrice.toFixed(2),
-    taxPrice,
-    totalPrice,
+    shippingPrice: finalShippingPrice.toFixed(2),
+    taxPrice: taxPrice.toFixed(2),
+    totalPrice: totalPrice.toFixed(2),
   };
 }
 
@@ -40,8 +110,6 @@ const generateOrderId = () => {
     Math.floor(100 + Math.random() * 900) // ৩-সংখ্যার র্যান্ডম নাম্বার
   );
 };
-
-console.log(generateOrderId()); // যেমন: 345678
 
 const createOrder = async (req, res) => {
   try {
@@ -79,12 +147,16 @@ const createOrder = async (req, res) => {
         name: matchingItemFromDB.name,
         slug: matchingItemFromDB.slug,
         price: matchingItemFromDB.price,
-        shippingCharge: shippingAddress?.shippingCharge ?? 0,
+        discountPercentage: matchingItemFromDB.discountPercentage,
+        weight: matchingItemFromDB.weight || 0.5,
+        shippingDetails: {
+          ...matchingItemFromDB.shippingDetails, 
+        },
         _id: undefined,
       };
     });
 
-    const { itemsPrice, taxPrice, shippingPrice, totalPrice } = calcPrices(
+    const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calcPrices(
       dbOrderItems,
       shippingAddress,
     );
@@ -241,8 +313,6 @@ const getDeliverySummary = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 const calcualteTotalSalesByDate = async (req, res) => {
   try {
@@ -417,10 +487,6 @@ const markOrderAsPaid = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-
-
 
 const updateOrderStatus = async (req, res) => {
   try {

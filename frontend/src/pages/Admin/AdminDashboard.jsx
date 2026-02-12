@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import AdminMenu from "./AdminMenu";
 import OrderList from "./OrderList";
+import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
   const { data: sales, isLoading } = useGetTotalSalesQuery();
@@ -182,8 +183,10 @@ const AdminDashboard = () => {
         {/* Transactions Section */}
         <div className="mt-10 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all hover:shadow-md">
           <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-            <h2 className="text-lg font-bold text-gray-800">Recent Transactions</h2>
+            <h2 className="text-lg font-bold text-gray-800">Recent Orders</h2>
+           <Link to="/admin/orderlist" >
             <button className="px-4 py-2 bg-gray-50 text-indigo-600 rounded-xl text-xs font-bold hover:bg-indigo-50 transition-colors">View All</button>
+           </Link>
           </div>
           <div className="overflow-x-auto">
             <OrderList showAdminMenu={false} className="p-0" isDashboard={true} />

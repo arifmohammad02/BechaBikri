@@ -121,7 +121,7 @@ const UserList = () => {
             {/* Header Section */}
             <div className="mb-8 border-l-4 border-red-600 pl-4 py-2">
               <h1 className="text-3xl font-black text-black tracking-tighter uppercase">
-                System  <span className="text-red-600">User_Registry</span>
+                All  <span className="text-red-600">User_List</span>
               </h1>
             </div>
 

@@ -49,7 +49,7 @@ const AddToCartButton = ({
         <button
           onClick={handleAddToCart}
           disabled={isAdded || product.countInStock === 0}
-          className={`group relative flex items-center justify-center gap-2 py-3 px-6 min-w-[160px] font-poppins font-bold text-[14px] uppercase tracking-wider rounded-xl border-2 transition-all duration-300 overflow-hidden
+          className={`group relative flex items-center justify-center gap-2 py-2 px-4 min-w-[160px] font-poppins font-bold text-[14px] uppercase tracking-wider rounded-xl border-2 transition-all duration-300 overflow-hidden
             ${isAdded 
               ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed" 
               : "border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white active:scale-95 shadow-sm hover:shadow-pink-200"
@@ -60,7 +60,7 @@ const AddToCartButton = ({
         </button>
 
         {/* Heart Icon Wrapper */}
-        <div className="p-2.5 rounded-xl border-2 border-gray-100 hover:border-pink-200 hover:bg-pink-50 transition-all duration-300 cursor-pointer shadow-sm">
+        <div className="">
           <HeartIcon product={product} />
         </div>
       </div>

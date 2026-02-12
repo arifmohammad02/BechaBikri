@@ -39,13 +39,13 @@ const AdminMenu = () => {
       {/* Sidebar & Toggle Button Container */}
       <section
         className={`bg-white fixed top-0 left-0 h-screen mt-20 border-r border-gray-100 flex flex-col items-start py-8 w-[240px] z-40 shadow-2xl 2xl:shadow-none transform transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full 2xl:translate-x-0"
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Toggle Button - Sidebar এর সাথে ফিক্সড এবং স্মুথ */}
         <button
           onClick={toggleSidebar}
-          className="absolute top-6 -right-10 p-2 bg-black text-white border-2 border-red-600 rounded-r-md shadow-lg 2xl:hidden transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-90 flex items-center justify-center"
+          className="absolute top-6 -right-10 p-2 bg-black text-white border-2 border-red-600 rounded-r-md shadow-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-90 flex items-center justify-center"
         >
           {isSidebarOpen ? <IoIosArrowBack size={20} /> : <IoIosArrowForward size={20} />}
         </button>
@@ -53,7 +53,7 @@ const AdminMenu = () => {
         {/* Header inside Sidebar */}
         <div className="px-6 mb-10 w-full overflow-hidden">
           <p className="text-[10px] font-black text-red-600 tracking-[0.4em] uppercase opacity-60">
-            Admin Logs
+            Admin Panel
           </p>
         </div>
 
