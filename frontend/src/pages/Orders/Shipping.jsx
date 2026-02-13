@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,7 +21,7 @@ const Shipping = () => {
   const [address, setAddress] = useState(shippingAddress?.address || "");
   const [city, setCity] = useState(shippingAddress?.city || "");
   const [postalCode, setPostalCode] = useState(shippingAddress?.postalCode || "");
-  const [country, setCountry] = useState(shippingAddress?.country || "Bangladesh");
+  const [country, setCountry] = useState(shippingAddress?.country || "");
   const [phoneNumber, setPhoneNumber] = useState(shippingAddress?.phoneNumber || "");
   const [paymentMethod] = useState("Cash on Delivery");
 
@@ -151,7 +151,7 @@ const Shipping = () => {
                   </div>
                   <div>
                     <label className={labelStyle}><FaGlobe /> Country</label>
-                    <input type="text" value={country} readOnly className={`${inputStyle} bg-gray-100 opacity-60`} />
+                    <input type="text" className={inputStyle} value={country } onChange={(e) => setCountry(e.target.value)} placeholder="Country" />
                   </div>
                 </div>
 
