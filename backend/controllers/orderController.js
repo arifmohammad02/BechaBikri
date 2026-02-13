@@ -36,9 +36,10 @@ import { createAndSendNotification } from "./notificationController.js";
 
 function calcPrices(dbOrderItems, shippingAddress) {
   const itemsPrice = dbOrderItems.reduce((acc, item) => {
-    const discount = (item.price * (item.discountPercentage || 0)) / 100;
-    const discountedPrice = item.price - discount;
-    return acc + discountedPrice * item.qty;
+    const discount =
+      (Number(item.price) * (Number(item.discountPercentage) || 0)) / 100;
+    const discountedPrice = Number(item.price) - discount;
+    return acc + discountedPrice * Number(item.qty || 1);
   }, 0);
 
   let totalWeight = 0;
@@ -64,14 +65,12 @@ function calcPrices(dbOrderItems, shippingAddress) {
     }
   });
 
-const activeThresholds = dbOrderItems
-  .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
-  .map((i) => Number(i.shippingDetails?.freeShippingThreshold) || 999999);
+  const activeThresholds = dbOrderItems
+    .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
+    .map((i) => Number(i.shippingDetails?.freeShippingThreshold) || 999999);
 
-const freeThreshold =
-  activeThresholds.length > 0
-    ? Math.min(...activeThresholds) 
-    : 999999;
+  const freeThreshold =
+    activeThresholds.length > 0 ? Math.min(...activeThresholds) : 999999;
 
   let finalShippingPrice = 0;
 
@@ -126,31 +125,40 @@ const createOrder = async (req, res) => {
     }
 
     // Fetch items from the database
+
+    const productIds = orderItems.map((x) => x._id || x.product);
+
+    // Fetch items from the database
     const itemsFromDB = await Product.find({
-      _id: { $in: orderItems.map((x) => x._id) },
+      _id: { $in: productIds },
     });
 
     // Validate and map the order items
     const dbOrderItems = orderItems.map((itemFromClient) => {
+      // --- আপডেট ২: আইডি স্ট্রিং কম্পারিজন সেফটি ---
+      const clientId = (
+        itemFromClient._id || itemFromClient.product
+      )?.toString();
+
       const matchingItemFromDB = itemsFromDB.find(
-        (itemFromDB) => itemFromDB._id.toString() === itemFromClient._id,
+        (itemFromDB) => itemFromDB._id.toString() === clientId,
       );
 
       if (!matchingItemFromDB) {
         res.status(404);
-        throw new Error(`Product not found: ${itemFromClient._id}`);
+        throw new Error(`Product not found: ${clientId}`);
       }
 
       return {
         ...itemFromClient,
-        product: itemFromClient._id,
+        product: matchingItemFromDB._id,
         name: matchingItemFromDB.name,
         slug: matchingItemFromDB.slug,
         price: matchingItemFromDB.price,
-        discountPercentage: matchingItemFromDB.discountPercentage,
+        discountPercentage: matchingItemFromDB.discountPercentage || 0,
         weight: matchingItemFromDB.weight || 0.5,
         shippingDetails: {
-          ...matchingItemFromDB.shippingDetails, 
+          ...matchingItemFromDB.shippingDetails,
         },
         _id: undefined,
       };
@@ -183,14 +191,18 @@ const createOrder = async (req, res) => {
     const createdOrder = await order.save();
 
     // Notification Pathan
-    await createAndSendNotification(req, {
-      userId: order.user,
-      title: "Order Placed! 🛒",
-      message: `Your order #${order.orderId} has been confirmed.`,
-      type: "order",
-      actionUrl: `/user-orders`,
-      sendEmailFlag: true,
-    });
+    try {
+      await createAndSendNotification(req, {
+        userId: order.user,
+        title: "Order Placed! 🛒",
+        message: `Your order #${order.orderId} has been confirmed.`,
+        type: "order",
+        actionUrl: `/user-orders`,
+        sendEmailFlag: true,
+      });
+    } catch (err) {
+      console.error("Notification Error:", err.message);
+    }
 
     // Populate user for email
     const populatedOrder = await createdOrder.populate(
@@ -198,27 +210,41 @@ const createOrder = async (req, res) => {
       "username email",
     );
 
-    res.status(201).json(createdOrder);
-    // -------- Send Email to Customer --------
-    // -------- Send Emails Async (Catch internally) --------
-    await sendEmail({
-      to: populatedOrder.user.email,
-      subject: "Order Confirmation",
-      html: `<h2>Hi ${populatedOrder.user.username},</h2>
-         <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
-         <p>Total: ₹${totalPrice}</p>`,
-    });
+    // --- আপডেট ৩: ইমেইল পাঠানোর সময় এরর হ্যান্ডলিং যোগ ---
+    // এটি করলে ইমেইল সেন্ড হতে দেরি হলে বা ফেইল করলে কাস্টমার রেসপন্স পেতে দেরি হবে না
+    const sendEmails = async () => {
+      try {
+        await sendEmail({
+          to: populatedOrder.user.email,
+          subject: "Order Confirmation",
+          html: `<h2>Hi ${populatedOrder.user.username},</h2>
+                  <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
+                  <p>Total: ৳${totalPrice}</p>`,
+        });
 
-    await sendEmail({
-      to: process.env.ADMIN_EMAIL,
-      subject: "New Order Placed",
-      html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
-         <p>Total: ₹${totalPrice}</p>`,
-    });
+        await sendEmail({
+          to: process.env.ADMIN_EMAIL,
+          subject: "New Order Placed",
+          html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
+                  <p>Total: ৳${totalPrice}</p>`,
+        });
+      } catch (mailErr) {
+        console.error("Email Sending Error:", mailErr.message);
+      }
+    };
+
+    
+    sendEmails();
+
+    res.status(201).json(createdOrder);
   } catch (error) {
+    // Render লগে এররটি স্পষ্ট দেখার জন্য console.log রাখা হলো
+    console.error("Create Order Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
+
 const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find({}).populate("user", "id username email");
