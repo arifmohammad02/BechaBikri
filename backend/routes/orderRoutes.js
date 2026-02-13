@@ -25,16 +25,24 @@ router
   .get(authenticate, authorizeAdmin, getAllOrders);
 
 router.route("/mine").get(authenticate, getUserOrders);
-router.route("/total-orders").get(countTotalOrders);
-router.route("/total-orders-by-date").get(countTotalOrdersByDate);
-router.route("/total-sales").get(calculateTotalSales);
+router
+  .route("/total-orders")
+  .get(authenticate, authorizeAdmin, countTotalOrders);
+router
+  .route("/total-orders-by-date")
+  .get(authenticate, authorizeAdmin, countTotalOrdersByDate);
+router
+  .route("/total-sales")
+  .get(authenticate, authorizeAdmin, calculateTotalSales);
 router
   .route("/sales-summary")
   .get(authenticate, authorizeAdmin, getSalesSummaryByStatus);
 router
     .route("/delivery-summary")
     .get(authenticate, authorizeAdmin, getDeliverySummary);
-router.route("/total-sales-by-date").get(calcualteTotalSalesByDate);
+router
+  .route("/total-sales-by-date")
+  .get(authenticate, authorizeAdmin, calcualteTotalSalesByDate);
 router.route("/:id").get(authenticate, findOrderById);
 router.route("/:id/pay").put(authenticate, markOrderAsPaid);
 router

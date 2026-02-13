@@ -15,6 +15,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       query: (id) => ({
         url: `${ORDERS_URL}/${id}`,
       }),
+      providesTags: (result, error, id) => [{ type: "Order", id }],
     }),
 
     payOrder: builder.mutation({
@@ -23,6 +24,10 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: { details, status },
       }),
+      invalidatesTags: (result, error, { orderId }) => [
+        { type: "Order", id: orderId },
+        "Order", // লিস্ট রিফ্রেশ করার জন্য
+      ],
     }),
 
     getPaypalClientId: builder.query({
@@ -42,6 +47,7 @@ export const orderApiSlice = apiSlice.injectEndpoints({
       query: () => ({
         url: ORDERS_URL,
       }),
+      providesTags: ["Order"],
     }),
 
     deliverOrder: builder.mutation({
@@ -49,6 +55,10 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         url: `${ORDERS_URL}/${orderId}/deliver`,
         method: "PUT",
       }),
+      invalidatesTags: (result, error, orderId) => [
+        { type: "Order", id: orderId },
+        "Order",
+      ],
     }),
 
     getTotalOrders: builder.query({
@@ -83,6 +93,10 @@ export const orderApiSlice = apiSlice.injectEndpoints({
         method: "PUT",
         body: { status },
       }),
+      invalidatesTags: (result, error, { orderId }) => [
+        { type: "Order", id: orderId },
+        "Order", // লিস্ট রিফ্রেশ করার জন্য
+      ],
     }),
   }),
 });
