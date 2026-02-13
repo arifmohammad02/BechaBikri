@@ -44,49 +44,48 @@ const Shipping = () => {
 
     // ১. সাবটোটাল ক্যালকুলেশন (ডিসকাউন্ট সহ)
     const itemsPrice = cartItems.reduce((acc, item) => {
-      const discountPercent = Number(item.discountPercentage) || 0;
-      const discount = (Number(item.price) * discountPercent) / 100;
-      return acc + (Number(item.price) - discount) * Number(item.qty);
+      const price = Number(item.price) || 0;
+      const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
+      const discountedPrice = price - (price * discountPercent) / 100;
+      return acc + discountedPrice * (Number(item.qty) || 1);
     }, 0);
 
     // ২. ফ্রি শিপিং থ্রেশহোল্ড বের করা (শুধুমাত্র যাদের isFreeShippingActive: true)
-    const activeThresholds = cartItems
-      .filter((i) => i.shippingDetails?.isFreeShippingActive)
-      .map((i) => Number(i.shippingDetails?.freeShippingThreshold) || 999999);
+   const activeThresholds = cartItems
+      .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
+      .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
+      .filter((t) => !isNaN(t) && t > 0);
 
-    const freeThreshold =
-      activeThresholds.length > 0 ? Math.min(...activeThresholds) : 999999;
+    const freeThreshold = activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
 
     // 🚩 শর্ত: যদি সাবটোটাল ফ্রি থ্রেশহোল্ডের সমান বা বেশি হয়, সব চার্জ ০
-    if (activeThresholds.length > 0 && itemsPrice >= freeThreshold) return 0;
+  if (itemsPrice >= freeThreshold) return 0;
 
     // ৩. ওজন এবং ফিক্সড চার্জ নির্ধারণ (যদি ফ্রি না হয়)
-    cartItems.forEach((item) => {
+   cartItems.forEach((item) => {
       const s = item.shippingDetails || {};
+      const type = s.shippingType?.toLowerCase();
 
-      if (s.shippingType === "fixed") {
-        const currentFixed = Number(s.fixedShippingCharge) || 0;
-        if (currentFixed > maxFixedShipping) maxFixedShipping = currentFixed;
-      } else if (s.shippingType === "weight-based") {
-        totalWeight += (Number(item.weight) || 0.5) * item.qty;
+      if (type === "fixed") {
+        maxFixedShipping = Math.max(maxFixedShipping, Number(s.fixedShippingCharge) || 0);
+      } else if (type === "weight-based") {
+        totalWeight += (Number(item.weight) || 0.5) * (Number(item.qty) || 1);
         const rate = isInsideDhaka
           ? Number(s.insideDhakaCharge) || 80
           : Number(s.outsideDhakaCharge) || 150;
-
-        if (rate > baseShippingRate) baseShippingRate = rate;
+        baseShippingRate = Math.max(baseShippingRate, rate);
       }
     });
 
-    let dynamicShipping = 0;
+    let weightCharge = 0;
     if (totalWeight > 0) {
-      dynamicShipping = baseShippingRate;
+      weightCharge = baseShippingRate;
       if (totalWeight > 1) {
-        const extraWeight = Math.ceil(totalWeight - 1);
-        dynamicShipping += extraWeight * 20;
+        weightCharge += Math.ceil(totalWeight - 1) * 20;
       }
     }
 
-    return dynamicShipping + maxFixedShipping;
+    return weightCharge + maxFixedShipping;
   };
 
   const handleShippingDetails = () => {

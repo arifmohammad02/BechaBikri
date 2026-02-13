@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -11,9 +10,10 @@ import {
 } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../redux/features/cart/cartSlice";
 import { LuShoppingBag } from "react-icons/lu";
-import { IoMdClose } from "react-icons/io";
+
 import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
+import { IoMdClose } from "react-icons/io";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -41,11 +41,12 @@ const Cart = () => {
 
   // --- 🛠 ক্যালকুলেশন ফাংশনস ---
   const calculateDiscountedPrice = (item) => {
-    const discountPercent = item.discountPercentage || item.disdiscountPercentage || 0;
+    const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
+    const basePrice = Number(item.price) || 0;
     if (discountPercent > 0) {
-      return (item.price - (item.price * discountPercent) / 100).toFixed(2);
+      return (basePrice - (basePrice * discountPercent) / 100).toFixed(2);
     }
-    return item.price.toFixed(2);
+    return basePrice.toFixed(2);
   };
 
   const subtotal = cartItems.reduce(
@@ -54,9 +55,9 @@ const Cart = () => {
   );
 
   const totalSavings = cartItems.reduce((acc, item) => {
-    const discountPercent = item.discountPercentage || item.disdiscountPercentage || 0;
+    const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
     if (discountPercent > 0) {
-      const savingsPerItem = (item.price * discountPercent) / 100;
+      const savingsPerItem = (Number(item.price) * discountPercent) / 100;
       return acc + item.qty * savingsPerItem;
     }
     return acc;
@@ -68,24 +69,30 @@ const Cart = () => {
     0
   );
 
-  // আপডেট: শুধুমাত্র তখনই থ্রেশহোল্ড নেওয়া হবে যদি isFreeShippingActive সত্য হয়
+  // ফ্রি শিপিং থ্রেশহোল্ড নির্ধারণ (আইটেমগুলোর মধ্যে সর্বোচ্চ থ্রেশহোল্ডটি নেওয়া হচ্ছে)
   const freeThreshold =
     cartItems.length > 0
       ? Math.max(
           ...cartItems.map((item) => {
             const s = item.shippingDetails || {};
+            // যদি আইটেমটিতে ফ্রি শিপিং একটিভ থাকে তবে তার থ্রেশহোল্ড নিন, নাহলে একটি বড় সংখ্যা দিন
             return s.isFreeShippingActive 
-              ? (Number(s.freeShippingThreshold) || 999999) 
+              ? (Number(s.freeShippingThreshold) || 0) 
               : 999999;
-          })
+          }),
+          2000 // ডিফল্ট মিনিমাম থ্রেশহোল্ড
         )
       : 2000;
 
-  // চেক করা হচ্ছে কোনো আইটেম আসলে ফ্রি শিপিং ইলিজিবল কি না
-  const hasActiveFreeShipping = cartItems.some(item => item.shippingDetails?.isFreeShippingActive);
+  // চেক করা হচ্ছে কোনো আইটেমে ফ্রি শিপিং অপশন আছে কিনা
+  const hasActiveFreeShipping = cartItems.some(item => 
+    item.shippingDetails?.isFreeShippingActive || item.shippingDetails?.shippingType === 'free'
+  );
 
   const progressPercent = Math.min((subtotal / freeThreshold) * 100, 100);
   const remainingForFree = freeThreshold - subtotal;
+  
+  // ফ্রি শিপিং এলিজিবিলিটি চেক
   const isFreeByThreshold = subtotal >= freeThreshold && hasActiveFreeShipping;
 
   return (
@@ -122,7 +129,7 @@ const Cart = () => {
         ) : (
           <div className="flex flex-col xl:flex-row gap-10">
             <div className="flex-1 space-y-6">
-              {/* 🚚 Shipping Progress Bar - শুধুমাত্র দেখাবে যদি অন্তত ১টি পণ্যে ফ্রি শিপিং একটিভ থাকে */}
+              {/* 🚚 Shipping Progress Bar */}
               {hasActiveFreeShipping && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -151,7 +158,8 @@ const Cart = () => {
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item) => {
                   const sDetails = item.shippingDetails || {};
-                  const discountPercent = item.discountPercentage || item.disdiscountPercentage || 0;
+                  const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
+                  const discountedPrice = Number(calculateDiscountedPrice(item));
                   
                   return (
                     <motion.div
@@ -181,11 +189,11 @@ const Cart = () => {
                         </h3>
                         <div className="flex items-center justify-center md:justify-start gap-3 mt-1">
                           <span className="text-red-600 font-black font-mono">
-                            ৳ {Number(calculateDiscountedPrice(item)).toLocaleString()}
+                            ৳ {discountedPrice.toLocaleString()}
                           </span>
                           {discountPercent > 0 && (
                             <span className="text-gray-400 text-xs line-through">
-                              ৳{item.price.toLocaleString()}
+                              ৳{Number(item.price).toLocaleString()}
                             </span>
                           )}
                         </div>
@@ -220,7 +228,7 @@ const Cart = () => {
 
                       <div className="md:w-32 text-center md:text-right">
                         <p className="text-xl font-mono font-black text-gray-900 tracking-tighter">
-                          ৳ {(item.qty * Number(calculateDiscountedPrice(item))).toLocaleString()}
+                          ৳ {(item.qty * discountedPrice).toLocaleString()}
                         </p>
                       </div>
 
@@ -257,7 +265,11 @@ const Cart = () => {
                     </div>
 
                     {totalSavings > 0 && (
-                      <motion.div className="flex justify-between text-green-500 bg-green-500/10 p-3 rounded-xl border border-green-500/20">
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex justify-between text-green-500 bg-green-500/10 p-3 rounded-xl border border-green-500/20"
+                      >
                         <span className="flex items-center gap-2 font-black uppercase text-[10px]"><FaTag /> Savings</span>
                         <span className="font-black">- ৳{totalSavings.toLocaleString()}</span>
                       </motion.div>
@@ -277,10 +289,10 @@ const Cart = () => {
                         <div className="space-y-2">
                           <div className="flex justify-between text-[10px]">
                             <span className="text-gray-500">Shipping:</span>
-                            <span className="text-red-500 font-black uppercase">Calculated by weight</span>
+                            <span className="text-red-500 font-black uppercase">By Weight</span>
                           </div>
                           <p className="text-[9px] text-gray-400 italic leading-relaxed text-center">
-                            Note: Extra ৳20/kg applies after 1kg weight.
+                            Note: Extra ৳20/kg applies after 1kg.
                           </p>
                         </div>
                       )}
@@ -303,7 +315,7 @@ const Cart = () => {
                   </button>
 
                   <p className="mt-6 text-[9px] text-center text-gray-600 uppercase tracking-widest font-bold flex items-center justify-center gap-2">
-                    <FaInfoCircle /> Shipping costs confirmed at checkout
+                    <FaInfoCircle /> Verified Secure Checkout
                   </p>
                 </motion.div>
               </div>

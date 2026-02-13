@@ -26,7 +26,7 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
     return acc + discountedPrice * item.qty;
   }, 0);
 
-  const shippingCharge = Number(shippingAddress?.shippingCharge) || 0;
+  const shippingCharge = Number(cart.shippingAddress?.shippingCharge) || 0;
   const totalPrice = (subtotal + shippingCharge).toFixed(2);
 
   const placeOrderHandler = async () => {
