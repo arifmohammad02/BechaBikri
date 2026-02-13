@@ -36,30 +36,39 @@ import { createAndSendNotification } from "./notificationController.js";
 
 function calcPrices(dbOrderItems, shippingAddress) {
   const itemsPrice = dbOrderItems.reduce((acc, item) => {
-    const discount =
-      (Number(item.price) * (Number(item.discountPercentage) || 0)) / 100;
-    const discountedPrice = Number(item.price) - discount;
-    return acc + discountedPrice * Number(item.qty || 1);
+    const itemPrice = Number(item.price) || 0;
+    const discountPercent = Number(item.discountPercentage) || 0;
+    const qty = Number(item.qty) || 1;
+
+    const discount = (itemPrice * discountPercent) / 100;
+    const discountedPrice = itemPrice - discount;
+
+    return acc + discountedPrice * qty;
   }, 0);
 
   let totalWeight = 0;
   let maxFixedShipping = 0; // সংশোধিত
   let baseShippingRate = 0;
 
-  const isInsideDhaka = shippingAddress?.city?.toLowerCase().includes("dhaka");
+  const city = shippingAddress?.city?.trim().toLowerCase() || "";
+  const isInsideDhaka = city.includes("dhaka");
 
   dbOrderItems.forEach((item) => {
     const s = item.shippingDetails;
 
-    if (s?.shippingType === "fixed") {
-      // ✅ Qty দিয়ে গুণ করা রিমুভ করা হয়েছে
-      const currentFixed = s.fixedShippingCharge || 0;
+    const type = s?.shippingType?.toLowerCase(); // Case-insensitive check
+
+    if (type === "fixed") {
+      const currentFixed = Number(s.fixedShippingCharge) || 0;
       if (currentFixed > maxFixedShipping) maxFixedShipping = currentFixed;
-    } else if (s?.shippingType === "weight-based") {
-      totalWeight += (item.weight || 0.5) * item.qty;
+    } else if (type === "weight-based") {
+      const weight = Number(item.weight) || 0.5;
+      const qty = Number(item.qty) || 1;
+      totalWeight += weight * qty;
+
       const rate = isInsideDhaka
-        ? s.insideDhakaCharge || 80
-        : s.outsideDhakaCharge || 150;
+        ? Number(s.insideDhakaCharge) || 80
+        : Number(s.outsideDhakaCharge) || 150;
 
       if (rate > baseShippingRate) baseShippingRate = rate;
     }
@@ -67,14 +76,14 @@ function calcPrices(dbOrderItems, shippingAddress) {
 
   const activeThresholds = dbOrderItems
     .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
-    .map((i) => Number(i.shippingDetails?.freeShippingThreshold) || 999999);
+    .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
+    .filter((t) => !isNaN(t) && t > 0);
 
   const freeThreshold =
-    activeThresholds.length > 0 ? Math.min(...activeThresholds) : 999999;
+    activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
 
   let finalShippingPrice = 0;
 
-  // 🚩 থ্রেশহোল্ড চেক
   if (itemsPrice < freeThreshold) {
     let dynamicShippingPrice = 0;
     if (totalWeight > 0) {
@@ -84,17 +93,15 @@ function calcPrices(dbOrderItems, shippingAddress) {
         dynamicShippingPrice += extraWeight * 20;
       }
     }
-    // যদি ফ্রি না হয় তবেই চার্জ যোগ হবে
     finalShippingPrice = dynamicShippingPrice + maxFixedShipping;
   } else {
-    // থ্রেশহোল্ড কমপ্লিট হলে চার্জ ০
     finalShippingPrice = 0;
   }
 
   const taxRate = 0.0;
   const taxPrice = itemsPrice * taxRate;
-  const totalPrice = itemsPrice + finalShippingPrice + taxPrice;
-
+  const totalPrice =
+    Number(itemsPrice) + Number(finalShippingPrice) + Number(taxPrice);
   return {
     itemsPrice: itemsPrice.toFixed(2),
     shippingPrice: finalShippingPrice.toFixed(2),
@@ -150,13 +157,13 @@ const createOrder = async (req, res) => {
       }
 
       return {
-        ...itemFromClient,
-        product: matchingItemFromDB._id,
         name: matchingItemFromDB.name,
-        slug: matchingItemFromDB.slug,
-        price: matchingItemFromDB.price,
-        discountPercentage: matchingItemFromDB.discountPercentage || 0,
-        weight: matchingItemFromDB.weight || 0.5,
+        qty: Number(itemFromClient.qty) || 1, // শুধু পরিমাণটা ক্লায়েন্ট থেকে আসবে
+        image: matchingItemFromDB.images[0], // সরাসরি ডিবি থেকে মেইন ইমেজ
+        price: Number(matchingItemFromDB.price), // জালিয়াতি ঠেকাতে ডিবি থেকে দাম নেওয়া
+        product: matchingItemFromDB._id,
+        discountPercentage: Number(matchingItemFromDB.discountPercentage) || 0,
+        weight: Number(matchingItemFromDB.weight) || 0.5,
         shippingDetails: {
           ...matchingItemFromDB.shippingDetails,
         },
@@ -175,7 +182,8 @@ const createOrder = async (req, res) => {
     const isPaid = false; // Default false
 
     const order = new Order({
-      orderId: generateOrderId(),
+      orderId:
+        typeof generateOrderId === "function" ? generateOrderId() : undefined,
       orderItems: dbOrderItems,
       user: req.user._id,
       shippingAddress,
@@ -185,7 +193,6 @@ const createOrder = async (req, res) => {
       shippingPrice,
       totalPrice,
       paymentStatus,
-      isPaid,
     });
 
     const createdOrder = await order.save();
@@ -233,7 +240,6 @@ const createOrder = async (req, res) => {
       }
     };
 
-    
     sendEmails();
 
     res.status(201).json(createdOrder);
@@ -243,7 +249,6 @@ const createOrder = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const getAllOrders = async (req, res) => {
   try {

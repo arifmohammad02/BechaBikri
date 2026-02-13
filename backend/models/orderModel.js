@@ -96,8 +96,7 @@ const orderSchema = mongoose.Schema(
     },
 
     paidAt: {
-      type: Date,
-      default: () => new Date(), // Use the device's local time
+      type: Date, 
     },
 
     isDelivered: {
@@ -114,8 +113,7 @@ const orderSchema = mongoose.Schema(
     },
 
     deliveredAt: {
-      type: Date,
-      default: () => new Date(), // Use the device's local time
+      type: Date, 
     },
   },
   {
