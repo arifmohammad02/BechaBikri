@@ -8,6 +8,11 @@ import Footer from "./components/Footer";
 import ServiceTag from "./components/ServiceTag";
 import { useNotifications } from "./hooks/useNotifications";
 
+
+// import PopupBanner from "./components/PopupBanner";
+import FooterBanners from "./components/FooterBanners";
+// import AdminRoute from "./pages/Admin/AdminRoute";
+
 function App() {
   useNotifications();
   const [loading, setLoading] = useState(true);
@@ -39,6 +44,8 @@ function App() {
     "/admin/productlist",
     "/admin/allproductslist",
     "/admin/orderlist",
+     "/admin/bannerlist",
+    "/admin/banner/create",
     "/verify-otp", 
   ].includes(location.pathname);
 
@@ -53,6 +60,9 @@ function App() {
         style={{ zIndex: 99999 }}
       />
 
+         {/* 🆕 Popup Banner - Only on non-admin pages */}
+      {/* {!AdminRoute && <PopupBanner />} */}
+
       {loading ? (
         <div className="flex items-center justify-center h-screen">
           <Loader />
@@ -65,6 +75,7 @@ function App() {
           </main>
           {shouldShowExtras && (
             <>
+             <FooterBanners />
               <ServiceTag />
               <Footer />
             </>

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 
-import { useMemo, useState ,useRef } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useCreateProductMutation,
@@ -18,12 +18,14 @@ import {
   FaArrowLeft,
   FaArrowRight,
 } from "react-icons/fa";
-import Quill from 'quill';
+import Quill from "quill";
 import ReactQuill from "react-quill";
-import ImageResize from 'quill-image-resize-module-react';
+import ImageResize from "quill-image-resize-module-react";
 import "react-quill/dist/quill.snow.css";
+import React from "react";
+import { TreeSelect } from "antd";
 
-Quill.register('modules/imageResize', ImageResize);
+Quill.register("modules/imageResize", ImageResize);
 
 const ProductList = () => {
   const quillRef = useRef(null);
@@ -47,7 +49,7 @@ const ProductList = () => {
     { label: "", value: "" },
   ]);
 
-  // --- SHIPPING STATES (সুরক্ষিত রাখা হয়েছে) ---
+  // --- SHIPPING STATES (সুরক্ষিত রাখা হয়েছে) ---
   const [weight, setWeight] = useState(0.5);
   const [shippingType, setShippingType] = useState("weight-based");
   const [insideDhakaCharge, setInsideDhakaCharge] = useState(80);
@@ -85,14 +87,14 @@ const ProductList = () => {
     };
   };
 
-const modules = useMemo(
+  const modules = useMemo(
     () => ({
       toolbar: {
         container: [
           [{ header: [1, 2, 3, 4, 5, 6, false] }],
           [{ size: ["small", false, "large", "huge"] }],
-          ["bold", "italic", "underline", "strike", "blockquote"], // 'strike' (কাটা দাগ) যোগ করা হয়েছে
-          
+          ["bold", "italic", "underline", "strike", "blockquote"], // 'strike' (কাটা দাগ) যোগ করা হয়েছে
+
           // --- জুরুরি নতুন ফিচার ---
           [{ color: [] }, { background: [] }], // টেক্সট কালার ও হাইলাইট
           [{ align: [] }], // টেক্সট এলাইনমেন্ট (Left, Center, Right, Justify)
@@ -107,22 +109,33 @@ const modules = useMemo(
         handlers: { image: imageHandler },
       },
       imageResize: {
-        parrentElement: 'section',
-        modules: ['Resize', 'DisplaySize', 'Toolbar'] 
+        parrentElement: "section",
+        modules: ["Resize", "DisplaySize", "Toolbar"],
       },
     }),
     [],
   );
 
-  
   const formats = [
-    "header", "size",
-    "bold", "italic", "underline", "strike", "blockquote",
-    "color", "background", "align", "script",
-    "list", "bullet", "indent",
-    "link", "image", "video",
+    "header",
+    "size",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "color",
+    "background",
+    "align",
+    "script",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "video",
   ];
-  
+
   // --- Specifications Logic ---
   const addSpec = () =>
     setSpecifications([...specifications, { label: "", value: "" }]);
@@ -143,7 +156,6 @@ const modules = useMemo(
     setKeyFeatures(newFeatures);
   };
 
-
   const moveImage = (index, direction) => {
     const updatedImages = [...images];
     const newIndex = direction === "left" ? index - 1 : index + 1;
@@ -154,6 +166,35 @@ const modules = useMemo(
     ];
     setImages(updatedImages);
   };
+
+  const organizedCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+
+    const buildTree = (parentId = null, parentPath = "") => {
+      return categories
+        .filter((c) => {
+          const currentParentId =
+            c.parent && typeof c.parent === "object" ? c.parent._id : c.parent;
+          return parentId === null
+            ? !currentParentId
+            : currentParentId === parentId;
+        })
+        .map((category) => {
+          const currentPath = parentPath
+            ? `${parentPath} > ${category.name}`
+            : category.name;
+          return {
+            title: category.name,
+            label: currentPath,
+            value: category._id,
+            key: category._id,
+            children: buildTree(category._id, currentPath),
+          };
+        });
+    };
+
+    return buildTree(null);
+  }, [categories]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -191,7 +232,7 @@ const modules = useMemo(
         JSON.stringify(specifications.filter((s) => s.label.trim() !== "")),
       );
 
-      // Shipping Data Append (কন্ট্রোলার অনুযায়ী সঠিক কি-ওয়ার্ড ব্যবহার করা হয়েছে)
+      // Shipping Data Append
       productData.append("weight", weight);
       productData.append("shippingType", shippingType);
       productData.append("insideDhakaCharge", insideDhakaCharge);
@@ -407,20 +448,22 @@ const modules = useMemo(
 
                 <div className="group relative">
                   <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                    Classification
+                    Category / Sub-Category
                   </label>
-                  <select
-                    className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer appearance-none"
-                    onChange={(e) => setCategory(e.target.value)}
+                  <TreeSelect
+                    showSearch
+                    style={{ width: "100%" }}
                     value={category}
-                  >
-                    <option value="">SELECT_CATEGORY</option>
-                    {categories?.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                    placeholder="SELECT_CATEGORY"
+                    allowClear
+                    treeDefaultExpandAll
+                    onChange={(newValue) => setCategory(newValue)}
+                    treeData={organizedCategories}
+                    treeNodeLabelProp="label"
+                    className="w-full border-b-2 border-gray-100 font-bold text-black custom-treeselect"
+                    variant="borderless"
+                  />
                 </div>
 
                 <div className="flex items-center gap-4 pt-6">
@@ -436,7 +479,7 @@ const modules = useMemo(
                 </div>
               </div>
 
-              {/* --- NEW: KEY FEATURES SECTION --- */}
+              {/* KEY FEATURES SECTION */}
               <div className="mb-12 border-t pt-10">
                 <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
                   Key_Features_Node
@@ -469,7 +512,8 @@ const modules = useMemo(
                   Add_Feature
                 </button>
               </div>
-              {/* --- NEW: SPECIFICATIONS TABLE SECTION --- */}
+
+              {/* SPECIFICATIONS TABLE SECTION */}
               <div className="mb-12 border-t pt-10">
                 <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
                   Technical_Specifications
@@ -517,7 +561,7 @@ const modules = useMemo(
                 </button>
               </div>
 
-              {/* --- SHIPPING CONFIGURATION SECTION --- */}
+              {/* SHIPPING CONFIGURATION SECTION */}
               <div className="mb-12 border-t border-gray-100 pt-10">
                 <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-8 flex items-center gap-2">
                   <span className="w-8 h-[2px] bg-red-600"></span>{" "}
@@ -553,7 +597,6 @@ const modules = useMemo(
                     />
                   </div>
 
-                  {/* নতুন যোগ করা ফ্রি শিপিং একটিভেশন টগল */}
                   <div className="bg-gray-50 p-4 border border-gray-100 rounded-sm flex items-center justify-between group hover:border-red-200 transition-all">
                     <div>
                       <label className="text-[10px] font-black text-gray-400 tracking-widest uppercase block mb-1">
@@ -634,7 +677,7 @@ const modules = useMemo(
                 </label>
                 <div className="border border-gray-100 rounded-sm">
                   <ReactQuill
-                   ref={quillRef}
+                    ref={quillRef}
                     theme="snow"
                     value={description}
                     onChange={setDescription}

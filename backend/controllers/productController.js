@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import Product from "../models/productModel.js";
+import Category from "../models/categoryModel.js";
 import sanitizeHtml from "sanitize-html";
 
 const sanitizeDescription = (description) => {
@@ -85,7 +86,6 @@ const addProduct = asyncHandler(async (req, res) => {
         ? JSON.parse(keyFeatures)
         : keyFeatures
       : [];
-
 
     const shippingData = {
       shippingType,
@@ -175,7 +175,6 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       imagesArray = typeof images === "string" ? JSON.parse(images) : images;
       if (!Array.isArray(imagesArray)) imagesArray = [imagesArray];
     }
-
 
     const shippingData = {
       shippingType: fields.shippingType,
@@ -273,7 +272,13 @@ const fetchProductById = asyncHandler(async (req, res) => {
         { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null },
         { slug: req.params.id },
       ],
-    }).populate("category");
+    }).populate({
+      path: "category",
+      populate: {
+        path: "parent",
+        populate: { path: "parent" },
+      },
+    });
 
     if (product) {
       return res.json(product);
@@ -290,9 +295,17 @@ const fetchProductById = asyncHandler(async (req, res) => {
 const fetchAllProducts = asyncHandler(async (req, res) => {
   try {
     const products = await Product.find({})
-      .populate("category")
+      .populate({
+        path: "category",
+        populate: {
+          path: "parent", 
+          populate: {
+            path: "parent",
+          },
+        },
+      })
       .limit(50)
-      .sort({ createAt: -1 });
+      .sort({ createdAt: -1 });
 
     res.json(products);
   } catch (error) {
@@ -371,10 +384,29 @@ const filterProducts = asyncHandler(async (req, res) => {
     const { checked, radio } = req.body;
 
     let args = {};
-    if (checked.length > 0) args.category = checked;
-    if (radio.length) args.price = { $gte: radio[0], $lte: radio[1] };
+    if (checked && checked.length > 0) {
+      const getRecursiveChildIds = async (parentIds) => {
+        const children = await Category.find({
+          parent: { $in: parentIds },
+        }).select("_id");
+        if (children.length === 0) return [];
+        const childIds = children.map((c) => c._id);
+        const subChildIds = await getRecursiveChildIds(childIds);
+        return [...childIds, ...subChildIds];
+      };
 
-    const products = await Product.find(args);
+      const allChildCategoryIds = await getRecursiveChildIds(checked);
+      const finalCategoryIds = [...checked, ...allChildCategoryIds];
+
+      args.category = { $in: finalCategoryIds };
+    }
+
+
+     if (radio && radio.length) {
+       args.price = { $gte: radio[0], $lte: radio[1] };
+     }
+
+    const products = await Product.find(args).populate("category");
     res.json(products);
   } catch (error) {
     console.error(error);

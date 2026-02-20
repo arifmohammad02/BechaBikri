@@ -17,6 +17,9 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
 
+  console.log(cart, cartItems , shippingAddress ,paymentMethod);
+  
+
   // ১. সাবটোটাল ক্যালকুলেশন (ডিসকাউন্ট সহ)
   const subtotal = cartItems.reduce((acc, item) => {
     const discountPercent =

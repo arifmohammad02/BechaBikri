@@ -14,12 +14,27 @@ const Category = () => {
   }
 
   if (error) {
-    return <div className="text-center text-red-500 py-10 font-mono">Failed to load categories.</div>;
+    return (
+      <div className="text-center text-red-500 py-10 font-mono">
+        Failed to load categories.
+      </div>
+    );
   }
 
   if (!Array.isArray(data) || data.length === 0) {
-    return <div className="text-center py-10 text-gray-400 font-mono">No categories found.</div>;
+    return (
+      <div className="text-center py-10 text-gray-400 font-mono">
+        No categories found.
+      </div>
+    );
   }
+
+  // --- UPDATE START: Only show Main Categories in the Grid ---
+  const mainCategories = data.filter((c) => {
+    const parentId = c.parent && typeof c.parent === "object" ? c.parent._id : c.parent;
+    return !parentId;
+  });
+  // --- UPDATE END ---
 
   return (
     <div className="container mx-auto py-16 px-4">
@@ -46,7 +61,8 @@ const Category = () => {
 
       {/* 🟢 Category Grid */}
       <div className="flex items-center justify-center gap-6 md:gap-12 flex-wrap">
-        {data.map((category, index) => (
+        {/* --- UPDATE START: Using mainCategories instead of data --- */}
+        {mainCategories.map((category, index) => (
           <motion.div
             key={category._id}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -61,7 +77,7 @@ const Category = () => {
               <div className="relative w-28 h-28 md:w-36 md:h-36">
                 {/* Rotating Border on Hover */}
                 <div className="absolute inset-0 border-2 border-dashed border-blue-200 rounded-[2rem] group-hover:rotate-45 group-hover:border-blue-500 transition-all duration-700" />
-                
+
                 <div className="absolute inset-2 overflow-hidden rounded-[1.8rem] bg-gray-50 border border-gray-100 shadow-sm group-hover:shadow-xl transition-all duration-500">
                   <img
                     src={category.image || "/placeholder.jpg"}
@@ -77,12 +93,13 @@ const Category = () => {
               <h4 className="text-[13px] md:text-[15px] font-mono text-[#212B36] font-black mt-5 text-center uppercase tracking-wider group-hover:text-blue-600 transition-colors">
                 {category.name}
               </h4>
-              
+
               {/* Small dot below name */}
               <div className="w-1 h-1 bg-[#B88E2F] rounded-full mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
           </motion.div>
         ))}
+        {/* --- UPDATE END --- */}
       </div>
     </div>
   );

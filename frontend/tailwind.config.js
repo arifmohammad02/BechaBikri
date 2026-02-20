@@ -56,6 +56,7 @@ export default {
         figtree: ["Figtree", "sans-serif"],
         playfair: ["Playfair Display", "serif"],
         lora: ["Lora", "serif"],
+        trebuchet: ['"Trebuchet MS"', "sans-serif"],
       },
     },
   },

@@ -1,21 +1,20 @@
-import sgMail from "@sendgrid/mail";
+import * as SibApiV3Sdk from "@getbrevo/brevo";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Brevo API Client Setup
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+const apiKey = apiInstance.authentications["apiKey"];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
-/**
- * এই ফাংশনটি এখন স্মার্টলি চেক করবে আপনি কি অবজেক্ট পাঠিয়েছেন নাকি আলাদা আলাদা প্যারামিটার।
- */
 const sendEmail = async (params, subjectParam, textParam, htmlParam) => {
   let to, subject, text, html;
 
-  // যদি প্রথম প্যারামিটারটি একটি অবজেক্ট হয় (যেমন অর্ডারের ক্ষেত্রে ব্যবহার করছেন)
+  // আপনার আগের লজিক (Object বা direct params)
   if (typeof params === "object" && params !== null && !Array.isArray(params)) {
     ({ to, subject, text, html } = params);
   } else {
-    // যদি আপনি সরাসরি createUser থেকে পাঠাতে চান (যেমন: sendEmail(to, subject, text, html))
     to = params;
     subject = subjectParam;
     text = textParam;
@@ -23,22 +22,26 @@ const sendEmail = async (params, subjectParam, textParam, htmlParam) => {
   }
 
   try {
-    const msg = {
-      to,
-      from: process.env.FROM_EMAIL, // আপনার ভেরিফাইড সেন্ডার ইমেইল
-      subject,
-      text,
-      html,
-    };
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-    await sgMail.send(msg);
-    console.log(`✅ Email sent successfully to: ${to}`);
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+    sendSmtpEmail.textContent = text;
+    sendSmtpEmail.sender = { name: "ArixGear", email: process.env.FROM_EMAIL };
+    sendSmtpEmail.to = [{ email: to }];
+    sendSmtpEmail.replyTo = { email: process.env.FROM_EMAIL };
+
+    // API এর মাধ্যমে ইমেইল পাঠানো
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
+    console.log(`✅ Email sent successfully via Brevo API to: ${to}`);
+    return data;
   } catch (error) {
+    // Brevo API এর ডিটেইল এরর মেসেজ দেখা
     console.error(
-      `❌ SendGrid Error for ${to}:`,
-      error.response?.body?.errors || error.message,
+      `❌ Brevo API Error for ${to}:`,
+      error.response?.body?.message || error.message,
     );
-    // ইন্টারনাল এরর থ্রো করা যাতে কন্ট্রোলার বুঝতে পারে ইমেইল ফেইল হয়েছে
     throw new Error("Email delivery failed");
   }
 };

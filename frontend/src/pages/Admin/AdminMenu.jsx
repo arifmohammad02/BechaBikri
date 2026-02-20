@@ -6,6 +6,7 @@ import { CiShoppingCart } from "react-icons/ci";
 import { AiOutlineProduct, AiOutlinePlusSquare } from "react-icons/ai";
 import { TbCategory2 } from "react-icons/tb";
 import { MdOutlineDashboard } from "react-icons/md";
+import { RiImageLine } from "react-icons/ri";
 
 const AdminMenu = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -32,6 +33,7 @@ const AdminMenu = () => {
     { to: "/admin/productlist", icon: <AiOutlinePlusSquare />, label: "Create Product" },
     { to: "/admin/userlist", icon: <LuUsers />, label: "Users" },
     { to: "/admin/orderlist", icon: <CiShoppingCart />, label: "Orders" },
+     { to: "/admin/bannerlist", icon: <RiImageLine />, label: "Banners" },
   ];
 
   return (

@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
-import ProductCarousel from "../pages/Products/ProductCarousel";
+// import ProductCarousel from "../pages/Products/ProductCarousel";
 import SmallProduct from "../pages/Products/SmallProduct ";
 import { useGetTopProductsQuery } from "../redux/api/productApiSlice";
 import Loader from "./Loader";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import Category from "./Category";
 import { motion } from "framer-motion"; // অ্যানিমেশনের জন্য
+import TopBarBanner from "./TopBarBanner";
+import HeroBanner from "./HeroBanner";
+// import CategoryBanners from "./CategoryBanners";
 
+
+  
 const Header = () => {
   const { data, isLoading, error } = useGetTopProductsQuery();
 
@@ -25,9 +30,20 @@ const Header = () => {
   return (
     <div className="bg-white">
       {/* 🟢 Hero Carousel Section */}
+
+       <TopBarBanner />
+
+      {/* 🆕 Hero Banner Section */}
+      <div className="mt-4 px-4 md:px-6">
+        <HeroBanner />
+        {/* <CategoryBanners/> */}
+      </div>
+
+
+{/* 
       <div className="mt-16">
         <ProductCarousel />
-      </div>
+      </div> */}
 
       {/* 🟢 Category Navigation */}
       <div className="py-8">

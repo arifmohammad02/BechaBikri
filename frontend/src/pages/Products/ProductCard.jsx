@@ -20,7 +20,9 @@ const ProductCard = ({ p }) => {
       ? p.images[0]
       : p?.image || "/placeholder.jpg";
 
-  const productPath = `/product/${p._id}`;
+ 
+
+  const productPath = `/product/${p.slug || p._id}`;
 
   return (
     <div className="group relative w-full bg-white rounded-[1.5rem] p-3 border border-gray-100 hover:border-blue-100 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] transition-all duration-500 ease-in-out">

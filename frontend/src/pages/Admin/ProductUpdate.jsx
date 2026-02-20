@@ -11,6 +11,7 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
+import { TreeSelect } from 'antd';
 import {
   FaTrash,
   FaCloudUploadAlt,
@@ -71,6 +72,38 @@ const ProductUpdate = () => {
   const [updateProduct] = useUpdateProductMutation();
   const [deleteProduct] = useDeleteProductMutation();
 
+  // ১. প্রথমে ক্যাটাগরিগুলোকে ট্রি-তে রূপান্তর করার লজিক
+const organizedCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+
+    const buildTree = (parentId = null, parentPath = "") => {
+      return categories
+        .filter((c) => {
+          const currentParentId =
+            c.parent && typeof c.parent === "object" ? c.parent._id : c.parent;
+
+          return parentId === null
+            ? !currentParentId || currentParentId === null
+            : String(currentParentId) === String(parentId);
+        })
+        .map((category) => {
+          // পাথ তৈরি করা: Parent > Child
+          const currentPath = parentPath 
+            ? `${parentPath} > ${category.name}` 
+            : category.name;
+
+          return {
+            title: category.name,       // ড্রপডাউন লিস্টে দেখাবে শুধু নাম
+            label: currentPath,        // সিলেক্ট করার পর ইনপুটে দেখাবে ফুল পাথ
+            value: category._id,
+            key: category._id,
+            children: buildTree(category._id, currentPath),
+          };
+        });
+    };
+
+    return buildTree();
+  }, [categories]);
   // --- Image Handler for ReactQuill ---
   const imageHandler = () => {
     const input = document.createElement("input");
@@ -96,43 +129,53 @@ const ProductUpdate = () => {
     };
   };
 
-const modules = useMemo(
+  const modules = useMemo(
     () => ({
       toolbar: {
         container: [
           [{ header: [1, 2, 3, 4, 5, 6, false] }],
           [{ size: ["small", false, "large", "huge"] }],
-          ["bold", "italic", "underline", "strike", "blockquote"], 
-          
-        
-          [{ color: [] }, { background: [] }], 
-          [{ align: [] }], 
-          [{ script: "sub" }, { script: "super" }], 
+          ["bold", "italic", "underline", "strike", "blockquote"],
+
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          [{ script: "sub" }, { script: "super" }],
           // -----------------------
 
           [{ list: "ordered" }, { list: "bullet" }],
-          [{ indent: "-1" }, { indent: "+1" }], 
+          [{ indent: "-1" }, { indent: "+1" }],
           ["link", "image", "video"],
           ["clean"],
         ],
         handlers: { image: imageHandler },
       },
       imageResize: {
-        parrentElement: 'section',
-        modules: ['Resize', 'DisplaySize', 'Toolbar'] 
+        parrentElement: "section",
+        modules: ["Resize", "DisplaySize", "Toolbar"],
       },
     }),
     [],
   );
 
   const formats = [
-    "header", "size",
-    "bold", "italic", "underline", "strike", "blockquote",
-    "color", "background", "align", "script",
-    "list", "bullet", "indent",
-    "link", "image", "video",
+    "header",
+    "size",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "color",
+    "background",
+    "align",
+    "script",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "video",
   ];
-
 
   useEffect(() => {
     if (productData && productData._id) {
@@ -254,7 +297,6 @@ const modules = useMemo(
       formData.append("freeShippingThreshold", Number(freeShippingThreshold));
       formData.append("isFreeShippingActive", isFreeShippingActive);
 
-      
       const shippingDetails = {
         weight,
         shippingType,
@@ -459,18 +501,20 @@ const modules = useMemo(
                   <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
                     CATEGORY_REF
                   </label>
-                  <select
-                    className="w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer"
-                    onChange={(e) => setCategory(e.target.value)}
+                    <TreeSelect
+                    showSearch
+                    style={{ width: '100%' }}
                     value={category}
-                  >
-                    <option value="">SELECT_CATEGORY</option>
-                    {categories.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                    placeholder="SELECT_CATEGORY"
+                    allowClear
+                    treeDefaultExpandAll
+                    onChange={(newValue) => setCategory(newValue)}
+                    treeData={organizedCategories}
+                    treeNodeLabelProp="label" // এটি নিশ্চিত করে যে সিলেক্ট করার পর ফুল পাথ (A > B > C) দেখাবে
+                    className="custom-tree-select w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus-within:border-red-600 transition-all"
+                    variant="borderless"
+                  />
                 </div>
 
                 <div className="flex items-center gap-4 pt-6">
@@ -678,7 +722,7 @@ const modules = useMemo(
                 </label>
                 <div className="border border-gray-100 hover:border-red-600 transition-colors">
                   <ReactQuill
-                  ref={quillRef}
+                    ref={quillRef}
                     theme="snow"
                     value={description}
                     onChange={setDescription}

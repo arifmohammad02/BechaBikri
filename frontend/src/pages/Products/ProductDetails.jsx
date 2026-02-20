@@ -9,14 +9,20 @@ import {
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
 import ProductTabs from "./ProductTabs";
-import Ratings from "./Ratings";
 import { FaTruck, FaPlus, FaMinus } from "react-icons/fa";
-import {
-  HiOutlineInformationCircle,
-  HiOutlineShieldCheck,
-} from "react-icons/hi";
+import { HiOutlineShieldCheck } from "react-icons/hi";
 import AddToCartButton from "../../components/AddToCartButton";
+
 import { motion } from "framer-motion";
+import React from "react";
+
+// UPDATE START
+import { 
+  calculateProductPrice, 
+  calculateProductShipping, 
+  getCategoryPath 
+} from "../../components/ProductLogistics";
+// UPDATE END
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
@@ -31,6 +37,8 @@ const ProductDetails = () => {
     refetch,
     error,
   } = useGetProductDetailsQuery(productId);
+
+  console.log(product);
 
   const { userInfo } = useSelector((state) => state.auth);
   const [createReview, { isLoading: loadingProductReview }] =
@@ -48,55 +56,15 @@ const ProductDetails = () => {
     }
   }, [product]);
 
-  // --- 🛠️ Logic Section (Synced with Backend calcPrices) ---
-  const discountPercent =
-    product?.discountPercentage || product?.disdiscountPercentage || 0;
-  const basePrice = product?.price || 0;
-  const unitPriceAfterDiscount =
-    basePrice - (basePrice * discountPercent) / 100;
-
-  // Backend itemsPrice logic equivalent for single product view
-  const itemsPrice = unitPriceAfterDiscount * qty;
-
-  const itemWeight = Number(product?.weight) || 0.5;
-  const totalWeight = itemWeight * qty;
-
-  const {
-    shippingType,
-    insideDhakaCharge,
-    outsideDhakaCharge,
-    fixedShippingCharge,
-    freeShippingThreshold,
-    isFreeShippingActive,
-  } = product?.shippingDetails || {};
-
-  const calculateEstimatedShipping = (isDhaka) => {
-    // 1. Free Shipping Threshold Check (Backend line: if (itemsPrice < freeThreshold))
-    if (
-      (isFreeShippingActive &&
-        itemsPrice >= (freeShippingThreshold || 999999)) ||
-      shippingType === "free"
-    )
-      return 0;
-    // 2. Fixed Shipping Check
-    if (shippingType === "fixed") return fixedShippingCharge || 0;
-
-    // 3. Weight Based Check (Backend line: if (totalWeight > 0))
-    if (shippingType === "weight-based") {
-      let baseRate = isDhaka
-        ? insideDhakaCharge || 80
-        : outsideDhakaCharge || 150;
-      let dynamicPrice = baseRate;
-
-      // Extra weight logic (Backend line: const extraWeight = Math.ceil(totalWeight - 1))
-      if (totalWeight > 1) {
-        const extraWeight = Math.ceil(totalWeight - 1);
-        dynamicPrice += extraWeight * 20;
-      }
-      return dynamicPrice;
-    }
-    return 0;
-  };
+  // UPDATE START
+  const { itemsPrice, basePrice, discountPercent } = calculateProductPrice(product, qty);
+  const estimatedShipping = calculateProductShipping(product, qty, true);
+  const categoryPath = product ? getCategoryPath(product.category) : [];
+  
+  const sDetails = product?.shippingDetails || {};
+  const isFreeEligible = sDetails.isFreeShippingActive && (itemsPrice >= (sDetails.freeShippingThreshold || 0));
+  const isAlwaysFree = sDetails.shippingType === "free";
+  // UPDATE END
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -122,10 +90,21 @@ const ProductDetails = () => {
           <Link to="/" className="hover:text-black transition-colors">
             Home
           </Link>
-          <span className="text-gray-200">/</span>
-          <Link to="/shop" className="hover:text-black transition-colors">
-            {product.category?.name}
-          </Link>
+
+          {/* UPDATE START */}
+          {categoryPath.map((cat, index) => (
+            <React.Fragment key={cat._id || index}>
+              <span className="text-gray-200">/</span>
+              <Link
+                to={`/shop?category=${cat._id}`}
+                className="hover:text-black transition-colors"
+              >
+                {cat.name}
+              </Link>
+            </React.Fragment>
+          ))}
+          {/* UPDATE END */}
+
           <span className="text-gray-200">/</span>
           <span className="text-gray-900 truncate font-semibold">
             {product.name}
@@ -134,12 +113,11 @@ const ProductDetails = () => {
       </nav>
 
       <div className="container mx-auto px-6 py-12">
-        <div className="flex flex-col lg:flex-row gap-20">
-       
-          {/* 🟢 AriX Gear Premium Tech Image Gallery */}
-          <div className="lg:w-1/2">
+        <div className="flex flex-col lg:flex-row gap-5">
+          {/* Image Gallery */}
+          <div className="lg:w-[45%]">
             <div className="sticky top-32 flex flex-col-reverse lg:flex-row gap-8">
-              {/* 🟢 Vertical Tech Thumbnails (Left Side) */}
+              {/* Thumbnails (Left Side) */}
               <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-y-auto no-scrollbar py-2 lg:max-h-[500px] flex-shrink-0">
                 {(product.images?.length > 0
                   ? product.images
@@ -151,6 +129,7 @@ const ProductDetails = () => {
                   >
                     <img
                       src={img}
+                      alt="thumbnail"
                       onClick={() => setActiveImage(img)}
                       className={`w-16 h-16 lg:w-20 lg:h-20 object-cover rounded-xl cursor-pointer border-2 transition-all duration-500 ease-in-out ${
                         activeImage === img
@@ -168,9 +147,8 @@ const ProductDetails = () => {
                 ))}
               </div>
 
-              {/* 🟢 Main Tech Display Area */}
+              {/*Display Area */}
               <div className="relative flex-1 bg-gradient-to-br from-[#fcfcfc] to-[#f5f5f5] rounded-[2.5rem] overflow-hidden aspect-square flex items-center justify-center p-12 border border-gray-100/50 group shadow-sm">
-                {/* 🔥 Tech Discount Badge (Floating Glassmorphism) */}
                 {discountPercent > 0 && (
                   <div className="absolute top-8 left-8 z-10">
                     <div className="backdrop-blur-md bg-white/60 border border-white/40 px-5 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] flex flex-col items-center">
@@ -221,173 +199,201 @@ const ProductDetails = () => {
           </div>
 
           {/* 🟢 Product Info */}
-          <div className="lg:w-1/2 space-y-12">
-            <header className="space-y-6">
-              <div className="flex items-center gap-4">
-                <span className="bg-black text-white text-[10px] font-bold px-4 py-1.5 rounded-full uppercase tracking-[0.2em] font-dosis">
-                  {product.brand || "AriX Gear"}
-                </span>
-                {product.countInStock > 0 ? (
-                  <span className="text-[11px] text-green-600 font-bold uppercase tracking-widest flex items-center gap-2 font-poppins">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />{" "}
-                    In Stock
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-red-500 font-bold uppercase tracking-widest font-poppins">
-                    Out of Stock
-                  </span>
-                )}
+          <div className="lg:w-[55%] space-y-2">
+            {/* ================= HEADER ================= */}
+            <header className="space-y-8">
+              <div className="w-full">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  {/* Left Side: Brand, Name & Status */}
+                  <div className="w-full">
+                    {/* Product Title */}
+                    <h1 className="text-[18px] md:text-[22px] font-trebuchet text-[#3749BB] mb-3">
+                      {product.name}
+                    </h1>
+
+                    {/* Info Badges Row */}
+                    <div className="flex items-center flex-wrap gap-1">
+                      {/* Price Badge */}
+                      <div className="flex items-center gap-1 bg-[#F5F6FC] px-2 py-2 rounded-xl">
+                        <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
+                          Price:
+                        </span>
+                        <span className="text-[14px] font-bold font-trebuchet text-gray-900">
+                          ৳{itemsPrice.toFixed()}
+                        </span>
+                      </div>
+
+                      {/* Regular Price (Discount) Badge */}
+                      {discountPercent > 0 && (
+                        <div className="flex items-center gap-1 bg-[#F5F6FC] px-2 py-2 rounded-xl">
+                          <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
+                            Regular Price:
+                          </span>
+                          <span className="text-[14px] font-bold font-trebuchet text-gray-900">
+                            ৳{(basePrice * qty).toFixed()}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Status Badge */}
+                      <div className="flex items-center gap-1 bg-[#F5F6FC] px-2 py-2 rounded-xl">
+                        <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
+                          Status:
+                        </span>
+                        <span
+                          className={`text-[14px] font-bold font-trebuchet text-gray-900 ${product.countInStock > 0 ? "text-emerald-600" : "text-rose-500"}`}
+                        >
+                          {product.countInStock > 0
+                            ? "In Stock"
+                            : "Out of Stock"}
+                        </span>
+                      </div>
+
+                      {/* Product Code Badge */}
+                      <div className="flex items-center gap-1 bg-[#F5F6FC] px-2 py-2 rounded-xl">
+                        <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
+                          Product Code:
+                        </span>
+                        <span className="text-[14px] font-bold font-trebuchet text-gray-900">
+                          {product._id?.slice(-5) || "47586"}
+                        </span>
+                      </div>
+
+                      {/* Brand Badge */}
+                      <div className="flex items-center gap-1 bg-[#F5F6FC] px-2 py-2 rounded-xl">
+                        <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
+                          Brand:
+                        </span>
+                        <span className="text-[14px] font-bold font-trebuchet text-gray-900">
+                          {product.brand || "Sony"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <h1 className="font-playfair text-5xl md:text-7xl font-medium text-gray-900 tracking-tight leading-[1.1]">
-                {product.name}
-              </h1>
-
-              <div className="flex items-center gap-6 pt-2">
-                <Ratings value={product.rating} />
-                <span className="text-sm text-gray-400 font-medium font-poppins">
-                  {product.numReviews} Verified Reviews
-                </span>
-              </div>
-            </header>
-
-            <div className="space-y-10">
-              <div className="flex items-baseline gap-5">
-                <span className="text-6xl font-figtree font-bold text-gray-900 tracking-tighter">
-                  ৳{itemsPrice.toLocaleString()}
-                </span>
-                {discountPercent > 0 && (
-                  <span className="text-3xl text-gray-300 line-through font-light font-figtree">
-                    ৳{(basePrice * qty).toLocaleString()}
-                  </span>
-                )}
-              </div>
-
-              {/* Action Box */}
-              <div className="p-5 bg-[#FBFBFB] rounded-[2rem] border border-gray-100/80 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-gray-900 uppercase tracking-[0.2em] font-dosis">
-                    Select Quantity
-                  </span>
-                  <div className="flex items-center bg-white rounded-2xl border border-gray-200 p-1 shadow-sm">
+              {product.specifications && product.specifications.length > 0 && (
+                <div>
+                  <h4 className="text-[18px] font-normal text-gray-900 mb-2 font-trebuchet">
+                    Key Features
+                  </h4>
+                  <div className="space-y-1">
+                    {product.specifications.map((spec) => (
+                      <div
+                        key={spec._id}
+                        className="flex items-center border-b border-gray-100 pb-2 gap-1 group"
+                      >
+                        <span className="text-[12px] font-normal font-trebuchet text-gray-900 uppercase">
+                          {spec.label}
+                        </span>
+                        <span className="text-sm font-normal font-trebuchet text-gray-900">
+                          {spec.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4">
                     <button
-                      onClick={() => setQty(Math.max(1, qty - 1))}
-                      className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-50 transition-colors text-gray-600"
+                      onClick={() => {
+                        const element = document.getElementById(
+                          "product-tabs-section",
+                        );
+                        element?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="text-[#3749BB] text-[14px] font-bold hover:underline underline-offset-4 flex items-center gap-1 transition-all"
                     >
-                      <FaMinus size={14} />
-                    </button>
-                    <span className="w-14 text-center text-lg font-bold font-figtree">
-                      {qty}
-                    </span>
-                    <button
-                      onClick={() =>
-                        setQty(Math.min(product.countInStock || 10, qty + 1))
-                      }
-                      className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-50 transition-colors text-gray-600"
-                    >
-                      <FaPlus size={14} />
+                      View More Info
                     </button>
                   </div>
                 </div>
+              )}
+            </header>
 
+            {/* ================= ACTION ================= */}
+            <div className="flex gap-3">
+              <div className="flex items-center py-0 bg-gray-50 rounded-md border border-gray-200 px-3 transition-all duration-300 hover:bg-white">
+                <button
+                  onClick={() => setQty(Math.max(1, qty - 1))}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl font-figtree font-normal text-[20px] text-[#270000] transition-all duration-200 hover:bg-gray-100 hover:scale-105 active:scale-95"
+                >
+                  <FaMinus size={14} />
+                </button>
+
+                <span className="w-8 text-center text-[20px] font-normal font-figtree text-[#270000]">
+                  {qty}
+                </span>
+
+                <button
+                  onClick={() =>
+                    setQty(Math.min(product.countInStock || 10, qty + 1))
+                  }
+                  className="w-8 h-8 flex items-center justify-center font-figtree font-normal text-[20px] rounded-xl text-[#270000] transition-all duration-200 hover:bg-gray-100 hover:scale-105 active:scale-95"
+                >
+                  <FaPlus size={14} />
+                </button>
+              </div>
+              <div className="flex-2">
                 <AddToCartButton
                   product={product}
                   qty={qty}
                   buttonText="Add to Cart"
                   isOrderNow={true}
-                  className="py-6 rounded-2xl font-poppins text-lg tracking-wide shadow-lg"
+                  className="w-full py-5 rounded-2xl font-poppins text-lg tracking-wide shadow-md transition-all duration-300 hover:shadow-xl active:scale-[0.99]"
                 />
               </div>
             </div>
 
-            {/* Logistics Info */}
+            {/* ================= LOGISTICS ================= */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex gap-5 p-6 rounded-[2rem] bg-gray-50/50 border border-gray-100">
-                <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center">
                   <FaTruck className="text-blue-600 text-xl" />
                 </div>
                 <div className="space-y-2 w-full">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-dosis">
-                      Shipping Info
-                    </h4>
-                    <div className="flex gap-1">
-                      {shippingType === "free" ||
-                      (isFreeShippingActive &&
-                        itemsPrice >= freeShippingThreshold) ? (
-                        <span className="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase font-poppins">
-                          Free
-                        </span>
-                      ) : (
-                        <span className="bg-blue-50 text-blue-600 text-[9px] font-bold px-2 py-0.5 rounded-md uppercase font-poppins">
-                          {shippingType}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold font-figtree text-gray-900 leading-none">
-                      ৳{calculateEstimatedShipping(true)}
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-dosis">
+                    Shipping Info
+                  </h4>
+                  {/* UPDATE START */}
+                  <div className="flex flex-col">
+                    <span className="text-3xl font-bold font-figtree text-gray-900">
+                      {isFreeEligible || isAlwaysFree ? "Free" : `৳${estimatedShipping}`}
                     </span>
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter font-poppins">
-                      Delivery
-                    </span>
+                    {!isFreeEligible && !isAlwaysFree && sDetails.isFreeShippingActive && (
+                       <p className="text-[9px] text-gray-400 font-medium font-poppins mt-1 italic">
+                        Free delivery at ৳{sDetails.freeShippingThreshold}
+                      </p>
+                    )}
                   </div>
+                  {/* UPDATE END */}
                 </div>
               </div>
 
               <div className="flex gap-5 p-6 rounded-[2rem] bg-gray-50/50 border border-gray-100">
-                <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center">
                   <HiOutlineShieldCheck className="text-green-600 text-2xl" />
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 font-dosis">
                     Authenticity
                   </h4>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold font-figtree text-gray-900 leading-none">
-                      Original
-                    </span>
-                    <span className="text-[9px] bg-black text-white px-1.5 py-0.5 rounded font-black font-poppins">
-                      100%
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-gray-500 font-medium font-poppins leading-snug">
+                  <span className="text-2xl font-bold font-figtree text-gray-900">
+                    Original
+                  </span>
+                  <p className="text-[10px] text-gray-500 font-medium font-poppins">
                     7-day easy return policy
                   </p>
                 </div>
               </div>
             </div>
-
-            {/* Free Shipping Progress */}
-            {isFreeShippingActive &&
-              freeShippingThreshold > 0 &&
-              itemsPrice < freeShippingThreshold && (
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="flex items-center gap-5 p-6 bg-black text-white rounded-[2rem] shadow-2xl shadow-gray-300"
-                >
-                  <div className="p-3 bg-white/10 rounded-xl">
-                    <HiOutlineInformationCircle className="text-blue-400 text-2xl" />
-                  </div>
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] font-dosis leading-relaxed">
-                    Add{" "}
-                    <span className="text-blue-400 text-lg font-figtree ml-1">
-                      ৳{(freeShippingThreshold - itemsPrice).toLocaleString()}
-                    </span>{" "}
-                    more for{" "}
-                    <span className="underline underline-offset-8 decoration-blue-500 decoration-2">
-                      Free Delivery
-                    </span>
-                  </p>
-                </motion.div>
-              )}
           </div>
         </div>
 
         {/* Reviews Section */}
-        <div className="mt-32 pt-24 border-t border-gray-100">
+        <div
+          id="product-tabs-section"
+          className="mt-32 pt-24 border-t border-gray-100"
+        >
           <ProductTabs
             {...{
               loadingProductReview,

@@ -3,20 +3,21 @@
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
-import { Route, RouterProvider, createRoutesFromElements,createBrowserRouter } from "react-router-dom";
+import {
+  Route,
+  RouterProvider,
+  createRoutesFromElements,
+  createBrowserRouter,
+} from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
 import Loader from "./components/Loader";
 import AllNotifications from "./components/AllNotifications";
 
-
-
-
-
 // Lazy Loading Components
 const About = lazy(() => import("./pages/About"));
-const VerifyOtp = lazy (() => import("./components/VerifyOtp"))
+const VerifyOtp = lazy(() => import("./components/VerifyOtp"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
@@ -41,7 +42,12 @@ const OrderList = lazy(() => import("./pages/Admin/OrderList"));
 const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword"));
-const VerifyResetOtp = lazy (() => import("./pages/Auth/VerifyResetOtp"))
+const VerifyResetOtp = lazy(() => import("./pages/Auth/VerifyResetOtp"));
+
+// 🆕 BANNER COMPONENTS
+const BannerList = lazy(() => import("./pages/Admin/BannerList"));
+const BannerCreate = lazy(() => import("./pages/Admin/BannerCreate"));
+const BannerUpdate = lazy(() => import("./pages/Admin/BannerUpdate"));
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -71,40 +77,40 @@ const router = createBrowserRouter(
         }
       />
       <Route
-  path="/forgot-password"
-  element={
-    <Suspense fallback={<Loader />}>
-      <ForgotPassword />
-    </Suspense>
-  }
-/>
+        path="/forgot-password"
+        element={
+          <Suspense fallback={<Loader />}>
+            <ForgotPassword />
+          </Suspense>
+        }
+      />
 
-<Route
-  path="/verify-reset-otp"
-  element={
-    <Suspense fallback={<Loader />}>
-      <VerifyResetOtp />
-    </Suspense>
-  }
-/>
+      <Route
+        path="/verify-reset-otp"
+        element={
+          <Suspense fallback={<Loader />}>
+            <VerifyResetOtp />
+          </Suspense>
+        }
+      />
 
-<Route
-  path="/reset-password" 
-  element={
-    <Suspense fallback={<Loader />}>
-      <ResetPassword />
-    </Suspense>
-  }
-/>
+      <Route
+        path="/reset-password"
+        element={
+          <Suspense fallback={<Loader />}>
+            <ResetPassword />
+          </Suspense>
+        }
+      />
 
-<Route
-  path="/all-notifications" 
-  element={
-    <Suspense fallback={<Loader />}>
-      <AllNotifications />
-    </Suspense>
-  }
-/>
+      <Route
+        path="/all-notifications"
+        element={
+          <Suspense fallback={<Loader />}>
+            <AllNotifications />
+          </Suspense>
+        }
+      />
       <Route
         index={true}
         path="/"
@@ -278,8 +284,33 @@ const router = createBrowserRouter(
             </Suspense>
           }
         />
+        {/* 🆕 BANNER ROUTES */}
+        <Route
+          path="bannerlist"
+          element={
+            <Suspense fallback={<Loader />}>
+              <BannerList />
+            </Suspense>
+          }
+        />
+        <Route
+          path="banner/create"
+          element={
+            <Suspense fallback={<Loader />}>
+              <BannerCreate />
+            </Suspense>
+          }
+        />
+        <Route
+          path="banner/update/:id"
+          element={
+            <Suspense fallback={<Loader />}>
+              <BannerUpdate />
+            </Suspense>
+          }
+        />
       </Route>
-    </Route>
+    </Route>,
   ),
   {
     /* ১. Future Flags: এই অংশটি আপনার কনসোলের সব Router ওয়ার্নিং বন্ধ করে দিবে */
@@ -291,11 +322,11 @@ const router = createBrowserRouter(
       v7_partialHydration: true,
       v7_skipActionErrorRevalidation: true,
     },
-  }
+  },
 );
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <RouterProvider router={router} />
-  </Provider>
+  </Provider>,
 );

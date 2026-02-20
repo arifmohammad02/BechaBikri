@@ -15,6 +15,13 @@ import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 
+// UPDATE START
+import {
+  calculateProductPrice,
+  calculateCartShipping,
+} from "../components/ProductLogistics";
+// UPDATE END
+
 const Cart = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -39,61 +46,44 @@ const Cart = () => {
     }
   };
 
-  // --- 🛠 ক্যালকুলেশন ফাংশনস ---
-  const calculateDiscountedPrice = (item) => {
-    const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
-    const basePrice = Number(item.price) || 0;
-    if (discountPercent > 0) {
-      return (basePrice - (basePrice * discountPercent) / 100).toFixed(2);
-    }
-    return basePrice.toFixed(2);
-  };
-
-  const subtotal = cartItems.reduce(
-    (acc, item) => acc + item.qty * Number(calculateDiscountedPrice(item)),
-    0
-  );
-
-  const totalSavings = cartItems.reduce((acc, item) => {
-    const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
-    if (discountPercent > 0) {
-      const savingsPerItem = (Number(item.price) * discountPercent) / 100;
-      return acc + item.qty * savingsPerItem;
-    }
-    return acc;
+  // --- 🛠 ক্যালকুলেশন ফাংশনস (ProductLogistics থেকে প্রাপ্ত) ---
+  // UPDATE START
+  const subtotal = cartItems.reduce((acc, item) => {
+    const { itemsPrice } = calculateProductPrice(item, item.qty);
+    return acc + itemsPrice;
   }, 0);
 
-  // --- 🚚 ডাইনামিক শিপিং এবং ওজন লজিক ---
+  const totalSavings = cartItems.reduce((acc, item) => {
+    const { basePrice, itemsPrice } = calculateProductPrice(item, item.qty);
+    return acc + (basePrice * item.qty - itemsPrice);
+  }, 0);
+
   const totalWeight = cartItems.reduce(
     (acc, item) => acc + (Number(item.weight) || 0.5) * item.qty,
-    0
+    0,
   );
 
-  // ফ্রি শিপিং থ্রেশহোল্ড নির্ধারণ (আইটেমগুলোর মধ্যে সর্বোচ্চ থ্রেশহোল্ডটি নেওয়া হচ্ছে)
+  const shippingPrice = calculateCartShipping(cartItems, true); // true = Inside Dhaka
+
+  const activeThresholds = cartItems
+    .filter((i) => i.shippingDetails?.isFreeShippingActive)
+    .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
+    .filter((t) => t > 0);
+
   const freeThreshold =
-    cartItems.length > 0
-      ? Math.max(
-          ...cartItems.map((item) => {
-            const s = item.shippingDetails || {};
-            // যদি আইটেমটিতে ফ্রি শিপিং একটিভ থাকে তবে তার থ্রেশহোল্ড নিন, নাহলে একটি বড় সংখ্যা দিন
-            return s.isFreeShippingActive 
-              ? (Number(s.freeShippingThreshold) || 0) 
-              : 999999;
-          }),
-          2000 // ডিফল্ট মিনিমাম থ্রেশহোল্ড
-        )
-      : 2000;
+    activeThresholds.length > 0 ? Math.min(...activeThresholds) : 0;
 
-  // চেক করা হচ্ছে কোনো আইটেমে ফ্রি শিপিং অপশন আছে কিনা
-  const hasActiveFreeShipping = cartItems.some(item => 
-    item.shippingDetails?.isFreeShippingActive || item.shippingDetails?.shippingType === 'free'
+  const hasActiveFreeShipping = cartItems.some(
+    (item) =>
+      item.shippingDetails?.isFreeShippingActive ||
+      item.shippingDetails?.shippingType === "free",
   );
 
-  const progressPercent = Math.min((subtotal / freeThreshold) * 100, 100);
+  const progressPercent =
+    freeThreshold > 0 ? Math.min((subtotal / freeThreshold) * 100, 100) : 0;
   const remainingForFree = freeThreshold - subtotal;
-  
-  // ফ্রি শিপিং এলিজিবিলিটি চেক
-  const isFreeByThreshold = subtotal >= freeThreshold && hasActiveFreeShipping;
+  const isFreeByThreshold = freeThreshold > 0 && subtotal >= freeThreshold;
+  // UPDATE END
 
   return (
     <div className="mt-[105px] bg-[#F9F9F9] min-h-screen pb-20">
@@ -104,7 +94,9 @@ const Cart = () => {
             Shopping <span className="text-red-600">Bag</span>
           </h1>
           <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] ml-5">
-            <Link to="/" className="hover:text-red-600">Home</Link>
+            <Link to="/" className="hover:text-red-600">
+              Home
+            </Link>
             <span>/</span>
             <span className="text-gray-900 font-black">Checkout Terminal</span>
           </div>
@@ -119,7 +111,9 @@ const Cart = () => {
             className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-gray-100 shadow-xl"
           >
             <LuShoppingBag className="w-20 h-20 text-gray-200 mb-6" />
-            <h2 className="text-2xl font-mono font-black text-gray-800 uppercase tracking-tighter mb-6">Shopping Bag Empty</h2>
+            <h2 className="text-2xl font-mono font-black text-gray-800 uppercase tracking-tighter mb-6">
+              Shopping Bag Empty
+            </h2>
             <Link to="/shop">
               <button className="flex items-center gap-3 bg-black text-white py-4 px-10 rounded-xl font-mono font-black uppercase text-xs tracking-widest hover:bg-red-600 transition-all shadow-lg">
                 Go to Shop <FaArrowRight />
@@ -130,37 +124,56 @@ const Cart = () => {
           <div className="flex flex-col xl:flex-row gap-10">
             <div className="flex-1 space-y-6">
               {/* 🚚 Shipping Progress Bar */}
-              {hasActiveFreeShipping && (
+              {hasActiveFreeShipping && freeThreshold > 0 && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <FaTruckLoading className="text-red-600" size={20} />
+                      <FaTruckLoading
+                        className={
+                          isFreeByThreshold ? "text-green-600" : "text-red-600"
+                        }
+                        size={20}
+                      />
                       <p className="text-sm font-bold text-gray-800 font-mono uppercase tracking-tighter">
                         {isFreeByThreshold
                           ? "Congratulations! You've unlocked FREE SHIPPING"
-                          : `Add ৳${Math.ceil(remainingForFree).toLocaleString()} more for FREE SHIPPING`}
+                          : `Add ৳${Math.ceil(remainingForFree)} more for FREE SHIPPING`}
                       </p>
                     </div>
                     <span className="text-[10px] font-mono font-black bg-gray-100 px-2 py-1 rounded">
                       Total Weight: {totalWeight.toFixed(2)} kg
                     </span>
                   </div>
+
+                  {/* Progress Bar Container */}
                   <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${progressPercent}%` }}
-                      className="h-full bg-red-600 transition-all duration-1000"
+                      animate={{ width: `${Math.min(progressPercent, 100)}%` }}
+                      className={`h-full transition-all duration-1000 ${
+                        isFreeByThreshold ? "bg-green-500" : "bg-red-600"
+                      }`}
                     />
                   </div>
+
+                  {!isFreeByThreshold && (
+                    <p className="text-[10px] text-gray-400 mt-2 font-medium">
+                      Free shipping available on orders over ৳{freeThreshold}
+                    </p>
+                  )}
                 </div>
               )}
 
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item) => {
+                  // UPDATE START
+                  const { itemsPrice, discountPercent } = calculateProductPrice(
+                    item,
+                    1,
+                  );
                   const sDetails = item.shippingDetails || {};
-                  const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
-                  const discountedPrice = Number(calculateDiscountedPrice(item));
-                  
+                  // UPDATE END
+
                   return (
                     <motion.div
                       key={item._id}
@@ -178,7 +191,7 @@ const Cart = () => {
                         />
                         {discountPercent > 0 && (
                           <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg">
-                            {discountPercent}% OFF
+                            {Math.round(discountPercent)}% OFF
                           </div>
                         )}
                       </div>
@@ -189,7 +202,7 @@ const Cart = () => {
                         </h3>
                         <div className="flex items-center justify-center md:justify-start gap-3 mt-1">
                           <span className="text-red-600 font-black font-mono">
-                            ৳ {discountedPrice.toLocaleString()}
+                            ৳ {itemsPrice.toLocaleString()}
                           </span>
                           {discountPercent > 0 && (
                             <span className="text-gray-400 text-xs line-through">
@@ -200,7 +213,7 @@ const Cart = () => {
 
                         <div className="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
                           <span className="text-[9px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-bold uppercase">
-                            Weight: {(Number(item.weight) || 0.5)}kg
+                            Weight: {Number(item.weight) || 0.5}kg
                           </span>
                           {sDetails.shippingType === "free" && (
                             <span className="text-[9px] bg-green-100 text-green-600 px-2 py-1 rounded font-bold uppercase">
@@ -212,12 +225,16 @@ const Cart = () => {
 
                       <div className="flex items-center bg-gray-50 p-1 rounded-xl border border-gray-100">
                         <button
-                          onClick={() => item.qty > 1 && addToCartHandler(item, item.qty - 1)}
+                          onClick={() =>
+                            item.qty > 1 && addToCartHandler(item, item.qty - 1)
+                          }
                           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:text-red-600 transition-all shadow-sm"
                         >
                           <FaMinus size={10} />
                         </button>
-                        <span className="w-10 text-center font-mono font-black">{item.qty}</span>
+                        <span className="w-10 text-center font-mono font-black">
+                          {item.qty}
+                        </span>
                         <button
                           onClick={() => addToCartHandler(item, item.qty + 1)}
                           className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white hover:text-red-600 transition-all shadow-sm"
@@ -228,7 +245,7 @@ const Cart = () => {
 
                       <div className="md:w-32 text-center md:text-right">
                         <p className="text-xl font-mono font-black text-gray-900 tracking-tighter">
-                          ৳ {(item.qty * discountedPrice).toLocaleString()}
+                          ৳ {(item.qty * itemsPrice).toFixed()}
                         </p>
                       </div>
 
@@ -243,7 +260,10 @@ const Cart = () => {
                 })}
               </AnimatePresence>
 
-              <Link to="/shop" className="inline-flex items-center gap-2 text-gray-400 hover:text-red-600 font-mono text-[11px] font-black uppercase tracking-widest mt-4 transition-all">
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 text-gray-400 hover:text-red-600 font-mono text-[11px] font-black uppercase tracking-widest mt-4 transition-all"
+              >
                 <FaArrowLeftLong /> Return to Shop
               </Link>
             </div>
@@ -256,53 +276,73 @@ const Cart = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="bg-black text-white rounded-[2rem] p-8 shadow-2xl border border-gray-800"
                 >
-                  <h3 className="text-xl font-bold mb-8 border-l-4 border-red-600 pl-3 uppercase tracking-wider font-mono">Order Summary</h3>
+                  <h3 className="text-xl font-bold mb-8 border-l-4 border-red-600 pl-3 uppercase tracking-wider font-mono">
+                    Order Summary
+                  </h3>
 
                   <div className="space-y-4 font-mono text-sm">
                     <div className="flex justify-between text-gray-500">
                       <span>Subtotal</span>
-                      <span className="text-white">৳{(subtotal + totalSavings).toLocaleString()}</span>
+                      <span className="text-white">
+                        ৳{(subtotal + totalSavings).toFixed()}
+                      </span>
                     </div>
 
                     {totalSavings > 0 && (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex justify-between text-green-500 bg-green-500/10 p-3 rounded-xl border border-green-500/20"
                       >
-                        <span className="flex items-center gap-2 font-black uppercase text-[10px]"><FaTag /> Savings</span>
-                        <span className="font-black">- ৳{totalSavings.toLocaleString()}</span>
+                        <span className="flex items-center gap-2 font-black uppercase text-[10px]">
+                          <FaTag /> Savings
+                        </span>
+                        <span className="font-black">
+                          - ৳{totalSavings.toFixed()}
+                        </span>
                       </motion.div>
                     )}
 
                     <div className="flex justify-between text-gray-500 border-t border-gray-800 pt-4">
                       <span>Total Weight</span>
-                      <span className="text-white">{totalWeight.toFixed(2)} KG</span>
+                      <span className="text-white">
+                        {totalWeight.toFixed(2)} KG
+                      </span>
                     </div>
 
                     <div className="bg-gray-900/50 p-4 rounded-2xl space-y-2 border border-gray-800">
-                      {isFreeByThreshold ? (
-                        <p className="text-[10px] text-green-500 font-black text-center uppercase tracking-tighter">
-                          🎉 Free Delivery Unlocked
+                      {/* UPDATE START */}
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-gray-500">Shipping:</span>
+                        <span
+                          className={
+                            shippingPrice === 0
+                              ? "text-green-500 font-black uppercase"
+                              : "text-red-500 font-black uppercase"
+                          }
+                        >
+                          {shippingPrice === 0 ? "Free" : `৳${shippingPrice}`}
+                        </span>
+                      </div>
+                      {shippingPrice > 0 && totalWeight > 1 && (
+                        <p className="text-[9px] text-gray-400 italic leading-relaxed text-center">
+                          Note: Extra ৳20/kg applies after 1kg.
                         </p>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-[10px]">
-                            <span className="text-gray-500">Shipping:</span>
-                            <span className="text-red-500 font-black uppercase">By Weight</span>
-                          </div>
-                          <p className="text-[9px] text-gray-400 italic leading-relaxed text-center">
-                            Note: Extra ৳20/kg applies after 1kg.
-                          </p>
-                        </div>
                       )}
+                      {/* UPDATE END */}
                     </div>
 
                     <div className="h-px bg-gray-800 my-6" />
 
                     <div className="flex justify-between items-end">
-                      <span className="text-xs text-gray-500 uppercase font-black">Payable Amount</span>
-                      <span className="text-3xl font-black text-red-600 tracking-tighter">৳{subtotal.toLocaleString()}</span>
+                      <span className="text-xs text-gray-500 uppercase font-black">
+                        Payable Amount
+                      </span>
+                      <span className="text-3xl font-black text-red-600 tracking-tighter">
+                        {/* UPDATE START */}৳
+                        {(subtotal + shippingPrice).toLocaleString()}
+                        {/* UPDATE END */}
+                      </span>
                     </div>
                   </div>
 
@@ -311,7 +351,8 @@ const Cart = () => {
                     onClick={checkoutHandler}
                     className="w-full group mt-10 flex items-center justify-center gap-3 bg-red-600 py-5 rounded-xl font-mono font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-500 shadow-xl"
                   >
-                    Checkout <FaArrowRightLong className="group-hover:translate-x-2 transition-transform" />
+                    Checkout{" "}
+                    <FaArrowRightLong className="group-hover:translate-x-2 transition-transform" />
                   </button>
 
                   <p className="mt-6 text-[9px] text-center text-gray-600 uppercase tracking-widest font-bold flex items-center justify-center gap-2">
