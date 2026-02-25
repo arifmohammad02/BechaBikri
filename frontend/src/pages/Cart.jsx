@@ -15,13 +15,6 @@ import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 
-// UPDATE START
-import {
-  calculateProductPrice,
-  calculateCartShipping,
-} from "../components/ProductLogistics";
-// UPDATE END
-
 const Cart = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -34,8 +27,12 @@ const Cart = () => {
     dispatch(addToCart({ ...product, qty }));
   };
 
-  const removeFromCartHandler = (id) => {
-    dispatch(removeFromCart(id));
+  // ✅ FIXED: Properly extract variantInfo from item
+  const removeFromCartHandler = (item) => {
+    dispatch(removeFromCart({ 
+      _id: item._id, 
+      variantInfo: item.variantInfo || null 
+    }));
   };
 
   const checkoutHandler = () => {
@@ -46,16 +43,20 @@ const Cart = () => {
     }
   };
 
-  // --- 🛠 ক্যালকুলেশন ফাংশনস (ProductLogistics থেকে প্রাপ্ত) ---
-  // UPDATE START
+  // Calculate prices considering variants
   const subtotal = cartItems.reduce((acc, item) => {
-    const { itemsPrice } = calculateProductPrice(item, item.qty);
-    return acc + itemsPrice;
+    const price = item.variantInfo?.variantPrice || item.price || 0;
+    const discountPercent = item.discountPercentage || 0;
+    const discount = (price * discountPercent) / 100;
+    const finalPrice = price - discount;
+    return acc + finalPrice * item.qty;
   }, 0);
 
   const totalSavings = cartItems.reduce((acc, item) => {
-    const { basePrice, itemsPrice } = calculateProductPrice(item, item.qty);
-    return acc + (basePrice * item.qty - itemsPrice);
+    const price = item.variantInfo?.variantPrice || item.price || 0;
+    const discountPercent = item.discountPercentage || 0;
+    const discount = (price * discountPercent) / 100;
+    return acc + discount * item.qty;
   }, 0);
 
   const totalWeight = cartItems.reduce(
@@ -63,7 +64,39 @@ const Cart = () => {
     0,
   );
 
-  const shippingPrice = calculateCartShipping(cartItems, true); // true = Inside Dhaka
+  // Shipping calculation
+  const calculateShipping = () => {
+    const city = cart.shippingAddress?.city?.toLowerCase() || "";
+    const isInsideDhaka = city.includes("dhaka");
+    
+    let totalShipping = 0;
+    let hasFreeShipping = false;
+
+    cartItems.forEach((item) => {
+      const s = item.shippingDetails || {};
+      
+      const itemPrice = (item.variantInfo?.variantPrice || item.price || 0) * item.qty;
+      if (s.isFreeShippingActive && itemPrice >= (s.freeShippingThreshold || 0)) {
+        hasFreeShipping = true;
+        return;
+      }
+
+      if (s.shippingType === "free") {
+        hasFreeShipping = true;
+      } else if (s.shippingType === "fixed") {
+        totalShipping += Number(s.fixedShippingCharge) || 0;
+      } else {
+        const rate = isInsideDhaka
+          ? Number(s.insideDhakaCharge) || 80
+          : Number(s.outsideDhakaCharge) || 150;
+        totalShipping += rate;
+      }
+    });
+
+    return hasFreeShipping && totalShipping === 0 ? 0 : totalShipping;
+  };
+
+  const shippingPrice = calculateShipping();
 
   const activeThresholds = cartItems
     .filter((i) => i.shippingDetails?.isFreeShippingActive)
@@ -83,7 +116,6 @@ const Cart = () => {
     freeThreshold > 0 ? Math.min((subtotal / freeThreshold) * 100, 100) : 0;
   const remainingForFree = freeThreshold - subtotal;
   const isFreeByThreshold = freeThreshold > 0 && subtotal >= freeThreshold;
-  // UPDATE END
 
   return (
     <div className="mt-[105px] bg-[#F9F9F9] min-h-screen pb-20">
@@ -123,7 +155,7 @@ const Cart = () => {
         ) : (
           <div className="flex flex-col xl:flex-row gap-10">
             <div className="flex-1 space-y-6">
-              {/* 🚚 Shipping Progress Bar */}
+              {/* Shipping Progress Bar */}
               {hasActiveFreeShipping && freeThreshold > 0 && (
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
@@ -145,7 +177,6 @@ const Cart = () => {
                     </span>
                   </div>
 
-                  {/* Progress Bar Container */}
                   <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
@@ -166,17 +197,19 @@ const Cart = () => {
 
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item) => {
-                  // UPDATE START
-                  const { itemsPrice, discountPercent } = calculateProductPrice(
-                    item,
-                    1,
-                  );
+                  const itemPrice = item.variantInfo?.variantPrice || item.price || 0;
+                  const discountPercent = item.discountPercentage || 0;
+                  const discount = (itemPrice * discountPercent) / 100;
+                  const finalPrice = itemPrice - discount;
                   const sDetails = item.shippingDetails || {};
-                  // UPDATE END
+                  
+                  const variantText = item.variantInfo?.hasVariants
+                    ? `${item.variantInfo.colorName} / ${item.variantInfo.sizeName}`
+                    : "";
 
                   return (
                     <motion.div
-                      key={item._id}
+                      key={`${item._id}-${item.variantInfo?.colorIndex}-${item.variantInfo?.sizeIndex}`}
                       layout
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -200,24 +233,42 @@ const Cart = () => {
                         <h3 className="text-lg font-mono font-black text-gray-900 uppercase group-hover:text-red-600 transition-colors">
                           {item.name}
                         </h3>
-                        <div className="flex items-center justify-center md:justify-start gap-3 mt-1">
+                        
+                        {item.variantInfo?.hasVariants && (
+                          <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
+                            <span
+                              className="w-3 h-3 rounded-full border border-gray-200"
+                              style={{ backgroundColor: item.variantInfo.colorHex }}
+                            />
+                            <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                              {variantText}
+                            </span>
+                            {item.variantInfo.sku && (
+                              <span className="text-[9px] text-gray-400 font-mono">
+                                SKU: {item.variantInfo.sku}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center md:justify-start gap-3 mt-2">
                           <span className="text-red-600 font-black font-mono">
-                            ৳ {itemsPrice.toLocaleString()}
+                            ৳ {finalPrice.toLocaleString()}
                           </span>
                           {discountPercent > 0 && (
                             <span className="text-gray-400 text-xs line-through">
-                              ৳{Number(item.price).toLocaleString()}
+                              ৳{Number(itemPrice).toLocaleString()}
                             </span>
                           )}
                         </div>
 
-                        <div className="mt-3 flex flex-wrap justify-center md:justify-start gap-2">
+                        <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
                           <span className="text-[9px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-bold uppercase">
                             Weight: {Number(item.weight) || 0.5}kg
                           </span>
                           {sDetails.shippingType === "free" && (
                             <span className="text-[9px] bg-green-100 text-green-600 px-2 py-1 rounded font-bold uppercase">
-                              Free Shipping Item
+                              Free Shipping
                             </span>
                           )}
                         </div>
@@ -245,12 +296,13 @@ const Cart = () => {
 
                       <div className="md:w-32 text-center md:text-right">
                         <p className="text-xl font-mono font-black text-gray-900 tracking-tighter">
-                          ৳ {(item.qty * itemsPrice).toFixed()}
+                          ৳ {(item.qty * finalPrice).toFixed()}
                         </p>
                       </div>
 
+                      {/* ✅ FIXED: Pass full item object to remove handler */}
                       <button
-                        onClick={() => removeFromCartHandler(item._id)}
+                        onClick={() => removeFromCartHandler(item)}
                         className="p-2 text-gray-300 hover:text-red-600 hover:rotate-90 transition-all"
                       >
                         <IoMdClose size={24} />
@@ -311,7 +363,6 @@ const Cart = () => {
                     </div>
 
                     <div className="bg-gray-900/50 p-4 rounded-2xl space-y-2 border border-gray-800">
-                      {/* UPDATE START */}
                       <div className="flex justify-between text-[10px]">
                         <span className="text-gray-500">Shipping:</span>
                         <span
@@ -329,7 +380,6 @@ const Cart = () => {
                           Note: Extra ৳20/kg applies after 1kg.
                         </p>
                       )}
-                      {/* UPDATE END */}
                     </div>
 
                     <div className="h-px bg-gray-800 my-6" />
@@ -339,9 +389,7 @@ const Cart = () => {
                         Payable Amount
                       </span>
                       <span className="text-3xl font-black text-red-600 tracking-tighter">
-                        {/* UPDATE START */}৳
-                        {(subtotal + shippingPrice).toLocaleString()}
-                        {/* UPDATE END */}
+                        ৳{(subtotal + shippingPrice).toLocaleString()}
                       </span>
                     </div>
                   </div>

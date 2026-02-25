@@ -1,13 +1,74 @@
 /* eslint-disable no-constant-binary-expression */
-// UPDATE START
+
+// Calculate product price considering variants
 export const calculateProductPrice = (product, qty) => {
+  // Check if product has variant info (from cart) or is a variant product
+  const variantPrice = product?.variantInfo?.variantPrice;
+
   const discountPercent =
     product?.discountPercentage || product?.disdiscountPercentage || 0;
-  const basePrice = product?.price || 0;
+
+  // Use variant price if available, otherwise use base price
+  const basePrice = variantPrice || product?.price || 0;
+
   const unitPriceAfterDiscount =
     basePrice - (basePrice * discountPercent) / 100;
   const itemsPrice = unitPriceAfterDiscount * qty;
   return { itemsPrice, basePrice, discountPercent };
+};
+
+// Get minimum price from variants for display purposes
+export const getMinVariantPrice = (product) => {
+  if (
+    !product?.hasVariants ||
+    !product.variants ||
+    product.variants.length === 0
+  ) {
+    return product?.price || 0;
+  }
+
+  let minPrice = Infinity;
+  product.variants.forEach((variant) => {
+    if (variant.sizes && variant.sizes.length > 0) {
+      variant.sizes.forEach((size) => {
+        if (size.price < minPrice) {
+          minPrice = size.price;
+        }
+      });
+    }
+  });
+
+  return minPrice === Infinity ? product.price : minPrice;
+};
+
+// Get maximum price from variants
+export const getMaxVariantPrice = (product) => {
+  if (
+    !product?.hasVariants ||
+    !product.variants ||
+    product.variants.length === 0
+  ) {
+    return product?.price || 0;
+  }
+
+  let maxPrice = 0;
+  product.variants.forEach((variant) => {
+    if (variant.sizes && variant.sizes.length > 0) {
+      variant.sizes.forEach((size) => {
+        if (size.price > maxPrice) {
+          maxPrice = size.price;
+        }
+      });
+    }
+  });
+
+  return maxPrice || product.price;
+};
+
+// Get variant colors for display
+export const getVariantColors = (product, limit = 4) => {
+  if (!product?.hasVariants || !product.variants) return [];
+  return product.variants.slice(0, limit).map((v) => v.color);
 };
 
 export const calculateProductShipping = (product, qty, isDhaka = true) => {
@@ -106,4 +167,3 @@ export const getCategoryPath = (cat) => {
   }
   return path;
 };
-// UPDATE END

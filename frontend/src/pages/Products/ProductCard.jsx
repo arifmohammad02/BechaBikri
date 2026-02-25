@@ -27,7 +27,7 @@ const ProductCard = ({ p }) => {
   return (
     <div className="group relative w-full bg-white rounded-[1.5rem] p-3 border border-gray-100 hover:border-blue-100 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] transition-all duration-500 ease-in-out">
       
-      {/* 🟢 ১. ইমেজ কন্টেইনার (SmallProduct এর মতো হুবহু ডিজাইন) */}
+
       <div className="relative aspect-square overflow-hidden rounded-[1.2rem] bg-[#fcfcfc]">
         <Link to={productPath}>
           <motion.img

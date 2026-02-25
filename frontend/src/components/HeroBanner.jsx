@@ -25,13 +25,12 @@ const HeroBanner = () => {
     return () => clearInterval(timer);
   }, [isAutoPlaying, banners]);
 
-  console.log(banners);
+
   if (error) {
     console.error("Banner fetch error:", error);
     return null;
   }
 
-  console.log("Banners data:", banners);
 
   const buttonTypeStyles = {
     default: { bg: "bg-gray-600", text: "SHOP NOW", icon: "" },
@@ -87,9 +86,11 @@ const HeroBanner = () => {
     await incrementClicks(banner._id);
   };
 
-  if (isLoading) {
+if (isLoading) {
     return (
-      <div className="w-full h-[400px] md:h-[500px] lg:h-[600px] bg-gray-100 animate-pulse rounded-xl" />
+      <div className="mx-auto mt-10 md:mt-6 lg:mt-5">
+        <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] bg-gray-200 animate-pulse" />
+      </div>
     );
   }
 
@@ -98,14 +99,15 @@ const HeroBanner = () => {
   const currentBanner = banners[currentSlide];
 
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden rounded-xl md:rounded-[2rem]">
-      <AnimatePresence mode="wait">
+    <div className="mx-auto mt-10 md:mt-6 lg:mt-5 xl:mt-10">
+      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={currentSlide}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: currentSlide === 0 ? 1 : 0 }} 
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.5 }}
           className="absolute inset-0"
         >
           {/* Background Image */}
@@ -116,8 +118,11 @@ const HeroBanner = () => {
             />
             <img
               src={currentBanner.image}
+              fetchPriority="high"
               alt={currentBanner.headline}
               className="w-full h-full object-cover"
+              loading="eager" 
+              decoding="async"
             />
           </picture>
 
@@ -125,7 +130,7 @@ const HeroBanner = () => {
           <div
             className="absolute inset-0"
             style={{
-              background: `linear-gradient(to right, ${currentBanner.backgroundColor}dd 0%, ${currentBanner.backgroundColor}80 40%, transparent 100%)`,
+              background: `linear-gradient(to right, ${currentBanner.backgroundColor}dd 0%, ${currentBanner.backgroundColor}10 20%, transparent 100%)`,
             }}
           />
 
@@ -249,6 +254,7 @@ const HeroBanner = () => {
         </div>
       )}
     </div>
+      </div>
   );
 };
 

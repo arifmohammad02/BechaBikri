@@ -37,6 +37,21 @@ const sanitizeDescription = (description) => {
   });
 };
 
+const parseVariants = (variantsData) => {
+  if (!variantsData) return [];
+
+  try {
+    const parsed =
+      typeof variantsData === "string"
+        ? JSON.parse(variantsData)
+        : variantsData;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Error parsing variants:", error);
+    return [];
+  }
+};
+
 const addProduct = asyncHandler(async (req, res) => {
   try {
     const fields = req.fields;
@@ -51,6 +66,10 @@ const addProduct = asyncHandler(async (req, res) => {
       shippingType,
       keyFeatures,
       specifications,
+      hasVariants,
+      variants,
+      defaultColorIndex,
+      defaultSizeIndex,
     } = fields;
 
     // ১. ভ্যালিডেশন
@@ -98,6 +117,14 @@ const addProduct = asyncHandler(async (req, res) => {
         fields.isFreeShippingActive === true,
     };
 
+    // Parse variants
+    const hasVariantsBool = hasVariants === "true" || hasVariants === true;
+    let parsedVariants = [];
+
+    if (hasVariantsBool && variants) {
+      parsedVariants = parseVariants(variants);
+    }
+
     const product = new Product({
       ...fields,
       description: sanitizeDescription(description),
@@ -109,8 +136,12 @@ const addProduct = asyncHandler(async (req, res) => {
       price: Number(price),
       quantity: Number(quantity),
       countInStock: Number(fields.countInStock) || 0,
-      weight: Number(fields.weight) || 0.5,
+      weight: Number(fields.weight) || 0,
       shippingDetails: shippingData,
+      hasVariants: hasVariantsBool,
+      variants: parsedVariants,
+      defaultColorIndex: Number(defaultColorIndex) || 0,
+      defaultSizeIndex: Number(defaultSizeIndex) || 0,
     });
 
     await product.save();
@@ -120,6 +151,8 @@ const addProduct = asyncHandler(async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+
 
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
@@ -141,6 +174,10 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       isFreeShippingActive,
       specifications,
       keyFeatures,
+      hasVariants,
+      variants,
+      defaultColorIndex,
+      defaultSizeIndex,
     } = fields;
 
     // ভ্যালিডেশন
@@ -186,6 +223,14 @@ const updateProductDetails = asyncHandler(async (req, res) => {
         isFreeShippingActive === "true" || isFreeShippingActive === true,
     };
 
+    // Parse variants
+    const hasVariantsBool = hasVariants === "true" || hasVariants === true;
+    let parsedVariants = [];
+
+    if (hasVariantsBool && variants) {
+      parsedVariants = parseVariants(variants);
+    }
+
     const updatedFields = {
       ...fields,
       description: sanitizeDescription(description),
@@ -205,6 +250,10 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       quantity: Number(quantity),
       weight: Number(fields.weight),
       shippingDetails: shippingData,
+      hasVariants: hasVariantsBool,
+      variants: parsedVariants,
+      defaultColorIndex: Number(defaultColorIndex) || 0,
+      defaultSizeIndex: Number(defaultSizeIndex) || 0,
     };
 
     const product = await Product.findByIdAndUpdate(
@@ -318,7 +367,12 @@ const addProductReview = asyncHandler(async (req, res) => {
   const { rating, comment } = req.body;
 
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(req.params.id) ? req.params.id : null },
+        { slug: req.params.id },
+      ],
+    });
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
@@ -413,6 +467,8 @@ const filterProducts = asyncHandler(async (req, res) => {
     res.status(500).json({ error: "Server Error" });
   }
 });
+
+
 
 export {
   addProduct,

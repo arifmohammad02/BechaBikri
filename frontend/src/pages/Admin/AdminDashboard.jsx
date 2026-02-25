@@ -10,6 +10,7 @@ import {
   useGetSalesSummaryByStatusQuery,
   useGetDeliverySummaryQuery,
 } from "@redux/api/orderApiSlice";
+import { useGetPaymentStatsQuery } from "@redux/api/paymentApiSlice"; // 🆕 Payment stats
 
 import { useState, useEffect } from "react";
 import AdminMenu from "./AdminMenu";
@@ -25,6 +26,7 @@ const AdminDashboard = () => {
   const { data: salesByDate } = useGetTotalSalesByDateQuery();
   const { data: statusSummary } = useGetSalesSummaryByStatusQuery();
   const { data: deliverySummary } = useGetDeliverySummaryQuery();
+   const { data: paymentStats } = useGetPaymentStatsQuery(); 
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dhaka" });
   const todayOrders = ordersByDate?.find((item) => item._id === today)?.totalOrders || 0;
@@ -46,6 +48,19 @@ const AdminDashboard = () => {
       amount: data?.totalAmount || 0, // ✅ ব্যাকএন্ড থেকে আসা টাকা
     };
   };
+
+   const getManualPaymentStats = () => {
+    if (!paymentStats?.byMethod) return { total: 0, pending: 0, verified: 0, failed: 0 };
+    return {
+      total: paymentStats.byMethod.reduce((acc, curr) => acc + curr.count, 0),
+      pending: paymentStats.byMethod.reduce((acc, curr) => acc + curr.pending, 0),
+      verified: paymentStats.byMethod.reduce((acc, curr) => acc + curr.verified, 0),
+      failed: paymentStats.byMethod.reduce((acc, curr) => acc + curr.failed, 0),
+      revenue: paymentStats.overall?.totalRevenue || 0,
+    };
+  };
+
+    const manualStats = getManualPaymentStats();
 
   // ✅ নতুন Area Chart কনফিগারেশন (Premium Look)
   const [state, setState] = useState({
@@ -135,6 +150,75 @@ const AdminDashboard = () => {
           <StatCard title="All Orders" value={orders?.totalOrders} color="bg-rose-500" loading={isLoading} isCount />
         </div>
 
+           {/* 🆕 Manual Payment Stats Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                <div className="w-1.5 h-4 bg-pink-600 rounded-full"></div> 
+                Manual Payments
+              </h2>
+              <Link to="/admin/payment-settings">
+                <button className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wider">
+                  Settings →
+                </button>
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {paymentStats?.byMethod?.map((stat) => (
+                <div key={stat._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${
+                      stat._id === 'bKash' ? 'bg-pink-600' :
+                      stat._id === 'Nagad' ? 'bg-orange-500' :
+                      stat._id === 'Rocket' ? 'bg-purple-600' :
+                      'bg-blue-600'
+                    }`}></span>
+                    <span className="font-mono font-bold text-sm">{stat._id}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-gray-900 text-sm">৳{Number(stat.totalAmount).toLocaleString()}</p>
+                    <p className="text-[9px] text-gray-500">{stat.count} orders</p>
+                  </div>
+                </div>
+              ))}
+              {!paymentStats?.byMethod?.length && (
+                <p className="text-center text-gray-400 text-xs py-4">No manual payment data</p>
+              )}
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <h2 className="text-md font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <div className="w-1.5 h-4 bg-amber-500 rounded-full"></div> 
+              Payment Verification Status
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                <p className="text-2xl font-black text-amber-600">{manualStats.pending}</p>
+                <p className="text-[10px] uppercase font-bold text-gray-500 mt-1">Awaiting</p>
+              </div>
+              <div className="text-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <p className="text-2xl font-black text-emerald-600">{manualStats.verified}</p>
+                <p className="text-[10px] uppercase font-bold text-gray-500 mt-1">Verified</p>
+              </div>
+              <div className="text-center p-4 bg-red-50 rounded-2xl border border-red-100">
+                <p className="text-2xl font-black text-red-600">{manualStats.failed}</p>
+                <p className="text-[10px] uppercase font-bold text-gray-500 mt-1">Failed</p>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-2xl font-black text-blue-600">৳{Number(manualStats.revenue).toLocaleString()}</p>
+                <p className="text-[10px] uppercase font-bold text-gray-500 mt-1">Revenue</p>
+              </div>
+            </div>
+            <div className="mt-4 p-3 bg-gray-50 rounded-xl">
+              <p className="text-[10px] text-gray-500 font-mono text-center">
+                Total {manualStats.total} manual payment transactions processed
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Breakdowns Column */}
@@ -148,6 +232,7 @@ const AdminDashboard = () => {
                 <StatusRow label="Due (COD)" data={getStatusData("due")} color="text-blue-600" bg="bg-blue-50/50" />
                 <StatusRow label="Pending" data={getStatusData("pending")} color="text-amber-600" bg="bg-amber-50/50" />
                 <StatusRow label="Failed" data={getStatusData("failed")} color="text-rose-600" bg="bg-rose-50" />
+                 <StatusRow label="Failed" data={getStatusData("failed")} color="text-rose-600" bg="bg-rose-50" />
               </div>
             </div>
 

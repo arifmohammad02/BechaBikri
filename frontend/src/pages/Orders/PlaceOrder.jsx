@@ -17,52 +17,82 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
 
-  console.log(cart, cartItems , shippingAddress ,paymentMethod);
-  
-
-  // ১. সাবটোটাল ক্যালকুলেশন (ডিসকাউন্ট সহ)
+  // Calculate subtotal considering variant prices
   const subtotal = cartItems.reduce((acc, item) => {
-    const discountPercent =
-      item.discountPercentage || item.disdiscountPercentage || 0;
-    const discount = (item.price * discountPercent) / 100;
-    const discountedPrice = item.price - discount;
-    return acc + discountedPrice * item.qty;
+    const price = item.variantInfo?.variantPrice || item.price || 0;
+    const discountPercent = item.discountPercentage || 0;
+    const discount = (price * discountPercent) / 100;
+    return acc + (price - discount) * item.qty;
   }, 0);
 
   const shippingCharge = Number(cart.shippingAddress?.shippingCharge) || 0;
   const totalPrice = (subtotal + shippingCharge).toFixed(2);
 
+  // Check if manual payment
+  const isManualPayment = ["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod);
+
   const placeOrderHandler = async () => {
     if (!validateFields()) return;
 
-    // নিশ্চিত করছি রেডক্স ডাটা আপডেট হয়েছে
+    // Save shipping address
     onPlaceOrder();
 
     try {
       setIsLoading(true);
-      const orderData = {
-        orderItems: cartItems.map((item) => ({
-          name: item.name,
-          qty: Number(item.qty),
-          image: item.image || (item.images && item.images[0]),
-          price: Number(item.price),
-          product: item._id || item.product, // সঠিক আইডি নিশ্চিত করা
-          discountPercentage: Number(item.discountPercentage || 0),
-          weight: Number(item.weight || 0.5),
-          shippingDetails: item.shippingDetails, // ব্যাকএন্ডে ক্যালকুলেশনের জন্য প্রয়োজন
-        })),
-        shippingAddress: shippingAddress,
-        paymentMethod: paymentMethod,
-        itemsPrice: subtotal.toFixed(2),
-        shippingPrice: shippingCharge.toFixed(2),
-        totalPrice: totalPrice,
-      };
 
-      const res = await createOrder(orderData).unwrap();
+      // Prepare order items with variant info
+      const orderItemsWithVariants = cartItems.map((item) => ({
+        name: item.name,
+        qty: Number(item.qty),
+        image: item.image || (item.images && item.images[0]),
+        price: item.variantInfo?.variantPrice || Number(item.price) || 0,
+        product: item._id || item.product,
+        discountPercentage: Number(item.discountPercentage || 0),
+        weight: Number(item.weight || 0.5),
+        shippingDetails: item.shippingDetails,
+        // Include variant information
+        variantInfo: item.variantInfo || {
+          hasVariants: false,
+          colorIndex: null,
+          colorName: "",
+          colorHex: "",
+          sizeIndex: null,
+          sizeName: "",
+          variantPrice: null,
+          sku: "",
+        },
+      }));
 
-      toast.success("Order confirmed! 📦");
-      dispatch(clearCartItems());
-      navigate(`/order/${res._id}`);
+      if (isManualPayment) {
+        // Save order data for payment page
+        localStorage.setItem("pendingOrderData", JSON.stringify({
+          orderItems: orderItemsWithVariants,
+          shippingAddress: shippingAddress,
+          paymentMethod: paymentMethod,
+          itemsPrice: subtotal.toFixed(2),
+          shippingPrice: shippingCharge.toFixed(2),
+          totalPrice: totalPrice,
+        }));
+        
+        navigate(`/payment/checkout`);
+      } else {
+        // Direct order creation for COD
+        const orderData = {
+          orderItems: orderItemsWithVariants,
+          shippingAddress: shippingAddress,
+          paymentMethod: paymentMethod,
+          itemsPrice: subtotal.toFixed(2),
+          shippingPrice: shippingCharge.toFixed(2),
+          totalPrice: totalPrice,
+        };
+
+        const res = await createOrder(orderData).unwrap();
+        
+        toast.success("Order placed successfully! 📦");
+        dispatch(clearCartItems());
+        navigate(`/order/${res._id}`);
+      }
+      
     } catch (error) {
       toast.error(
         error?.data?.message || "Something went wrong while placing order.",
@@ -124,14 +154,22 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
             : "bg-blue-600 text-white hover:bg-black shadow-lg shadow-blue-100"
         }`}
       >
-        {isLoading ? "Processing..." : "Confirm My Order"}
+        {isLoading 
+          ? "Processing..." 
+          : isManualPayment 
+            ? "Proceed to Payment" 
+            : "Confirm My Order"
+        }
       </motion.button>
 
       <p className="text-center text-[9px] text-gray-400 mt-4 font-mono uppercase tracking-widest">
-        By clicking, you agree to our terms and conditions
+        {isManualPayment 
+          ? "You will pay first, then order will be created" 
+          : "By clicking, you agree to our terms and conditions"
+        }
       </p>
     </div>
   );
 };
 
-export default PlaceOrder;
+export default PlaceOrder

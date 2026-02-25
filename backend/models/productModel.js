@@ -14,8 +14,28 @@ const reviewSchema = mongoose.Schema(
       ref: "User",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
+
+// Variant Schema - For Color/Size combinations
+const variantSchema = mongoose.Schema({
+  color: {
+    name: { type: String, required: true }, // e.g., "Red", "Blue"
+    hexCode: { type: String, default: "" }, // e.g., "#FF0000"
+    image: { type: String, required: true }, // Main image for this color
+    images: [{ type: String }], // Additional images for this color
+  },
+  sizes: [
+    {
+      size: { type: String, required: true }, // e.g., "S", "M", "L", "XL"
+      price: { type: Number, required: true }, // Variant specific price
+      countInStock: { type: Number, required: true, default: 0 },
+      sku: { type: String, default: "" }, // Optional SKU for this variant
+      isAvailable: { type: Boolean, default: true },
+    },
+  ],
+  isActive: { type: Boolean, default: true },
+});
 
 // Product Schema
 const productSchema = mongoose.Schema(
@@ -46,6 +66,14 @@ const productSchema = mongoose.Schema(
     warranty: { type: String, default: "" },
     discountedAmount: { type: Number, default: 0 },
     weight: { type: Number, default: 0.5 },
+
+    hasVariants: { type: Boolean, default: false },
+    variants: [variantSchema],
+
+    // Default variant selection (for display purposes)
+    defaultColorIndex: { type: Number, default: 0 },
+    defaultSizeIndex: { type: Number, default: 0 },
+
     shippingDetails: {
       shippingType: {
         type: String,
@@ -58,7 +86,9 @@ const productSchema = mongoose.Schema(
       outsideDhakaCharge: { type: Number, default: 150 },
       isFreeShippingActive: { type: Boolean, default: false },
     },
+
   },
+
   { timestamps: true },
 );
 
@@ -66,10 +96,57 @@ productSchema.pre("save", function (next) {
   if (this.isModified("name")) {
     this.slug = slugify(this.name, { lower: true, strict: true });
   }
+
+  // Auto-calculate total stock from variants if hasVariants is true
+  if (this.hasVariants && this.variants && this.variants.length > 0) {
+    let totalStock = 0;
+    this.variants.forEach((variant) => {
+      if (variant.sizes && variant.sizes.length > 0) {
+        variant.sizes.forEach((size) => {
+          totalStock += size.countInStock || 0;
+        });
+      }
+    });
+    this.countInStock = totalStock;
+  }
+
   next();
 });
 
+// Method to get price for specific variant
+productSchema.methods.getVariantPrice = function (colorIndex, sizeIndex) {
+  if (!this.hasVariants || !this.variants[colorIndex]) {
+    return this.price;
+  }
+  const variant = this.variants[colorIndex];
+  if (!variant.sizes || !variant.sizes[sizeIndex]) {
+    return this.price;
+  }
+  return variant.sizes[sizeIndex].price;
+};
 
+// Method to check stock for specific variant
+productSchema.methods.getVariantStock = function (colorIndex, sizeIndex) {
+  if (!this.hasVariants || !this.variants[colorIndex]) {
+    return this.countInStock;
+  }
+  const variant = this.variants[colorIndex];
+  if (!variant.sizes || !variant.sizes[sizeIndex]) {
+    return 0;
+  }
+  return variant.sizes[sizeIndex].countInStock;
+};
+
+// Method to get images for specific color
+productSchema.methods.getColorImages = function (colorIndex) {
+  if (!this.hasVariants || !this.variants[colorIndex]) {
+    return this.images;
+  }
+  const variant = this.variants[colorIndex];
+  return variant.color.images && variant.color.images.length > 0
+    ? variant.color.images
+    : [variant.color.image];
+};
 
 // Creating Product Model
 const Product = mongoose.model("Product", productSchema);

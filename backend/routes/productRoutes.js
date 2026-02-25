@@ -29,6 +29,7 @@ router
   router.get("/top", fetchTopProducts);
   router.get("/new", fetchNewProducts);
 
+
 router
   .route("/:id")
   .get(fetchProductById)

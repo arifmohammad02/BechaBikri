@@ -146,12 +146,12 @@ const ProductTabs = ({
               {/* All Reviews */}
               {activeTab === 3 && (
                 <div className="space-y-6">
-                  {product.reviews.length === 0 ? (
+                  {!product.reviews || product.reviews.length === 0 ? (
                     <div className="text-center py-10 border-2 border-dashed rounded-3xl text-gray-400 font-mono">
                       No reviews yet. Be the first one!
                     </div>
                   ) : (
-                    product.reviews.map((review) => (
+                    product.reviews?.map((review) => (
                       <div
                         key={review._id}
                         className="bg-white p-6 rounded-2xl border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4"

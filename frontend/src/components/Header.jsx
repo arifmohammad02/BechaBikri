@@ -8,8 +8,6 @@ import Category from "./Category";
 import { motion } from "framer-motion"; // অ্যানিমেশনের জন্য
 import TopBarBanner from "./TopBarBanner";
 import HeroBanner from "./HeroBanner";
-// import CategoryBanners from "./CategoryBanners";
-
 
   
 const Header = () => {
@@ -29,21 +27,18 @@ const Header = () => {
 
   return (
     <div className="bg-white">
-      {/* 🟢 Hero Carousel Section */}
+
 
        <TopBarBanner />
 
       {/* 🆕 Hero Banner Section */}
-      <div className="mt-4 px-4 md:px-6">
+      <div className="">
         <HeroBanner />
         {/* <CategoryBanners/> */}
       </div>
 
 
-{/* 
-      <div className="mt-16">
-        <ProductCarousel />
-      </div> */}
+
 
       {/* 🟢 Category Navigation */}
       <div className="py-8">

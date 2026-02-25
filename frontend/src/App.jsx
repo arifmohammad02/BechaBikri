@@ -11,10 +11,13 @@ import { useNotifications } from "./hooks/useNotifications";
 
 // import PopupBanner from "./components/PopupBanner";
 import FooterBanners from "./components/FooterBanners";
+// import { useSelector } from "react-redux";
+// import PopupBanner from "./components/PopupBanner";
 // import AdminRoute from "./pages/Admin/AdminRoute";
 
 function App() {
   useNotifications();
+  // const { userInfo } = useSelector((state) => state.auth);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
@@ -61,7 +64,7 @@ function App() {
       />
 
          {/* 🆕 Popup Banner - Only on non-admin pages */}
-      {/* {!AdminRoute && <PopupBanner />} */}
+      {/* {!userInfo.isAdmin && <PopupBanner/>} */}
 
       {loading ? (
         <div className="flex items-center justify-center h-screen">

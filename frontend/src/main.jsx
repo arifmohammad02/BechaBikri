@@ -43,6 +43,10 @@ const AdminDashboard = lazy(() => import("./pages/Admin/AdminDashboard"));
 const ForgotPassword = lazy(() => import("./pages/Auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword"));
 const VerifyResetOtp = lazy(() => import("./pages/Auth/VerifyResetOtp"));
+const PaymentInstruction = lazy(
+  () => import("./pages/Orders/PaymentInstruction"),
+);
+const PaymentSettings = lazy(() => import("./pages/Admin/PaymentSettings"));
 
 // 🆕 BANNER COMPONENTS
 const BannerList = lazy(() => import("./pages/Admin/BannerList"));
@@ -217,6 +221,14 @@ const router = createBrowserRouter(
             </Suspense>
           }
         />
+        <Route
+          path="/payment/checkout"
+          element={
+            <Suspense fallback={<Loader />}>
+              <PaymentInstruction />
+            </Suspense>
+          }
+        />
       </Route>
 
       {/* Admin Routes */}
@@ -284,6 +296,15 @@ const router = createBrowserRouter(
             </Suspense>
           }
         />
+        <Route
+          path="payment-settings"
+          element={
+            <Suspense fallback={<Loader />}>
+              <PaymentSettings />
+            </Suspense>
+          }
+        />
+
         {/* 🆕 BANNER ROUTES */}
         <Route
           path="bannerlist"

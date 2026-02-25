@@ -14,6 +14,7 @@ import uploadRoutes from "./routes/uploadRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import bannerRoutes from "./routes/bannerRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 // utils
 import connectDB from "./config/db.js";
@@ -80,6 +81,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/banners", bannerRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

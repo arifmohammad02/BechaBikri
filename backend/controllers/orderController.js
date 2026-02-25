@@ -4,39 +4,15 @@ import Product from "../models/productModel.js";
 import sendEmail from "../utils/sendEmail.js";
 import { createAndSendNotification } from "./notificationController.js";
 
-// Utility Function
-// function calcPrices(orderItems, shippingAddress) {
-//   const itemsPrice = orderItems.reduce((acc, item) => {
-//     const discount = (item.price * item.discountPercentage) / 100;
-//     const discountedPrice = item.price - discount;
-//     return acc + discountedPrice * item.qty;
-//   }, 0);
 
-//   const shippingPrice = orderItems.reduce(
-//     (acc, item) => acc + (item.shippingCharge ?? 0),
-//     0,
-//   );
-
-//   const taxRate = 0.0;
-//   const taxPrice = (itemsPrice * taxRate).toFixed(2);
-
-//   const totalPrice = (
-//     itemsPrice +
-//     shippingPrice +
-//     parseFloat(taxPrice)
-//   ).toFixed(2);
-
-//   return {
-//     itemsPrice: itemsPrice.toFixed(2),
-//     shippingPrice: shippingPrice.toFixed(2),
-//     taxPrice,
-//     totalPrice,
-//   };
-// }
 
 function calcPrices(dbOrderItems, shippingAddress) {
   const itemsPrice = dbOrderItems.reduce((acc, item) => {
-    const itemPrice = Number(item.price) || 0;
+    // Use variant price if available, otherwise use base price
+    const itemPrice = item.variantInfo?.variantPrice
+      ? Number(item.variantInfo.variantPrice)
+      : Number(item.price) || 0;
+
     const discountPercent = Number(item.discountPercentage) || 0;
     const qty = Number(item.qty) || 1;
 
@@ -47,7 +23,7 @@ function calcPrices(dbOrderItems, shippingAddress) {
   }, 0);
 
   let totalWeight = 0;
-  let maxFixedShipping = 0; // সংশোধিত
+  let maxFixedShipping = 0;
   let baseShippingRate = 0;
 
   const city = shippingAddress?.city?.trim().toLowerCase() || "";
@@ -55,8 +31,7 @@ function calcPrices(dbOrderItems, shippingAddress) {
 
   dbOrderItems.forEach((item) => {
     const s = item.shippingDetails;
-
-    const type = s?.shippingType?.toLowerCase(); // Case-insensitive check
+    const type = s?.shippingType?.toLowerCase();
 
     if (type === "fixed") {
       const currentFixed = Number(s.fixedShippingCharge) || 0;
@@ -112,8 +87,8 @@ function calcPrices(dbOrderItems, shippingAddress) {
 
 const generateOrderId = () => {
   return (
-    Date.now().toString().slice(-3) + // শেষ ৩ সংখ্যা (Timestamp থেকে)
-    Math.floor(100 + Math.random() * 900) // ৩-সংখ্যার র্যান্ডম নাম্বার
+    Date.now().toString().slice(-3) + 
+    Math.floor(100 + Math.random() * 900)
   );
 };
 
@@ -126,8 +101,15 @@ const createOrder = async (req, res) => {
       res.status(400);
       throw new Error("No order items");
     }
-    // Verify payment method
-    if (paymentMethod !== "PayPal" && paymentMethod !== "Cash on Delivery") {
+    const validMethods = [
+      "PayPal",
+      "Cash on Delivery",
+      "bKash",
+      "Nagad",
+      "Rocket",
+      "Bank",
+    ];
+    if (!validMethods.includes(paymentMethod)) {
       return res.status(400).json({ msg: "Invalid payment method." });
     }
 
@@ -142,7 +124,6 @@ const createOrder = async (req, res) => {
 
     // Validate and map the order items
     const dbOrderItems = orderItems.map((itemFromClient) => {
-      // --- আপডেট ২: আইডি স্ট্রিং কম্পারিজন সেফটি ---
       const clientId = (
         itemFromClient._id || itemFromClient.product
       )?.toString();
@@ -156,17 +137,71 @@ const createOrder = async (req, res) => {
         throw new Error(`Product not found: ${clientId}`);
       }
 
+      // Determine the correct image and price based on variant selection
+      let itemImage = matchingItemFromDB.images[0];
+      let itemPrice = Number(matchingItemFromDB.price);
+
+      // Handle variant information
+      let variantInfo = {
+        hasVariants: false,
+        colorIndex: null,
+        colorName: "",
+        colorHex: "",
+        sizeIndex: null,
+        sizeName: "",
+        variantPrice: null,
+        sku: "",
+      };
+
+      if (
+        itemFromClient.variantInfo?.hasVariants &&
+        matchingItemFromDB.hasVariants
+      ) {
+        const { colorIndex, sizeIndex } = itemFromClient.variantInfo;
+
+        if (colorIndex !== null && matchingItemFromDB.variants[colorIndex]) {
+          const variant = matchingItemFromDB.variants[colorIndex];
+
+          // Update image to color-specific image
+          itemImage = variant.color.image || matchingItemFromDB.images[0];
+
+          variantInfo.hasVariants = true;
+          variantInfo.colorIndex = colorIndex;
+          variantInfo.colorName = variant.color.name;
+          variantInfo.colorHex = variant.color.hexCode || "";
+
+          if (sizeIndex !== null && variant.sizes[sizeIndex]) {
+            const sizeVariant = variant.sizes[sizeIndex];
+            itemPrice = sizeVariant.price;
+
+            variantInfo.sizeIndex = sizeIndex;
+            variantInfo.sizeName = sizeVariant.size;
+            variantInfo.variantPrice = sizeVariant.price;
+            variantInfo.sku = sizeVariant.sku || "";
+
+            // Check stock for variant
+            if (sizeVariant.countInStock < itemFromClient.qty) {
+              res.status(400);
+              throw new Error(
+                `Insufficient stock for ${matchingItemFromDB.name} - ${variant.color.name} / ${sizeVariant.size}`,
+              );
+            }
+          }
+        }
+      }
+
       return {
         name: matchingItemFromDB.name,
-        qty: Number(itemFromClient.qty) || 1, // শুধু পরিমাণটা ক্লায়েন্ট থেকে আসবে
-        image: matchingItemFromDB.images[0], // সরাসরি ডিবি থেকে মেইন ইমেজ
-        price: Number(matchingItemFromDB.price), // জালিয়াতি ঠেকাতে ডিবি থেকে দাম নেওয়া
+        qty: Number(itemFromClient.qty) || 1,
+        image: itemImage,
+        price: itemPrice,
         product: matchingItemFromDB._id,
         discountPercentage: Number(matchingItemFromDB.discountPercentage) || 0,
         weight: Number(matchingItemFromDB.weight) || 0.5,
         shippingDetails: {
           ...matchingItemFromDB.shippingDetails,
         },
+        variantInfo: variantInfo,
         _id: undefined,
       };
     });
@@ -176,10 +211,14 @@ const createOrder = async (req, res) => {
       shippingAddress,
     );
 
-    // Payment status based on payment method
-    const paymentStatus =
-      paymentMethod === "Cash on Delivery" ? "due" : "pending";
-    const isPaid = false; // Default false
+    let paymentStatus;
+    if (paymentMethod === "Cash on Delivery") {
+      paymentStatus = "due";
+    } else if (["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)) {
+      paymentStatus = "awaiting_verification";
+    } else {
+      paymentStatus = "pending";
+    }
 
     const order = new Order({
       orderId:
@@ -193,18 +232,44 @@ const createOrder = async (req, res) => {
       shippingPrice,
       totalPrice,
       paymentStatus,
+      isPaid: false,
     });
 
     const createdOrder = await order.save();
+
+        for (const item of orderItems) {
+          if (item.variantInfo?.hasVariants) {
+            await Product.updateOne(
+              {
+                _id: item._id || item.product,
+                "variants.color.name": item.variantInfo.colorName,
+                "variants.sizes.size": item.variantInfo.sizeName,
+              },
+              {
+                $inc: { "variants.$[v].sizes.$[s].countInStock": -item.qty },
+              },
+              {
+                arrayFilters: [
+                  { "v.color.name": item.variantInfo.colorName },
+                  { "s.size": item.variantInfo.sizeName },
+                ],
+              },
+            );
+          }
+        }
 
     // Notification Pathan
     try {
       await createAndSendNotification(req, {
         userId: order.user,
         title: "Order Placed! 🛒",
-        message: `Your order #${order.orderId} has been confirmed.`,
+        message: `Your order #${order.orderId} has been confirmed.${
+          ["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)
+            ? " Please complete the payment."
+            : ""
+        }`,
         type: "order",
-        actionUrl: `/user-orders`,
+        actionUrl: `/order/${order._id}`,
         sendEmailFlag: true,
       });
     } catch (err) {
@@ -219,26 +284,43 @@ const createOrder = async (req, res) => {
 
     // --- আপডেট ৩: ইমেইল পাঠানোর সময় এরর হ্যান্ডলিং যোগ ---
     // এটি করলে ইমেইল সেন্ড হতে দেরি হলে বা ফেইল করলে কাস্টমার রেসপন্স পেতে দেরি হবে না
-    const sendEmails = async () => {
-      try {
-        await sendEmail({
-          to: populatedOrder.user.email,
-          subject: "Order Confirmation",
-          html: `<h2>Hi ${populatedOrder.user.username},</h2>
-                  <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
-                  <p>Total: ৳${totalPrice}</p>`,
-        });
+     const sendEmails = async () => {
+       try {
+         let paymentInstructions = "";
+         if (["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)) {
+           paymentInstructions = `<p style="color: #d97706; font-weight: bold;">Please complete your payment using ${paymentMethod} and submit the Transaction ID.</p>`;
+         }
 
-        await sendEmail({
-          to: process.env.ADMIN_EMAIL,
-          subject: "New Order Placed",
-          html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
+         // Build variant info for email
+         let variantDetails = "";
+         dbOrderItems.forEach((item) => {
+           if (item.variantInfo?.hasVariants) {
+             variantDetails += `<p style="font-size: 12px; color: #666;">Variant: ${item.variantInfo.colorName} / ${item.variantInfo.sizeName}</p>`;
+           }
+         });
+
+         await sendEmail({
+           to: populatedOrder.user.email,
+           subject: "Order Confirmation",
+           html: `<h2>Hi ${populatedOrder.user.username},</h2>
+                  <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
+                  ${paymentInstructions}
+                  ${variantDetails}
                   <p>Total: ৳${totalPrice}</p>`,
-        });
-      } catch (mailErr) {
-        console.error("Email Sending Error:", mailErr.message);
-      }
-    };
+         });
+
+         await sendEmail({
+           to: process.env.ADMIN_EMAIL,
+           subject: "New Order Placed",
+           html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
+          <p>Payment Method: ${paymentMethod}</p>
+                  <p>Total: ৳${totalPrice}</p>`,
+         });
+       } catch (mailErr) {
+         console.error("Email Sending Error:", mailErr.message);
+       }
+     };
+
 
     sendEmails();
 
@@ -316,7 +398,7 @@ const getSalesSummaryByStatus = async (req, res) => {
     const summary = await Order.aggregate([
       {
         $group: {
-          _id: "$paymentStatus", // paid, due, pending, failed
+          _id: "$paymentStatus",
           totalSales: { $sum: { $toDouble: "$totalPrice" } },
           orderCount: { $sum: 1 },
         },
@@ -333,7 +415,7 @@ const getDeliverySummary = async (req, res) => {
     const summary = await Order.aggregate([
       {
         $group: {
-          _id: "$isDelivered", // আপনার মডেলের enum ফিল্ড
+          _id: "$isDelivered",
           count: { $sum: 1 },
           totalAmount: { $sum: { $toDouble: "$totalPrice" } },
         },
@@ -360,7 +442,7 @@ const calcualteTotalSalesByDate = async (req, res) => {
           totalSales: { $sum: { $toDouble: "$totalPrice" } },
         },
       },
-      { $sort: { _id: 1 } }, // গ্রাফের জন্য পুরানো থেকে নতুন সর্ট
+      { $sort: { _id: 1 } },
     ]);
 
     res.json(salesByDate);
@@ -393,11 +475,12 @@ const findOrderById = async (req, res) => {
       throw new Error("Order not found");
     }
   } catch (error) {
-    // টার্মিনালে চেক করার জন্য কনসোল লগ
     console.error("Backend Error in findOrderById:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
+
 const markOrderAsDelivered = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -447,7 +530,6 @@ const markOrderAsPaid = async (req, res) => {
     }
 
     if (!status) {
-      // ডিফল্ট লজিক (সরাসরি পেইড করা হলে)
       const paidAtTime = req.body.paidAt
         ? new Date(req.body.paidAt)
         : new Date();
@@ -464,7 +546,6 @@ const markOrderAsPaid = async (req, res) => {
         };
       }
     } else {
-      // স্ট্যাটাস অনুযায়ী আপডেট
       order.paymentStatus = status;
       order.isPaid = status === "paid";
 
@@ -486,7 +567,6 @@ const markOrderAsPaid = async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // --- নোটিফিকেশন লজিক (সকল স্ট্যাটাসের জন্য) ---
     let notificationConfig = {
       userId: updatedOrder.user,
       type: "order",
@@ -508,7 +588,6 @@ const markOrderAsPaid = async (req, res) => {
       notificationConfig.message = `Unfortunately, the payment for order #${updatedOrder.orderId} has failed.`;
     }
 
-    // নোটিফিকেশন পাঠানো (যদি টাইটেল সেট হয়ে থাকে)
     if (notificationConfig.title) {
       await createAndSendNotification(req, notificationConfig);
     }
@@ -527,7 +606,7 @@ const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const { status } = req.body; // যেমন: "Shipped" বা "Delivered"
+    const { status } = req.body;
     const validStatuses = [
       "Order Placed",
       "Processing",
@@ -549,7 +628,6 @@ const updateOrderStatus = async (req, res) => {
 
     const updatedOrder = await order.save();
 
-    // ✅ স্ট্যাটাস আপডেট নোটিফিকেশন পাঠানো (Paid হওয়ার প্রয়োজন নেই, যেকোনো স্ট্যাটাসেই যাবে)
     await createAndSendNotification(req, {
       userId: updatedOrder.user,
       title: `Order Status: ${status}`,

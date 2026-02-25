@@ -21,7 +21,21 @@ const AddToCartButton = ({
   const navigate = useNavigate();
 
   const cartItems = useSelector((state) => state.cart.cartItems);
-  const isAdded = cartItems.some((item) => item._id === product._id);
+
+ const isAdded = cartItems.some((item) => {
+    const sameProduct = item._id === product?._id;
+    if (!sameProduct) return false;
+    
+    // If product has variants, check variant match
+    if (product?.variantInfo?.hasVariants) {
+      return (
+        item.variantInfo?.colorIndex === product.variantInfo.colorIndex &&
+        item.variantInfo?.sizeIndex === product.variantInfo.sizeIndex
+      );
+    }
+    
+    return true;
+  });
 
   const mainImage =
     Array.isArray(product?.images) && product.images.length > 0
@@ -29,9 +43,49 @@ const AddToCartButton = ({
       : product?.image || "/placeholder.jpg";
 
   const handleAddToCart = () => {
+    if (!product) {
+      toast.error("Product information is missing!");
+      return;
+    }
+
+    // Check stock for variants
+    if (product.variantInfo?.hasVariants) {
+      const stock = product.variantInfo.countInStock;
+      if (stock !== undefined && stock < qty) {
+        toast.error(`Only ${stock} units available for this variant!`);
+        return;
+      }
+    } else if (product.countInStock < qty) {
+      toast.error(`Only ${product.countInStock} units available!`);
+      return;
+    }
+
     if (!isAdded) {
-      dispatch(addToCart({ ...product, qty, image: mainImage }));
-      toast.success(`${product.name} added to cart!`, {
+      const cartItem = {
+        ...product,
+        qty,
+        image: mainImage,
+        // Ensure variant info is included
+        variantInfo: product.variantInfo || {
+          hasVariants: false,
+          colorIndex: null,
+          colorName: "",
+          colorHex: "",
+          sizeIndex: null,
+          sizeName: "",
+          variantPrice: null,
+          sku: "",
+        },
+      };
+      
+      dispatch(addToCart(cartItem));
+      
+      // Show variant info in toast if applicable
+      const variantText = product.variantInfo?.hasVariants
+        ? ` (${product.variantInfo.colorName} / ${product.variantInfo.sizeName})`
+        : "";
+      
+      toast.success(`${product.name}${variantText} added to cart!`, {
         position: "bottom-right",
         autoClose: 2000,
       });
@@ -39,7 +93,40 @@ const AddToCartButton = ({
   };
 
   const handleOrderNow = () => {
-    dispatch(addToCart({ ...product, qty, image: mainImage }));
+    if (!product) {
+      toast.error("Product information is missing!");
+      return;
+    }
+
+    // Check stock for variants
+    if (product.variantInfo?.hasVariants) {
+      const stock = product.variantInfo.countInStock;
+      if (stock !== undefined && stock < qty) {
+        toast.error(`Only ${stock} units available for this variant!`);
+        return;
+      }
+    } else if (product.countInStock < qty) {
+      toast.error(`Only ${product.countInStock} units available!`);
+      return;
+    }
+
+    const cartItem = {
+      ...product,
+      qty,
+      image: mainImage,
+      variantInfo: product.variantInfo || {
+        hasVariants: false,
+        colorIndex: null,
+        colorName: "",
+        colorHex: "",
+        sizeIndex: null,
+        sizeName: "",
+        variantPrice: null,
+        sku: "",
+      },
+    };
+    
+    dispatch(addToCart(cartItem));
     navigate("/shipping");
   };
 

@@ -6,14 +6,15 @@ import {
   savePaymentMethod,
 } from "../../redux/features/cart/cartSlice";
 import PlaceOrder from "./PlaceOrder";
-import { BsPersonVcard } from "react-icons/bs";
+import { BsPersonVcard, BsCreditCard } from "react-icons/bs";
 import { GiVibratingSmartphone } from "react-icons/gi";
 import { TfiLocationPin } from "react-icons/tfi";
-import { MdOutlineLocalPostOffice } from "react-icons/md";
+import { MdOutlineLocalPostOffice, MdOutlinePayments } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { FaGlobe } from "react-icons/fa6";
+import { FaGlobe, FaMoneyBillWave } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
+import { FaMoneyBillWaveAlt, FaUniversity } from "react-icons/fa";
 
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
@@ -25,15 +26,19 @@ const Shipping = () => {
   const [postalCode, setPostalCode] = useState(
     shippingAddress?.postalCode || "",
   );
-  const [country, setCountry] = useState(shippingAddress?.country || "");
+  const [country, setCountry] = useState(shippingAddress?.country || "Bangladesh");
   const [phoneNumber, setPhoneNumber] = useState(
     shippingAddress?.phoneNumber || "",
   );
-  const [paymentMethod] = useState("Cash on Delivery");
+  
+  // 🆕 Payment Method State
+  const [paymentMethod, setPaymentMethod] = useState(
+    shippingAddress?.paymentMethod || "Cash on Delivery"
+  );
 
   const dispatch = useDispatch();
 
-  // --- 🚛 Backend Logic অনুযায়ী শিপিং চার্জ ক্যালকুলেশন ---
+  // শিপিং চার্জ ক্যালকুলেশন
   const calculateShippingCharge = (selectedCity) => {
     if (cartItems.length === 0) return 0;
 
@@ -42,7 +47,6 @@ const Shipping = () => {
     let baseShippingRate = 0;
     const isInsideDhaka = selectedCity?.toLowerCase().includes("dhaka");
 
-    // ১. সাবটোটাল ক্যালকুলেশন (ডিসকাউন্ট সহ)
     const itemsPrice = cartItems.reduce((acc, item) => {
       const price = Number(item.price) || 0;
       const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
@@ -50,19 +54,16 @@ const Shipping = () => {
       return acc + discountedPrice * (Number(item.qty) || 1);
     }, 0);
 
-    // ২. ফ্রি শিপিং থ্রেশহোল্ড বের করা (শুধুমাত্র যাদের isFreeShippingActive: true)
-   const activeThresholds = cartItems
+    const activeThresholds = cartItems
       .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
       .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
       .filter((t) => !isNaN(t) && t > 0);
 
     const freeThreshold = activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
 
-    // 🚩 শর্ত: যদি সাবটোটাল ফ্রি থ্রেশহোল্ডের সমান বা বেশি হয়, সব চার্জ ০
-  if (itemsPrice >= freeThreshold) return 0;
+    if (itemsPrice >= freeThreshold) return 0;
 
-    // ৩. ওজন এবং ফিক্সড চার্জ নির্ধারণ (যদি ফ্রি না হয়)
-   cartItems.forEach((item) => {
+    cartItems.forEach((item) => {
       const s = item.shippingDetails || {};
       const type = s.shippingType?.toLowerCase();
 
@@ -106,7 +107,7 @@ const Shipping = () => {
 
   useEffect(() => {
     handleShippingDetails();
-  }, [city, cartItems, name, address, phoneNumber]);
+  }, [city, cartItems, name, address, phoneNumber, paymentMethod]);
 
   const divisions = [
     "Dhaka",
@@ -118,6 +119,16 @@ const Shipping = () => {
     "Rangpur",
     "Mymensingh",
   ];
+
+  // 🆕 Payment Methods Configuration
+  const paymentMethods = [
+    { id: "Cash on Delivery", label: "Cash on Delivery", icon: <FaMoneyBillWave />, color: "bg-green-50 border-green-200 text-green-700" },
+    { id: "bKash", label: "bKash", icon: <FaMoneyBillWaveAlt />, color: "bg-pink-50 border-pink-200 text-pink-700" },
+    { id: "Nagad", label: "Nagad", icon: <FaMoneyBillWaveAlt />, color: "bg-orange-50 border-orange-200 text-orange-700" },
+    { id: "Rocket", label: "Rocket", icon: <FaMoneyBillWaveAlt />, color: "bg-purple-50 border-purple-200 text-purple-700" },
+    { id: "Bank", label: "Bank Transfer", icon: <FaUniversity />, color: "bg-blue-50 border-blue-200 text-blue-700" },
+  ];
+
   const inputStyle =
     "w-full p-4 border border-gray-200 rounded-2xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono text-sm";
   const labelStyle =
@@ -144,12 +155,12 @@ const Shipping = () => {
             animate={{ opacity: 1, y: 0 }}
             className="w-full xl:w-7/12"
           >
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm mb-8">
               <h1 className="text-3xl font-mono font-black text-gray-900 tracking-tighter uppercase mb-10">
                 Delivery <span className="text-blue-600">Details</span>
               </h1>
 
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
                 <div>
                   <label className={labelStyle}>
                     <BsPersonVcard /> Full Name
@@ -169,11 +180,12 @@ const Shipping = () => {
                       <GiVibratingSmartphone /> Phone Number
                     </label>
                     <input
-                      type="text"
+                      type="tel"
                       className={inputStyle}
                       value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                       placeholder="01XXX-XXXXXX"
+                      maxLength={11}
                     />
                   </div>
                   <div>
@@ -231,24 +243,82 @@ const Shipping = () => {
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                       placeholder="Country"
+                      readOnly
                     />
                   </div>
                 </div>
+              </form>
+            </div>
 
-                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex items-center justify-between">
+            {/* 🆕 Payment Method Selection */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+              <h2 className="text-2xl font-mono font-black text-gray-900 tracking-tighter uppercase mb-6 flex items-center gap-3">
+                <MdOutlinePayments className="text-blue-600" />
+                Payment <span className="text-blue-600">Method</span>
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {paymentMethods.map((method) => (
+                  <motion.div
+                    key={method.id}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setPaymentMethod(method.id)}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      paymentMethod === method.id
+                        ? `${method.color} border-current ring-2 ring-offset-2 ring-blue-100`
+                        : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className={`text-2xl ${paymentMethod === method.id ? 'scale-110' : 'text-gray-400'}`}>
+                      {method.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-mono font-black text-sm uppercase tracking-tight ${
+                        paymentMethod === method.id ? 'text-current' : 'text-gray-600'
+                      }`}>
+                        {method.label}
+                      </p>
+                      {method.id === "Cash on Delivery" && (
+                        <p className="text-[10px] text-gray-400 font-mono mt-1">Pay when you receive</p>
+                      )}
+                      {method.id !== "Cash on Delivery" && (
+                        <p className="text-[10px] text-gray-400 font-mono mt-1">Pay now via {method.label}</p>
+                      )}
+                    </div>
+                    {paymentMethod === method.id && (
+                      <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* 🆕 Selected Payment Info */}
+              <div className="mt-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+                <div className="flex items-start gap-3">
+                  <BsCreditCard className="text-blue-600 mt-1" />
                   <div>
-                    <p className="font-mono font-black text-gray-900 text-sm uppercase">
-                      Cash on Delivery
+                    <p className="text-xs font-mono font-black uppercase text-gray-500 mb-1">Selected Method</p>
+                    <p className="font-mono font-bold text-gray-900">
+                      {paymentMethods.find(m => m.id === paymentMethod)?.label}
                     </p>
-                    <p className="text-[10px] text-gray-500 font-mono italic">
-                      Pay when you receive the product
-                    </p>
-                  </div>
-                  <div className="text-blue-600">
-                    <BsPersonVcard size={24} />
+                    {paymentMethod === "Cash on Delivery" ? (
+                      <p className="text-[11px] text-gray-500 font-mono mt-1">
+                        You will pay ৳{cart.cartItems.reduce((acc, item) => {
+                          const discount = (item.price * (item.discountPercentage || 0)) / 100;
+                          return acc + (item.price - discount) * item.qty;
+                        }, 0) + (Number(cart.shippingAddress?.shippingCharge) || 0)} when the product is delivered.
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-gray-500 font-mono mt-1">
+                        You will be redirected to payment instructions after placing the order.
+                      </p>
+                    )}
                   </div>
                 </div>
-              </form>
+              </div>
             </div>
           </motion.div>
 
@@ -259,6 +329,10 @@ const Shipping = () => {
                 validateFields={() => {
                   if (!name || !phoneNumber || !address || !city) {
                     toast.error("Please provide all delivery information!");
+                    return false;
+                  }
+                  if (!paymentMethod) {
+                    toast.error("Please select a payment method!");
                     return false;
                   }
                   return true;

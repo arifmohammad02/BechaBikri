@@ -1,15 +1,17 @@
+// Helper function to add decimals
 export const addDecimals = (num) => {
   return (Math.round(num * 100) / 100).toFixed(2);
 };
 
 export const updateCart = (state, shippingAddress = {}) => {
-  // ১. আইটেম প্রাইস ক্যালকুলেশন (ডিসকাউন্ট সহ)
+  const addr = shippingAddress.city ? shippingAddress : state.shippingAddress;
+
+  // ১. আইটেম প্রাইস ক্যালকুলেশন (ডিসকাউন্ট এবং ভেরিয়েন্ট সহ)
   state.itemsPrice = addDecimals(
     state.cartItems.reduce((acc, item) => {
-      const discountPercent = Number(
-        item.discountPercentage || item.disdiscountPercentage || 0,
-      );
-      const price = Number(item.price) || 0;
+      // Use variant price if available
+      const price = item.variantInfo?.variantPrice || item.price || 0;
+      const discountPercent = Number(item.discountPercentage || 0);
       const qty = Number(item.qty) || 1;
 
       const discount = (price * discountPercent) / 100;
@@ -23,7 +25,7 @@ export const updateCart = (state, shippingAddress = {}) => {
   let baseShippingRate = 0;
 
   // ২. ঢাকা সিটি চেক
-  const city = shippingAddress?.city?.trim().toLowerCase() || "";
+  const city = addr?.city?.trim().toLowerCase() || "";
   const isInsideDhaka = city.includes("dhaka");
 
   // ৩. ফ্রি শিপিং থ্রেশহোল্ড বের করা

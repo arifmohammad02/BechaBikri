@@ -1,4 +1,3 @@
-
 import InvoicePDF from "../../components/InvoicePDF";
 import { Link, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -29,15 +28,14 @@ const Order = () => {
     refetch();
   }, [orderId, refetch]);
 
-  // --- 🛠️ ব্যাকএন্ড ডেটা অনুযায়ী ক্যালকুলেশন ---
-  // এখানে নিজে থেকে কোনো লজিক যোগ না করে সরাসরি ডাটাবেসের ভ্যালু ব্যবহার করা হয়েছে
+  // Backend data values
   const itemsPrice = order?.itemsPrice || 0;
   const shippingCharge = order?.shippingPrice || 0;
   const totalPrice = order?.totalPrice || 0;
 
-  // প্রোডাক্ট লিস্টে দেখানোর জন্য ডিসকাউন্টেড প্রাইস ক্যালকুলেশন
+  // Calculate final price for item (considering variant price)
   const calculateFinalPrice = (item) => {
-    const price = Number(item.price);
+    const price = item.variantInfo?.variantPrice || item.price || 0;
     const discount = item.discountPercentage > 0 ? (price * item.discountPercentage) / 100 : 0;
     return (price - discount).toFixed(2);
   };
@@ -49,7 +47,7 @@ const Order = () => {
     <div className="bg-[#F8FAFC] min-h-screen pb-20">
       <div className="container mx-auto px-4 mt-[100px]">
         
-        {/* 🟢 ১. সাকসেস হেডার */}
+        {/* Success Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -74,7 +72,7 @@ const Order = () => {
 
         <div className="flex flex-col-reverse lg:flex-row gap-8">
           
-          {/* 🟢 ২. বাম পাশ - প্রোডাক্ট লিস্ট */}
+          {/* Left Side - Product List */}
           <div className="lg:w-2/3">
             <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm">
               <div className="p-8 border-b border-gray-50 flex justify-between items-center">
@@ -103,7 +101,28 @@ const Order = () => {
                               <Link to={`/product/${item.product}`} className="text-sm font-mono font-black text-gray-900 hover:text-blue-600 transition-colors uppercase">
                                 {item.name}
                               </Link>
-                              <p className="text-[10px] text-gray-400 font-mono mt-1 uppercase">Unit: ৳{item.price}</p>
+                              
+                              {/* Variant Info */}
+                              {item.variantInfo?.hasVariants && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    className="w-3 h-3 rounded-full border border-gray-200"
+                                    style={{ backgroundColor: item.variantInfo.colorHex }}
+                                  />
+                                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                                    {item.variantInfo.colorName} / {item.variantInfo.sizeName}
+                                  </span>
+                                  {item.variantInfo.sku && (
+                                    <span className="text-[9px] text-gray-400 font-mono">
+                                      SKU: {item.variantInfo.sku}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              
+                              <p className="text-[10px] text-gray-400 font-mono mt-1 uppercase">
+                                Unit: ৳{item.variantInfo?.variantPrice || item.price}
+                              </p>
                             </div>
                           </div>
                         </td>
@@ -117,7 +136,7 @@ const Order = () => {
                 </table>
               </div>
 
-              {/* 🟢 ৩. সামারি সেকশন (সরাসরি ব্যাকএন্ড ভ্যালু) */}
+              {/* Summary Section */}
               <div className="p-8 bg-gray-50/50 border-t border-gray-100">
                 <div className="space-y-3 max-w-xs ml-auto">
                   <div className="flex justify-between text-sm font-mono text-gray-500 font-bold uppercase">
@@ -139,7 +158,7 @@ const Order = () => {
             </div>
           </div>
 
-          {/* 🟢 ৪. ডান পাশ - কাস্টমার এবং পেমেন্ট ডিটেইলস */}
+          {/* Right Side - Customer and Payment Details */}
           <div className="lg:w-1/3 space-y-6">
             
             <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
@@ -184,7 +203,7 @@ const Order = () => {
                 </div>
                 <div className="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
                   <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Delivery</span>
-                  <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase ${order.isDelivered ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase ${order.isDelivered === 'Delivered' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
                     {order.isDelivered}
                   </span>
                 </div>
@@ -193,9 +212,7 @@ const Order = () => {
 
             {userInfo?.isAdmin && (
               <div className="flex flex-col gap-3 pt-4">
-                
-                
-                {!order.isDelivered && (
+                {!order.isDelivered === 'Delivered' && (
                    <button 
                     onClick={() => deliverOrder(orderId)}
                     className="w-full flex items-center justify-center gap-3 bg-blue-600 text-white py-4 rounded-2xl font-mono font-black uppercase tracking-widest text-xs hover:bg-green-600 transition-all">

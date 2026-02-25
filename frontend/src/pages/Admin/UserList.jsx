@@ -7,8 +7,8 @@ import {
   FaEdit,
   FaTrash,
   FaCheck,
-  FaTimes,
   FaSearch,
+  FaTimesCircle,
 } from "react-icons/fa";
 import {
   useDeleteUserMutation,
@@ -265,7 +265,7 @@ const UserList = () => {
                           {editableUserId === user._id ? (
                             <>
                               <button onClick={saveEdit} className="p-2 text-green-600 hover:scale-125 transition-transform"><FaCheck /></button>
-                              <button onClick={cancelEdit} className="p-2 text-red-600 hover:scale-125 transition-transform"><FaTimes /></button>
+                              <button onClick={cancelEdit} className="p-2 text-red-600 hover:scale-125 transition-transform"><FaTimesCircle /></button>
                             </>
                           ) : (
                             !user.isAdmin && (

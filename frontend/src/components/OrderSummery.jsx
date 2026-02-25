@@ -12,10 +12,11 @@ const OrderSummery = () => {
     dispatch(addToCart({ ...product, qty }));
   };
 
-  const calculateDiscountedPrice = (product) => {
-    return product.discountPercentage > 0
-      ? product.price - (product.price * product.discountPercentage) / 100
-      : product.price;
+  const calculateDiscountedPrice = (item) => {
+    const price = item.variantInfo?.variantPrice || item.price || 0;
+    return item.discountPercentage > 0
+      ? price - (price * item.discountPercentage) / 100
+      : price;
   };
 
   return (
@@ -32,7 +33,6 @@ const OrderSummery = () => {
         </Link>
       </div>
 
-      {/* 🚫 Scrollbar Removed but scrollable */}
       <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         <style>{`
           .no-scrollbar::-webkit-scrollbar {
@@ -46,10 +46,13 @@ const OrderSummery = () => {
             : item?.image || "/placeholder.jpg";
 
           const unitPrice = calculateDiscountedPrice(item);
+          const variantText = item.variantInfo?.hasVariants
+            ? `${item.variantInfo.colorName} / ${item.variantInfo.sizeName}`
+            : "";
 
           return (
             <div
-              key={item._id}
+              key={`${item._id}-${item.variantInfo?.colorIndex}-${item.variantInfo?.sizeIndex}`}
               className="group relative flex items-center gap-4 p-3 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300"
             >
               {/* Product Image */}
@@ -62,13 +65,26 @@ const OrderSummery = () => {
               </div>
 
               {/* Info Section */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <Link
                   to={`/product/${item._id}`}
                   className="text-sm font-mono font-black text-gray-800 hover:text-blue-600 transition-colors line-clamp-1 uppercase tracking-tighter"
                 >
                   {item.name}
                 </Link>
+                
+                {/* Variant Info */}
+                {item.variantInfo?.hasVariants && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: item.variantInfo.colorHex }}
+                    />
+                    <span className="text-[10px] text-gray-500 font-mono">
+                      {variantText}
+                    </span>
+                  </div>
+                )}
                 
                 <div className="flex items-center justify-between mt-2">
                   {/* Quantity Stepper */}
@@ -98,7 +114,7 @@ const OrderSummery = () => {
                     </p>
                     {item.discountPercentage > 0 && (
                       <p className="text-[9px] font-mono font-bold text-green-500 uppercase">
-                        Saved ৳{Math.round((item.price - unitPrice) * item.qty)}
+                        Saved ৳{Math.round(((item.variantInfo?.variantPrice || item.price) - unitPrice) * item.qty)}
                       </p>
                     )}
                   </div>

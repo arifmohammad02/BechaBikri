@@ -7,6 +7,7 @@ import { AiOutlineProduct, AiOutlinePlusSquare } from "react-icons/ai";
 import { TbCategory2 } from "react-icons/tb";
 import { MdOutlineDashboard } from "react-icons/md";
 import { RiImageLine } from "react-icons/ri";
+import { FaCreditCard } from "react-icons/fa";
 
 const AdminMenu = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,17 +24,36 @@ const AdminMenu = () => {
 
   useEffect(() => {
     document.documentElement.style.overflow = isSidebarOpen ? "hidden" : "";
-    return () => { document.documentElement.style.overflow = ""; };
+    return () => {
+      document.documentElement.style.overflow = "";
+    };
   }, [isSidebarOpen]);
 
   const menuItems = [
-    { to: "/admin/dashboard", icon: <MdOutlineDashboard />, label: "Dashboard" },
+    {
+      to: "/admin/dashboard",
+      icon: <MdOutlineDashboard />,
+      label: "Dashboard",
+    },
     { to: "/admin/categorylist", icon: <TbCategory2 />, label: "Categories" },
-    { to: "/admin/allproductslist", icon: <AiOutlineProduct />, label: "All Products" },
-    { to: "/admin/productlist", icon: <AiOutlinePlusSquare />, label: "Create Product" },
+    {
+      to: "/admin/allproductslist",
+      icon: <AiOutlineProduct />,
+      label: "All Products",
+    },
+    {
+      to: "/admin/productlist",
+      icon: <AiOutlinePlusSquare />,
+      label: "Create Product",
+    },
     { to: "/admin/userlist", icon: <LuUsers />, label: "Users" },
     { to: "/admin/orderlist", icon: <CiShoppingCart />, label: "Orders" },
-     { to: "/admin/bannerlist", icon: <RiImageLine />, label: "Banners" },
+    { to: "/admin/bannerlist", icon: <RiImageLine />, label: "Banners" },
+    {
+      to: "/admin/payment-settings",
+      icon: <FaCreditCard />,
+      label: "Payments",
+    },
   ];
 
   return (
@@ -49,7 +69,11 @@ const AdminMenu = () => {
           onClick={toggleSidebar}
           className="absolute top-6 -right-10 p-2 bg-black text-white border-2 border-red-600 rounded-r-md shadow-lg transition-all duration-300 hover:bg-red-600 hover:scale-105 active:scale-90 flex items-center justify-center"
         >
-          {isSidebarOpen ? <IoIosArrowBack size={20} /> : <IoIosArrowForward size={20} />}
+          {isSidebarOpen ? (
+            <IoIosArrowBack size={20} />
+          ) : (
+            <IoIosArrowForward size={20} />
+          )}
         </button>
 
         {/* Header inside Sidebar */}
@@ -79,7 +103,7 @@ const AdminMenu = () => {
                 <span className="text-[12px] font-bold tracking-[0.1em] uppercase">
                   {item.label}
                 </span>
-                
+
                 {/* Hover Background - Smooth Slide */}
                 <div className="absolute inset-0 bg-red-600/5 origin-left transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 -z-10" />
               </NavLink>
@@ -96,10 +120,12 @@ const AdminMenu = () => {
       </section>
 
       {/* Overlay - Background Blur with Smooth Fade */}
-      <div 
+      <div
         onClick={toggleSidebar}
         className={`fixed inset-0 bg-black/30 backdrop-blur-sm z-30 transition-opacity duration-500 2xl:hidden ${
-          isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          isSidebarOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
       />
     </div>

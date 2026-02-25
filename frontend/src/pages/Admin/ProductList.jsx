@@ -17,6 +17,8 @@ import {
   FaTrash,
   FaArrowLeft,
   FaArrowRight,
+  FaPalette,
+  FaRuler,
 } from "react-icons/fa";
 import Quill from "quill";
 import ReactQuill from "react-quill";
@@ -49,7 +51,7 @@ const ProductList = () => {
     { label: "", value: "" },
   ]);
 
-  // --- SHIPPING STATES (সুরক্ষিত রাখা হয়েছে) ---
+  // --- SHIPPING STATES 
   const [weight, setWeight] = useState(0.5);
   const [shippingType, setShippingType] = useState("weight-based");
   const [insideDhakaCharge, setInsideDhakaCharge] = useState(80);
@@ -57,6 +59,11 @@ const ProductList = () => {
   const [fixedShippingCharge, setFixedShippingCharge] = useState(0);
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(0);
   const [isFreeShippingActive, setIsFreeShippingActive] = useState(false);
+
+    // --- VARIANT STATES ---
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variants, setVariants] = useState([]);
+  const [activeVariantTab, setActiveVariantTab] = useState("basic");
 
   const navigate = useNavigate();
   const [uploadProductImage] = useUploadProductImageMutation();
@@ -77,7 +84,7 @@ const ProductList = () => {
       try {
         toast.info("Uploading image to description...");
         const res = await uploadProductImage(formData).unwrap();
-        const url = res.images[0]; // আপনার ব্যাকএন্ড অ্যারে রিটার্ন করে
+        const url = res.images[0];
         const quill = quillRef.current.getEditor();
         const range = quill.getSelection();
         quill.insertEmbed(range.index, "image", url);
@@ -93,16 +100,14 @@ const ProductList = () => {
         container: [
           [{ header: [1, 2, 3, 4, 5, 6, false] }],
           [{ size: ["small", false, "large", "huge"] }],
-          ["bold", "italic", "underline", "strike", "blockquote"], // 'strike' (কাটা দাগ) যোগ করা হয়েছে
+          ["bold", "italic", "underline", "strike", "blockquote"],
 
-          // --- জুরুরি নতুন ফিচার ---
-          [{ color: [] }, { background: [] }], // টেক্সট কালার ও হাইলাইট
-          [{ align: [] }], // টেক্সট এলাইনমেন্ট (Left, Center, Right, Justify)
-          [{ script: "sub" }, { script: "super" }], // সাবস্ক্রিপ্ট ও সুপারস্ক্রিপ্ট
-          // -----------------------
 
+          [{ color: [] }, { background: [] }], 
+          [{ align: [] }],
+          [{ script: "sub" }, { script: "super" }], 
           [{ list: "ordered" }, { list: "bullet" }],
-          [{ indent: "-1" }, { indent: "+1" }], // ইন্ডেন্টেশন (প্যারাগ্রাফ ডানে-বামে সরানো)
+          [{ indent: "-1" }, { indent: "+1" }],
           ["link", "image", "video"],
           ["clean"],
         ],
@@ -156,6 +161,80 @@ const ProductList = () => {
     setKeyFeatures(newFeatures);
   };
 
+
+    const addColorVariant = () => {
+    const newVariant = {
+      color: {
+        name: "",
+        hexCode: "#000000",
+        image: "",
+        images: [],
+      },
+      sizes: [
+        { size: "", price: Number(price) || 0, countInStock: 0, sku: "", isAvailable: true },
+      ],
+      isActive: true,
+    };
+    setVariants([...variants, newVariant]);
+  };
+
+ const removeColorVariant = (colorIndex) => {
+    setVariants(variants.filter((_, i) => i !== colorIndex));
+  };
+
+   const updateColorInfo = (colorIndex, field, value) => {
+    const newVariants = [...variants];
+    newVariants[colorIndex].color[field] = value;
+    setVariants(newVariants);
+  };
+
+    const uploadColorImage = async (e, colorIndex) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      toast.info("Uploading color image...");
+      const res = await uploadProductImage(formData).unwrap();
+      const newVariants = [...variants];
+      newVariants[colorIndex].color.image = res.images[0];
+      if (!newVariants[colorIndex].color.images.includes(res.images[0])) {
+        newVariants[colorIndex].color.images.push(res.images[0]);
+      }
+      setVariants(newVariants);
+      toast.success("Color image uploaded!");
+    } catch (error) {
+      toast.error("Upload failed");
+    }
+  };
+
+    const addSizeToVariant = (colorIndex) => {
+    const newVariants = [...variants];
+    newVariants[colorIndex].sizes.push({
+      size: "",
+      price: Number(price) || 0,
+      countInStock: 0,
+      sku: "",
+      isAvailable: true,
+    });
+    setVariants(newVariants);
+  };
+
+   const removeSizeFromVariant = (colorIndex, sizeIndex) => {
+    const newVariants = [...variants];
+    newVariants[colorIndex].sizes = newVariants[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
+    setVariants(newVariants);
+  };
+
+  const updateSizeInfo = (colorIndex, sizeIndex, field, value) => {
+    const newVariants = [...variants];
+    newVariants[colorIndex].sizes[sizeIndex][field] = value;
+    setVariants(newVariants);
+  };
+
+
   const moveImage = (index, direction) => {
     const updatedImages = [...images];
     const newIndex = direction === "left" ? index - 1 : index + 1;
@@ -204,6 +283,34 @@ const ProductList = () => {
     if (!price || price <= 0) return toast.error("Valid price is required.");
     if (!category) return toast.error("Category is required.");
 
+      // Validate variants if enabled
+    if (hasVariants) {
+      if (variants.length === 0) {
+        return toast.error("At least one color variant is required.");
+      }
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
+        if (!v.color.name) {
+          return toast.error(`Color name is required for variant ${i + 1}`);
+        }
+        if (!v.color.image) {
+          return toast.error(`Image is required for color: ${v.color.name}`);
+        }
+        if (v.sizes.length === 0) {
+          return toast.error(`At least one size required for: ${v.color.name}`);
+        }
+        for (let j = 0; j < v.sizes.length; j++) {
+          if (!v.sizes[j].size) {
+            return toast.error(`Size name required for ${v.color.name}`);
+          }
+          if (v.sizes[j].price <= 0) {
+            return toast.error(`Valid price required for ${v.color.name} - ${v.sizes[j].size}`);
+          }
+        }
+      }
+    }
+
+
     try {
       setLoading(true);
       const productData = new FormData();
@@ -241,6 +348,14 @@ const ProductList = () => {
       productData.append("freeShippingThreshold", freeShippingThreshold);
       productData.append("isFreeShippingActive", isFreeShippingActive);
 
+        // Variant Data
+      productData.append("hasVariants", hasVariants);
+      if (hasVariants) {
+        productData.append("variants", JSON.stringify(variants));
+        productData.append("defaultColorIndex", 0);
+        productData.append("defaultSizeIndex", 0);
+      }
+
       const res = await createProduct(productData).unwrap();
 
       if (res.error) {
@@ -275,10 +390,9 @@ const ProductList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
+     <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
       <div className="flex flex-col 2xl:flex-row">
         <AdminMenu />
-
         <div className="flex-1 px-4 lg:px-12 pb-20">
           <div className="max-w-[1400px] mx-auto">
             <div className="mb-10 border-l-4 border-red-600 pl-6 py-2">
@@ -286,410 +400,682 @@ const ProductList = () => {
                 Create <span className="text-red-600">New Product</span>
               </h1>
               <p className="text-[10px] text-gray-500 font-bold tracking-[0.4em] uppercase mt-1">
-                AriX GeaR Management System | Node_Active
+                AriX GeaR Management System | Variant_System_Active
               </p>
             </div>
 
+            {/* Tab Navigation */}
+            <div className="flex gap-4 mb-6 border-b border-gray-200">
+              <button
+                onClick={() => setActiveVariantTab("basic")}
+                className={`px-6 py-3 font-black uppercase text-[12px] tracking-widest transition-all ${
+                  activeVariantTab === "basic"
+                    ? "border-b-2 border-red-600 text-red-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                Basic Info
+              </button>
+              <button
+                onClick={() => setActiveVariantTab("variants")}
+                className={`px-6 py-3 font-black uppercase text-[12px] tracking-widest transition-all flex items-center gap-2 ${
+                  activeVariantTab === "variants"
+                    ? "border-b-2 border-red-600 text-red-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <FaPalette />
+                Variants {hasVariants && `(${variants.length} Colors)`}
+              </button>
+            </div>
+
             <div className="bg-white border border-gray-100 shadow-2xl p-6 lg:p-10 relative overflow-hidden">
-              {/* Image Preview Matrix */}
-              <div className="mb-10">
-                <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-4">
-                  Gallery_Assets
-                </p>
-                <div className="flex flex-wrap gap-4 p-4 bg-gray-50 border border-dashed border-gray-200 min-h-[160px] items-center justify-center rounded-sm">
-                  {images.map((img, index) => (
-                    <div
-                      key={index}
-                      className="relative group border-2 border-white shadow-md overflow-hidden w-32 h-32 bg-white transition-all duration-300 hover:scale-105"
-                    >
-                      <img
-                        src={img}
-                        alt="product"
-                        className="h-full w-full object-cover"
+              
+              {/* BASIC INFO TAB */}
+              {activeVariantTab === "basic" && (
+                <>
+                  {/* Image Preview Matrix */}
+                  <div className="mb-10">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-gray-400 mb-4">
+                      Gallery_Assets
+                    </p>
+                    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 border border-dashed border-gray-200 min-h-[160px] items-center justify-center rounded-sm">
+                      {images.map((img, index) => (
+                        <div
+                          key={index}
+                          className="relative group border-2 border-white shadow-md overflow-hidden w-32 h-32 bg-white transition-all duration-300 hover:scale-105"
+                        >
+                          <img
+                            src={img}
+                            alt="product"
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                            <div className="flex gap-3">
+                              <button
+                                type="button"
+                                onClick={() => moveImage(index, "left")}
+                                disabled={index === 0}
+                                className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"
+                              >
+                                <FaArrowLeft size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveImage(index, "right")}
+                                disabled={index === images.length - 1}
+                                className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"
+                              >
+                                <FaArrowRight size={14} />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setImages(images.filter((_, i) => i !== index))
+                              }
+                              className="text-red-500 hover:scale-125 transition-transform"
+                            >
+                              <FaTrash size={18} />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-0 left-0 bg-black/50 text-white text-[8px] px-1 italic">
+                            POS_{index + 1}
+                          </div>
+                        </div>
+                      ))}
+
+                      <label className="w-32 h-32 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-600 hover:bg-red-50 transition-all text-gray-400 hover:text-red-600 group rounded-sm">
+                        {loading ? (
+                          <FaSpinner className="animate-spin" size={24} />
+                        ) : (
+                          <FaCloudUploadAlt
+                            size={24}
+                            className="group-hover:translate-y-[-4px] transition-transform"
+                          />
+                        )}
+                        <span className="text-[8px] font-black uppercase mt-2 tracking-tighter text-center">
+                          Batch_Upload
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={uploadFileHandler}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Input Grid (Basic Info) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10 mb-12">
+                    {[
+                      {
+                        label: "Product_Identifier",
+                        val: name,
+                        set: setName,
+                        type: "text",
+                        placeholder: "E.g. Mech-Keyboard X1",
+                      },
+                      {
+                        label: "Base_Price",
+                        val: price,
+                        set: setPrice,
+                        type: "number",
+                        placeholder: "0.00 (Used if no variants)",
+                      },
+                      {
+                        label: "Total_Quantity",
+                        val: quantity,
+                        set: setQuantity,
+                        type: "number",
+                        placeholder: "100",
+                      },
+                      {
+                        label: "Brand_Mark",
+                        val: brand,
+                        set: setBrand,
+                        type: "text",
+                        placeholder: "AriX GeaR",
+                      },
+                      {
+                        label: "Initial_Stock",
+                        val: stock,
+                        set: setStock,
+                        type: "number",
+                        placeholder: "0 (Auto if variants)",
+                      },
+                      {
+                        label: "Active_Offer",
+                        val: offer,
+                        set: setOffer,
+                        type: "text",
+                        placeholder: "Seasonal Sale",
+                      },
+                      {
+                        label: "Warranty_Period",
+                        val: warranty,
+                        set: setWarranty,
+                        type: "text",
+                        placeholder: "24 Months",
+                      },
+                      {
+                        label: "Discount_Ratio_%",
+                        val: discountPercentage,
+                        set: setDiscountPercentage,
+                        type: "number",
+                        placeholder: "0",
+                      },
+                      {
+                        label: "Markdown_Amount",
+                        val: discountedAmount,
+                        set: setDiscountedAmount,
+                        type: "number",
+                        placeholder: "0",
+                      },
+                    ].map((field, idx) => (
+                      <div key={idx} className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block group-focus-within:text-red-600 transition-colors">
+                          {field.label}
+                        </label>
+                        <input
+                          type={field.type}
+                          value={field.val}
+                          placeholder={field.placeholder}
+                          onChange={(e) => field.set(e.target.value)}
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all duration-300 placeholder:font-normal placeholder:text-gray-300"
+                        />
+                      </div>
+                    ))}
+
+                    <div className="group relative">
+                      <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                        Category / Sub-Category
+                      </label>
+                      <TreeSelect
+                        showSearch
+                        style={{ width: "100%" }}
+                        value={category}
+                        dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                        placeholder="SELECT_CATEGORY"
+                        allowClear
+                        treeDefaultExpandAll
+                        onChange={(newValue) => setCategory(newValue)}
+                        treeData={organizedCategories}
+                        treeNodeLabelProp="label"
+                        className="w-full border-b-2 border-gray-100 font-bold text-black custom-treeselect"
+                        variant="borderless"
                       />
-                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                        <div className="flex gap-3">
+                    </div>
+
+                    <div className="flex items-center gap-4 pt-6">
+                      <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase italic">
+                        Mark_As_Featured
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={isFeatured}
+                        onChange={(e) => setIsFeatured(e.target.checked)}
+                        className="w-5 h-5 accent-red-600 cursor-pointer shadow-sm"
+                      />
+                    </div>
+
+                    {/* Enable Variants Toggle */}
+                    <div className="flex items-center gap-4 pt-6 bg-red-50 p-4 rounded-xl border border-red-100">
+                      <div className="flex-1">
+                        <label className="text-[11px] font-black text-red-600 tracking-widest uppercase block">
+                          Enable Variants
+                        </label>
+                        <p className="text-[9px] text-gray-500 mt-1">
+                          Color & Size combinations
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={hasVariants}
+                        onChange={(e) => setHasVariants(e.target.checked)}
+                        className="w-6 h-6 accent-red-600 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* KEY FEATURES SECTION */}
+                  <div className="mb-12 border-t pt-10">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
+                      Key_Features_Node
+                    </p>
+                    {keyFeatures.map((feature, index) => (
+                      <div key={index} className="flex gap-4 mb-3">
+                        <input
+                          type="text"
+                          value={feature}
+                          placeholder="e.g. Ultra Responsive Switches"
+                          onChange={(e) =>
+                            handleFeatureChange(index, e.target.value)
+                          }
+                          className="flex-1 bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(index)}
+                          className="text-red-500"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addFeature}
+                      className="text-[10px] font-black uppercase bg-black text-white px-4 py-2 mt-2"
+                    >
+                      Add_Feature
+                    </button>
+                  </div>
+
+                  {/* SPECIFICATIONS TABLE SECTION */}
+                  <div className="mb-12 border-t pt-10">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
+                      Technical_Specifications
+                    </p>
+                    {specifications.map((spec, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Label (e.g. Battery)"
+                          value={spec.label}
+                          onChange={(e) =>
+                            handleSpecChange(index, "label", e.target.value)
+                          }
+                          className="bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none"
+                        />
+                        <div className="flex gap-4">
+                          <input
+                            type="text"
+                            placeholder="Value (e.g. 4000mAh)"
+                            value={spec.value}
+                            onChange={(e) =>
+                              handleSpecChange(index, "value", e.target.value)
+                            }
+                            className="flex-1 bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none"
+                          />
                           <button
                             type="button"
-                            onClick={() => moveImage(index, "left")}
-                            disabled={index === 0}
-                            className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"
+                            onClick={() => removeSpec(index)}
+                            className="text-red-500"
                           >
-                            <FaArrowLeft size={14} />
+                            <FaTrash />
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => moveImage(index, "right")}
-                            disabled={index === images.length - 1}
-                            className="text-white hover:text-red-500 disabled:opacity-30 transition-colors"
-                          >
-                            <FaArrowRight size={14} />
-                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addSpec}
+                      className="text-[10px] font-black uppercase bg-black text-white px-4 py-2"
+                    >
+                      Add_Spec_Row
+                    </button>
+                  </div>
+
+                  {/* SHIPPING CONFIGURATION SECTION */}
+                  <div className="mb-12 border-t border-gray-100 pt-10">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-8 flex items-center gap-2">
+                      <span className="w-8 h-[2px] bg-red-600"></span>
+                      Shipping_Configuration_Node
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+                      <div className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          Shipping_Logic_Type
+                        </label>
+                        <select
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer appearance-none"
+                          onChange={(e) => setShippingType(e.target.value)}
+                          value={shippingType}
+                        >
+                          <option value="weight-based">WEIGHT_BASED</option>
+                          <option value="fixed">FIXED_RATE</option>
+                          <option value="free">ALWAYS_FREE</option>
+                        </select>
+                      </div>
+
+                      <div className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          Item_Weight_(KG)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={weight}
+                          onChange={(e) => setWeight(e.target.value)}
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all placeholder:text-gray-300"
+                        />
+                      </div>
+
+                      <div className="bg-gray-50 p-4 border border-gray-100 rounded-sm flex items-center justify-between group hover:border-red-200 transition-all">
+                        <div>
+                          <label className="text-[10px] font-black text-gray-400 tracking-widest uppercase block mb-1">
+                            Free_Shipping_Logic
+                          </label>
+                          <span className="text-[12px] font-bold text-black uppercase">
+                            Enable Threshold?
+                          </span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isFreeShippingActive}
+                          onChange={(e) =>
+                            setIsFreeShippingActive(e.target.checked)
+                          }
+                          className="w-6 h-6 accent-red-600 cursor-pointer"
+                        />
+                      </div>
+
+                      <div
+                        className={`group relative transition-all duration-500 ${
+                          !isFreeShippingActive ? "opacity-30" : "opacity-100"
+                        }`}
+                      >
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          Free_Shipping_Threshold
+                        </label>
+                        <input
+                          type="number"
+                          value={freeShippingThreshold}
+                          disabled={!isFreeShippingActive}
+                          onChange={(e) =>
+                            setFreeShippingThreshold(e.target.value)
+                          }
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all placeholder:text-gray-300"
+                        />
+                      </div>
+
+                      <div className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
+                          Inside_Dhaka_Charge
+                        </label>
+                        <input
+                          type="number"
+                          value={insideDhakaCharge}
+                          onChange={(e) => setInsideDhakaCharge(e.target.value)}
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
+                        />
+                      </div>
+
+                      <div className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
+                          Outside_Dhaka_Charge
+                        </label>
+                        <input
+                          type="number"
+                          value={outsideDhakaCharge}
+                          onChange={(e) =>
+                            setOutsideDhakaCharge(e.target.value)
+                          }
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
+                        />
+                      </div>
+
+                      <div className="group relative">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          Fixed_Shipping_Charge
+                        </label>
+                        <input
+                          type="number"
+                          value={fixedShippingCharge}
+                          disabled={shippingType !== "fixed"}
+                          onChange={(e) =>
+                            setFixedShippingCharge(e.target.value)
+                          }
+                          className={`w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all ${
+                            shippingType !== "fixed" ? "opacity-30" : ""
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rich Text Editor Section */}
+                  <div className="mb-12">
+                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                      Product_Specifications_Data
+                    </label>
+                    <div className="border border-gray-100 rounded-sm">
+                      <ReactQuill
+                        ref={quillRef}
+                        theme="snow"
+                        value={description}
+                        onChange={setDescription}
+                        modules={modules}
+                        formats={formats}
+                        className="min-h-[400px] description-quill"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* VARIANTS TAB */}
+              {activeVariantTab === "variants" && (
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-black text-black tracking-tighter uppercase">
+                        Product Variants
+                      </h2>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Configure color and size combinations with individual pricing
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addColorVariant}
+                      className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[11px] tracking-widest hover:bg-black transition-all"
+                    >
+                      <FaPlus /> Add Color
+                    </button>
+                  </div>
+
+                  {variants.length === 0 && (
+                    <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                      <FaPalette className="mx-auto text-4xl text-gray-300 mb-4" />
+                      <p className="text-gray-500 font-mono text-sm">
+                        No variants added yet. Click &quot;Add Color&quot; to start.
+                      </p>
+                    </div>
+                  )}
+
+                  {variants.map((variant, colorIndex) => (
+                    <div
+                      key={colorIndex}
+                      className="bg-gray-50 rounded-2xl p-6 border border-gray-200"
+                    >
+                      {/* Color Header */}
+                      <div className="flex items-start gap-6 mb-6 pb-6 border-b border-gray-200">
+                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                              Color Name
+                            </label>
+                            <input
+                              type="text"
+                              value={variant.color.name}
+                              onChange={(e) =>
+                                updateColorInfo(colorIndex, "name", e.target.value)
+                              }
+                              placeholder="e.g. Red"
+                              className="w-full bg-white border border-gray-200 rounded-lg p-3 font-bold text-black focus:ring-2 focus:ring-red-600 outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                              Hex Code
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="color"
+                                value={variant.color.hexCode}
+                                onChange={(e) =>
+                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                }
+                                className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer"
+                              />
+                              <input
+                                type="text"
+                                value={variant.color.hexCode}
+                                onChange={(e) =>
+                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                }
+                                className="flex-1 bg-white border border-gray-200 rounded-lg p-3 font-mono text-sm uppercase"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">
+                              Color Image
+                            </label>
+                            <div className="flex gap-2">
+                              {variant.color.image ? (
+                                <div className="relative w-12 h-12">
+                                  <img
+                                    src={variant.color.image}
+                                    alt="Color"
+                                    className="w-full h-full object-cover rounded-lg border border-gray-200"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateColorInfo(colorIndex, "image", "")
+                                    }
+                                    className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[8px] flex items-center justify-center"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                </div>
+                              ) : (
+                                <label className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-600 hover:bg-red-50 transition-all">
+                                  <FaCloudUploadAlt className="text-gray-400" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => uploadColorImage(e, colorIndex)}
+                                    className="hidden"
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() =>
-                            setImages(images.filter((_, i) => i !== index))
-                          }
-                          className="text-red-500 hover:scale-125 transition-transform"
+                          onClick={() => removeColorVariant(colorIndex)}
+                          className="p-3 text-red-500 hover:bg-red-50 rounded-lg transition-all"
                         >
-                          <FaTrash size={18} />
+                          <FaTrash />
                         </button>
                       </div>
-                      <div className="absolute bottom-0 left-0 bg-black/50 text-white text-[8px] px-1 italic">
-                        POS_{index + 1}
+
+                      {/* Sizes Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[11px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <FaRuler /> Sizes for {variant.color.name || `Color ${colorIndex + 1}`}
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => addSizeToVariant(colorIndex)}
+                            className="text-[10px] font-black text-red-600 uppercase tracking-widest flex items-center gap-1 hover:text-black transition-all"
+                          >
+                            <FaPlus /> Add Size
+                          </button>
+                        </div>
+
+                        {variant.sizes.map((size, sizeIndex) => (
+                          <div
+                            key={sizeIndex}
+                            className="grid grid-cols-2 md:grid-cols-5 gap-3 bg-white p-4 rounded-xl border border-gray-200"
+                          >
+                            <div>
+                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
+                                Size
+                              </label>
+                              <input
+                                type="text"
+                                value={size.size}
+                                onChange={(e) =>
+                                  updateSizeInfo(colorIndex, sizeIndex, "size", e.target.value)
+                                }
+                                placeholder="S, M, L"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
+                                Price (৳)
+                              </label>
+                              <input
+                                type="number"
+                                value={size.price}
+                                onChange={(e) =>
+                                  updateSizeInfo(colorIndex, sizeIndex, "price", Number(e.target.value))
+                                }
+                                placeholder="0"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
+                                Stock
+                              </label>
+                              <input
+                                type="number"
+                                value={size.countInStock}
+                                onChange={(e) =>
+                                  updateSizeInfo(colorIndex, sizeIndex, "countInStock", Number(e.target.value))
+                                }
+                                placeholder="0"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 block">
+                                SKU (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={size.sku}
+                                onChange={(e) =>
+                                  updateSizeInfo(colorIndex, sizeIndex, "sku", e.target.value)
+                                }
+                                placeholder="SKU-001"
+                                className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-mono text-sm uppercase focus:ring-2 focus:ring-red-600 outline-none"
+                              />
+                            </div>
+                            <div className="flex items-end">
+                              <button
+                                type="button"
+                                onClick={() => removeSizeFromVariant(colorIndex, sizeIndex)}
+                                className="w-full p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center gap-1"
+                              >
+                                <FaTrash size={12} /> Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
-
-                  <label className="w-32 h-32 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-red-600 hover:bg-red-50 transition-all text-gray-400 hover:text-red-600 group rounded-sm">
-                    {loading ? (
-                      <FaSpinner className="animate-spin" size={24} />
-                    ) : (
-                      <FaCloudUploadAlt
-                        size={24}
-                        className="group-hover:translate-y-[-4px] transition-transform"
-                      />
-                    )}
-                    <span className="text-[8px] font-black uppercase mt-2 tracking-tighter text-center">
-                      Batch_Upload
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={uploadFileHandler}
-                      className="hidden"
-                    />
-                  </label>
                 </div>
-              </div>
-
-              {/* Input Grid (Basic Info) */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10 mb-12">
-                {[
-                  {
-                    label: "Product_Identifier",
-                    val: name,
-                    set: setName,
-                    type: "text",
-                    placeholder: "E.g. Mech-Keyboard X1",
-                  },
-                  {
-                    label: "Price_Unit",
-                    val: price,
-                    set: setPrice,
-                    type: "number",
-                    placeholder: "0.00",
-                  },
-                  {
-                    label: "Total_Quantity",
-                    val: quantity,
-                    set: setQuantity,
-                    type: "number",
-                    placeholder: "100",
-                  },
-                  {
-                    label: "Brand_Mark",
-                    val: brand,
-                    set: setBrand,
-                    type: "text",
-                    placeholder: "AriX GeaR",
-                  },
-                  {
-                    label: "Initial_Stock",
-                    val: stock,
-                    set: setStock,
-                    type: "number",
-                    placeholder: "0",
-                  },
-                  {
-                    label: "Active_Offer",
-                    val: offer,
-                    set: setOffer,
-                    type: "text",
-                    placeholder: "Seasonal Sale",
-                  },
-                  {
-                    label: "Warranty_Period",
-                    val: warranty,
-                    set: setWarranty,
-                    type: "text",
-                    placeholder: "24 Months",
-                  },
-                  {
-                    label: "Discount_Ratio_%",
-                    val: discountPercentage,
-                    set: setDiscountPercentage,
-                    type: "number",
-                    placeholder: "0",
-                  },
-                  {
-                    label: "Markdown_Amount",
-                    val: discountedAmount,
-                    set: setDiscountedAmount,
-                    type: "number",
-                    placeholder: "0",
-                  },
-                ].map((field, idx) => (
-                  <div key={idx} className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block group-focus-within:text-red-600 transition-colors">
-                      {field.label}
-                    </label>
-                    <input
-                      type={field.type}
-                      value={field.val}
-                      placeholder={field.placeholder}
-                      onChange={(e) => field.set(e.target.value)}
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all duration-300 placeholder:font-normal placeholder:text-gray-300"
-                    />
-                  </div>
-                ))}
-
-                <div className="group relative">
-                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                    Category / Sub-Category
-                  </label>
-                  <TreeSelect
-                    showSearch
-                    style={{ width: "100%" }}
-                    value={category}
-                    dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
-                    placeholder="SELECT_CATEGORY"
-                    allowClear
-                    treeDefaultExpandAll
-                    onChange={(newValue) => setCategory(newValue)}
-                    treeData={organizedCategories}
-                    treeNodeLabelProp="label"
-                    className="w-full border-b-2 border-gray-100 font-bold text-black custom-treeselect"
-                    variant="borderless"
-                  />
-                </div>
-
-                <div className="flex items-center gap-4 pt-6">
-                  <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase italic">
-                    Mark_As_Featured
-                  </label>
-                  <input
-                    type="checkbox"
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="w-5 h-5 accent-red-600 cursor-pointer shadow-sm"
-                  />
-                </div>
-              </div>
-
-              {/* KEY FEATURES SECTION */}
-              <div className="mb-12 border-t pt-10">
-                <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
-                  Key_Features_Node
-                </p>
-                {keyFeatures.map((feature, index) => (
-                  <div key={index} className="flex gap-4 mb-3">
-                    <input
-                      type="text"
-                      value={feature}
-                      placeholder="e.g. Ultra Responsive Switches"
-                      onChange={(e) =>
-                        handleFeatureChange(index, e.target.value)
-                      }
-                      className="flex-1 bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none font-bold"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(index)}
-                      className="text-red-500"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addFeature}
-                  className="text-[10px] font-black uppercase bg-black text-white px-4 py-2 mt-2"
-                >
-                  Add_Feature
-                </button>
-              </div>
-
-              {/* SPECIFICATIONS TABLE SECTION */}
-              <div className="mb-12 border-t pt-10">
-                <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-6">
-                  Technical_Specifications
-                </p>
-                {specifications.map((spec, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"
-                  >
-                    <input
-                      type="text"
-                      placeholder="Label (e.g. Battery)"
-                      value={spec.label}
-                      onChange={(e) =>
-                        handleSpecChange(index, "label", e.target.value)
-                      }
-                      className="bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none"
-                    />
-                    <div className="flex gap-4">
-                      <input
-                        type="text"
-                        placeholder="Value (e.g. 4000mAh)"
-                        value={spec.value}
-                        onChange={(e) =>
-                          handleSpecChange(index, "value", e.target.value)
-                        }
-                        className="flex-1 bg-gray-50 border-b-2 border-gray-200 p-2 focus:border-black outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSpec(index)}
-                        className="text-red-500"
-                      >
-                        <FaTrash />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addSpec}
-                  className="text-[10px] font-black uppercase bg-black text-white px-4 py-2"
-                >
-                  Add_Spec_Row
-                </button>
-              </div>
-
-              {/* SHIPPING CONFIGURATION SECTION */}
-              <div className="mb-12 border-t border-gray-100 pt-10">
-                <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-8 flex items-center gap-2">
-                  <span className="w-8 h-[2px] bg-red-600"></span>{" "}
-                  Shipping_Configuration_Node
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
-                  <div className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                      Shipping_Logic_Type
-                    </label>
-                    <select
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer appearance-none"
-                      onChange={(e) => setShippingType(e.target.value)}
-                      value={shippingType}
-                    >
-                      <option value="weight-based">WEIGHT_BASED</option>
-                      <option value="fixed">FIXED_RATE</option>
-                      <option value="free">ALWAYS_FREE</option>
-                    </select>
-                  </div>
-
-                  <div className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                      Item_Weight_(KG)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all placeholder:text-gray-300"
-                    />
-                  </div>
-
-                  <div className="bg-gray-50 p-4 border border-gray-100 rounded-sm flex items-center justify-between group hover:border-red-200 transition-all">
-                    <div>
-                      <label className="text-[10px] font-black text-gray-400 tracking-widest uppercase block mb-1">
-                        Free_Shipping_Logic
-                      </label>
-                      <span className="text-[12px] font-bold text-black uppercase">
-                        Enable Threshold?
-                      </span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={isFreeShippingActive}
-                      onChange={(e) =>
-                        setIsFreeShippingActive(e.target.checked)
-                      }
-                      className="w-6 h-6 accent-red-600 cursor-pointer"
-                    />
-                  </div>
-
-                  <div
-                    className={`group relative transition-all duration-500 ${!isFreeShippingActive ? "opacity-30" : "opacity-100"}`}
-                  >
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                      Free_Shipping_Threshold
-                    </label>
-                    <input
-                      type="number"
-                      value={freeShippingThreshold}
-                      disabled={!isFreeShippingActive}
-                      onChange={(e) => setFreeShippingThreshold(e.target.value)}
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all placeholder:text-gray-300"
-                    />
-                  </div>
-
-                  <div className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
-                      Inside_Dhaka_Charge
-                    </label>
-                    <input
-                      type="number"
-                      value={insideDhakaCharge}
-                      onChange={(e) => setInsideDhakaCharge(e.target.value)}
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
-                    />
-                  </div>
-
-                  <div className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
-                      Outside_Dhaka_Charge
-                    </label>
-                    <input
-                      type="number"
-                      value={outsideDhakaCharge}
-                      onChange={(e) => setOutsideDhakaCharge(e.target.value)}
-                      className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
-                    />
-                  </div>
-
-                  <div className="group relative">
-                    <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                      Fixed_Shipping_Charge
-                    </label>
-                    <input
-                      type="number"
-                      value={fixedShippingCharge}
-                      disabled={shippingType !== "fixed"}
-                      onChange={(e) => setFixedShippingCharge(e.target.value)}
-                      className={`w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all ${shippingType !== "fixed" ? "opacity-30" : ""}`}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Rich Text Editor Section */}
-              <div className="mb-12">
-                <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
-                  Product_Specifications_Data
-                </label>
-                <div className="border border-gray-100 rounded-sm">
-                  <ReactQuill
-                    ref={quillRef}
-                    theme="snow"
-                    value={description}
-                    onChange={setDescription}
-                    modules={modules}
-                    formats={formats}
-                    className="min-h-[400px] description-quill"
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Submit Action */}
-              <div className="flex justify-end border-t border-gray-100 pt-10">
+              <div className="flex justify-end border-t border-gray-100 pt-10 mt-10">
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
