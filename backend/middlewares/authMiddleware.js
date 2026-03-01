@@ -5,28 +5,41 @@ import asyncHandler from "./asyncHandler.js";
 const authenticate = asyncHandler(async (req, res, next) => {
   let token;
 
-  // Check if token is present in cookies
+  // ⭐ 1. Cookie থেকে token নিন
   token = req.cookies.jwt;
+
+  // ⭐ 2. না পেলে Authorization Header থেকে নিন (Bearer token)
+  if (!token && req.headers.authorization?.startsWith("Bearer")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
   if (token) {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.userId).select("-password");
+
+      if (!req.user) {
+        res.status(401);
+        throw new Error("User not found");
+      }
+
       next();
     } catch (error) {
-      res.status(401).json({ message: "Not authorized, token failed" });
+      res.status(401);
+      throw new Error("Not authorized, token failed");
     }
   } else {
-    res.status(401).json({ message: "Not authorized, no token" });
+    res.status(401);
+    throw new Error("Not authorized, no token");
   }
 });
 
 const authorizeAdmin = (req, res, next) => {
-  // Check if user is an admin
   if (req.user && req.user.isAdmin) {
-    next(); // Proceed to next middleware or route handler
+    next();
   } else {
-    res.status(401).json({ message: "Not authorized as an admin" });
+    res.status(403); // ⭐ 403 Forbidden (401 নয়)
+    throw new Error("Not authorized as an admin");
   }
 };
 

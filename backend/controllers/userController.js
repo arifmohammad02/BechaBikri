@@ -3,6 +3,7 @@ import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
 import sendEmail from "../utils/sendEmail.js";
+import crypto from "crypto";
 
 // Create user
 const createUser = asyncHandler(async (req, res) => {
@@ -94,7 +95,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     user.otpExpires = undefined;
     await user.save();
 
-    createToken(res, user._id); // Now they get the cookie
+    const token = createToken(res, user._id); // Now they get the cookie
 
     res.status(200).json({
       _id: user._id,
@@ -102,6 +103,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
       email: user.email,
       isAdmin: user.isAdmin,
       isVerified: user.isVerified,
+      token: token,
     });
   } else {
     res.status(400);
@@ -151,45 +153,43 @@ const resendOTP = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  // Check if fields are empty
   if (!email || !password) {
-    return res.status(400).json({ error: "All fields are required" });
+    res.status(400);
+    throw new Error("All fields are required");
   }
 
-  // Check if user exists
   const existingUser = await User.findOne({ email });
 
-  if (existingUser) {
-    // চেক করুন ইউজার ভেরিফাইড কি না
-    if (!existingUser.isVerified) {
-      res.status(401);
-      throw new Error("Your account is not verified. Please check your email.");
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      existingUser.password,
-    );
-    if (isPasswordValid) {
-      createToken(res, existingUser._id);
-    } else {
-      res.status(400);
-      throw new Error("Invalid password");
-    }
-  } else {
-    res.status(400);
-    throw new Error("User not found");
+  if (!existingUser) {
+    res.status(401);
+    throw new Error("Invalid email or password");
   }
 
-  res.status(201).json({
+  if (!existingUser.isVerified) {
+    res.status(401);
+    throw new Error("Your account is not verified. Please check your email.");
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+
+  if (!isPasswordValid) {
+    res.status(401);
+    throw new Error("Invalid email or password");
+  }
+
+  // ✅ একবারই token তৈরি করুন
+  const token = createToken(res, existingUser._id);
+
+  res.status(200).json({
     _id: existingUser._id,
     username: existingUser.username,
     email: existingUser.email,
     isAdmin: existingUser.isAdmin,
+    isVerified: existingUser.isVerified,
+    token: token, // ✅ Frontend-এ store করার জন্য
   });
 });
 
-import crypto from "crypto";
 
 // @desc    Forgot Password - রিসেট টোকেন তৈরি ও ইমেইল পাঠানো
 const forgotPassword = asyncHandler(async (req, res) => {

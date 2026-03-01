@@ -35,19 +35,27 @@ startNotificationCleanupJob();
 // create express app
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-    ],
-  }),
-);
+// ==========================================
+// ⭐ CORS MUST BE FIRST - সবার আগে আসতে হবে
+// ==========================================
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["set-cookie"],
+};
+
+// Handle preflight requests for all routes
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // ⭐ Preflight handler
+
 // create http server
 const httpServer = createServer(app);
 
@@ -79,24 +87,31 @@ io.on("connection", (socket) => {
   });
 });
 
-// app settings
-app.set("io", io);
-app.set("onlineUsers", onlineUsers);
-
-// middleware
+// ==========================================
+// ⭐ Middleware Order - সঠিক ক্রম
+// ==========================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
 
+// App settings (after middleware)
+app.set("io", io);
+app.set("onlineUsers", onlineUsers);
+
+// Health check (before routes)
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     message: "Backend is running",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    frontend_url: process.env.FRONTEND_URL,
   });
 });
 
-// routes setup
+// ==========================================
+// ⭐ Routes Setup
+// ==========================================
 app.use("/api/users", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
@@ -109,20 +124,29 @@ app.use("/api/payments", paymentRoutes);
 // static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// app.use(express.static(path.join(__dirname, "/frontend/dist")));
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
-// });
-
+// ==========================================
+// ⭐ Error Handler (Last)
+// ==========================================
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Server Error", error: err.message });
+  console.error("Error:", err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || "Server Error",
+    stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+  });
+});
+
+// ==========================================
+// ⭐ 404 Handler (Very Last)
+// ==========================================
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 // listen
 httpServer.listen(port, () => {
   console.log(`🚀 Server running on port: ${port}`);
+  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
 });
 
 export { io, onlineUsers };

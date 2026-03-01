@@ -3,51 +3,24 @@ import { BASE_URL } from "../constants.js";
 
 const baseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
-  credentials: "include",
+  credentials: "include", // ⭐ Cookies পাঠানোর জন্য
   prepareHeaders: (headers, { getState }) => {
-    const userInfo = localStorage.getItem("userInfo");
-    let token = null;
-
-    if (userInfo) {
-      try {
-        const parsed = JSON.parse(userInfo);
-        token = parsed.token; 
-      } catch (e) {
-        console.error("Failed to parse userInfo:", e);
-      }
-    }
-
-    if (!token) {
-      token = getState()?.auth?.userInfo?.token;
-    }
-
-    console.log("🔑 Token found:", token ? "Yes" : "No");
+    // ⭐ LocalStorage থেকেও token নিন (backup হিসেবে)
+      const token = getState().auth?.token || localStorage.getItem("token");
 
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
-      console.log("✅ Authorization header set");
-    } else {
-      console.log("❌ No token found in userInfo");
     }
+
+    // ⭐ CORS এর জন্য headers
+    headers.set("Accept", "application/json");
 
     return headers;
   },
 });
 
-const baseQueryWithReauth = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
-
-  if (result?.error?.status === 401) {
-    console.log("🚫 401 Unauthorized - Logging out");
-    localStorage.clear();
-    window.location.href = "/login";
-  }
-
-  return result;
-};
-
 export const apiSlice = createApi({
-  baseQuery: baseQueryWithReauth,
+  baseQuery,
   tagTypes: [
     "Product",
     "Products",
