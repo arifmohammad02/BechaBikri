@@ -3,10 +3,26 @@ import { apiSlice } from "./apiSlice";
 
 export const productApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // productApiSlice.js - getProducts update
+    // productApiSlice.js
     getProducts: builder.query({
-      query: ({ keyword }) => ({
+      query: ({
+        keyword = "",
+        page = 1,
+        sort = "newest",
+        minPrice,
+        maxPrice,
+        category,
+      }) => ({
         url: `${PRODUCT_URL}`,
-        params: { keyword },
+        params: {
+          keyword,
+          page,
+          sort,
+          ...(minPrice !== undefined && minPrice !== 0 && { minPrice }),
+          ...(maxPrice !== undefined && maxPrice !== 100000 && { maxPrice }),
+          ...(category && { category }),
+        },
       }),
       keepUnusedDataFor: 5,
       providesTags: ["Products"],
@@ -81,12 +97,53 @@ export const productApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
     }),
 
+    // 🆕 New Arrivals Query
+    getNewArrivals: builder.query({
+      query: (limit = 8) => `${PRODUCT_URL}/new-arrivals?limit=${limit}`,
+      keepUnusedDataFor: 5,
+      providesTags: ["NewArrivals"],
+    }),
+
+    // 🆕 Best Sellers Query
+    getBestSellers: builder.query({
+      query: (limit = 8) => `${PRODUCT_URL}/best-sellers?limit=${limit}`,
+      keepUnusedDataFor: 5,
+      providesTags: ["BestSellers"],
+    }),
+
+    // 🆕 Flash Sale Query
+    getFlashSaleProducts: builder.query({
+      query: (limit = 8) => `${PRODUCT_URL}/flash-sale?limit=${limit}`,
+      keepUnusedDataFor: 5,
+      providesTags: ["FlashSale"],
+    }),
+
+    // 🆕 Update Sales Count Mutation
+    updateSalesCount: builder.mutation({
+      query: (data) => ({
+        url: `${PRODUCT_URL}/update-sales`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["BestSellers"],
+    }),
+
+    // ✅ UPDATED: getFilteredProducts with keyword support
     getFilteredProducts: builder.query({
       query: ({ checked, radio }) => ({
         url: `${PRODUCT_URL}/filtered-products`,
         method: "POST",
         body: { checked, radio },
       }),
+    }),
+    getRelatedProducts: builder.query({
+      query: ({ productId, limit = 4 }) => ({
+        url: `${PRODUCT_URL}/related/${productId}?limit=${limit}`,
+      }),
+      keepUnusedDataFor: 5,
+      providesTags: (result, error, { productId }) => [
+        { type: "RelatedProducts", id: productId },
+      ],
     }),
   }),
 });
@@ -104,4 +161,9 @@ export const {
   useGetNewProductsQuery,
   useUploadProductImageMutation,
   useGetFilteredProductsQuery,
+  useGetNewArrivalsQuery,
+  useGetBestSellersQuery,
+  useGetFlashSaleProductsQuery,
+  useUpdateSalesCountMutation,
+  useGetRelatedProductsQuery,
 } = productApiSlice;

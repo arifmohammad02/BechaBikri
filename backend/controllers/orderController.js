@@ -4,23 +4,67 @@ import Product from "../models/productModel.js";
 import sendEmail from "../utils/sendEmail.js";
 import { createAndSendNotification } from "./notificationController.js";
 
+// Helper function to check if flash sale is active
+const isFlashSaleActive = (flashSale) => {
+  if (!flashSale || !flashSale.isActive) return false;
 
+  const now = new Date();
+  const startTime = new Date(flashSale.startTime);
+  const endTime = new Date(flashSale.endTime);
+
+  return now >= startTime && now <= endTime;
+};
+
+// Helper function to calculate effective price (flash sale + discount)
+const calculateEffectivePrice = (product, variantPrice = null) => {
+  const basePrice = variantPrice || product.price || 0;
+
+ 
+  if (isFlashSaleActive(product.flashSale)) {
+    const flashDiscount = product.flashSale.discountPercentage || 0;
+    return basePrice - (basePrice * flashDiscount) / 100;
+  }
+
+
+  const discountPercent = product.discountPercentage || 0;
+  if (discountPercent > 0) {
+    return basePrice - (basePrice * discountPercent) / 100;
+  }
+
+  return basePrice;
+};
+
+
+const calculateSavings = (product, variantPrice = null) => {
+  const basePrice = variantPrice || product.price || 0;
+
+  if (isFlashSaleActive(product.flashSale)) {
+    const flashDiscount = product.flashSale.discountPercentage || 0;
+    return (basePrice * flashDiscount) / 100;
+  }
+
+  const discountPercent = product.discountPercentage || 0;
+  return (basePrice * discountPercent) / 100;
+};
 
 function calcPrices(dbOrderItems, shippingAddress) {
   const itemsPrice = dbOrderItems.reduce((acc, item) => {
-    // Use variant price if available, otherwise use base price
-    const itemPrice = item.variantInfo?.variantPrice
-      ? Number(item.variantInfo.variantPrice)
-      : Number(item.price) || 0;
-
-    const discountPercent = Number(item.discountPercentage) || 0;
+    const finalPrice = Number(item.finalPrice) || 0;
     const qty = Number(item.qty) || 1;
 
-    const discount = (itemPrice * discountPercent) / 100;
-    const discountedPrice = itemPrice - discount;
-
-    return acc + discountedPrice * qty;
+    return acc + finalPrice * qty;
   }, 0);
+
+    const totalSavings = dbOrderItems.reduce((acc, item) => {
+      const basePrice =
+        Number(item.variantInfo?.variantPrice) || Number(item.price) || 0;
+      const qty = Number(item.qty) || 1;
+      const savingsPerItem = calculateSavings(
+        item,
+        item.variantInfo?.variantPrice,
+      );
+      return acc + savingsPerItem * qty;
+    }, 0);
 
   let totalWeight = 0;
   let maxFixedShipping = 0;
@@ -82,13 +126,13 @@ function calcPrices(dbOrderItems, shippingAddress) {
     shippingPrice: finalShippingPrice.toFixed(2),
     taxPrice: taxPrice.toFixed(2),
     totalPrice: totalPrice.toFixed(2),
+    totalSavings: totalSavings.toFixed(2),
   };
 }
 
 const generateOrderId = () => {
   return (
-    Date.now().toString().slice(-3) + 
-    Math.floor(100 + Math.random() * 900)
+    Date.now().toString().slice(-3) + Math.floor(100 + Math.random() * 900)
   );
 };
 
@@ -102,7 +146,6 @@ const createOrder = async (req, res) => {
       throw new Error("No order items");
     }
     const validMethods = [
-      "PayPal",
       "Cash on Delivery",
       "bKash",
       "Nagad",
@@ -140,6 +183,7 @@ const createOrder = async (req, res) => {
       // Determine the correct image and price based on variant selection
       let itemImage = matchingItemFromDB.images[0];
       let itemPrice = Number(matchingItemFromDB.price);
+      let originalPrice = itemPrice;
 
       // Handle variant information
       let variantInfo = {
@@ -189,15 +233,28 @@ const createOrder = async (req, res) => {
           }
         }
       }
+      const finalPrice = calculateEffectivePrice(matchingItemFromDB, itemPrice);
+
+      // Calculate discount percentage for order record
+      let appliedDiscountPercent = 0;
+      if (isFlashSaleActive(matchingItemFromDB.flashSale)) {
+        appliedDiscountPercent =
+          matchingItemFromDB.flashSale.discountPercentage || 0;
+      } else {
+        appliedDiscountPercent = matchingItemFromDB.discountPercentage || 0;
+      }
 
       return {
         name: matchingItemFromDB.name,
         qty: Number(itemFromClient.qty) || 1,
         image: itemImage,
-        price: itemPrice,
+        price: originalPrice,
+        finalPrice: finalPrice,
         product: matchingItemFromDB._id,
-        discountPercentage: Number(matchingItemFromDB.discountPercentage) || 0,
-        weight: Number(matchingItemFromDB.weight) || 0.5,
+        discountPercentage: appliedDiscountPercent,
+        originalDiscountPercent: matchingItemFromDB.discountPercentage || 0,
+        isFlashSaleApplied: isFlashSaleActive(matchingItemFromDB.flashSale),
+        weight: Number(matchingItemFromDB.weight) || 0,
         shippingDetails: {
           ...matchingItemFromDB.shippingDetails,
         },
@@ -206,10 +263,8 @@ const createOrder = async (req, res) => {
       };
     });
 
-    const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calcPrices(
-      dbOrderItems,
-      shippingAddress,
-    );
+    const { itemsPrice, shippingPrice, taxPrice, totalPrice, totalSavings } =
+      calcPrices(dbOrderItems, shippingAddress);
 
     let paymentStatus;
     if (paymentMethod === "Cash on Delivery") {
@@ -231,32 +286,33 @@ const createOrder = async (req, res) => {
       taxPrice,
       shippingPrice,
       totalPrice,
+      totalSavings,
       paymentStatus,
       isPaid: false,
     });
 
     const createdOrder = await order.save();
 
-        for (const item of orderItems) {
-          if (item.variantInfo?.hasVariants) {
-            await Product.updateOne(
-              {
-                _id: item._id || item.product,
-                "variants.color.name": item.variantInfo.colorName,
-                "variants.sizes.size": item.variantInfo.sizeName,
-              },
-              {
-                $inc: { "variants.$[v].sizes.$[s].countInStock": -item.qty },
-              },
-              {
-                arrayFilters: [
-                  { "v.color.name": item.variantInfo.colorName },
-                  { "s.size": item.variantInfo.sizeName },
-                ],
-              },
-            );
-          }
-        }
+    for (const item of orderItems) {
+      if (item.variantInfo?.hasVariants) {
+        await Product.updateOne(
+          {
+            _id: item._id || item.product,
+            "variants.color.name": item.variantInfo.colorName,
+            "variants.sizes.size": item.variantInfo.sizeName,
+          },
+          {
+            $inc: { "variants.$[v].sizes.$[s].countInStock": -item.qty },
+          },
+          {
+            arrayFilters: [
+              { "v.color.name": item.variantInfo.colorName },
+              { "s.size": item.variantInfo.sizeName },
+            ],
+          },
+        );
+      }
+    }
 
     // Notification Pathan
     try {
@@ -265,7 +321,7 @@ const createOrder = async (req, res) => {
         title: "Order Placed! 🛒",
         message: `Your order #${order.orderId} has been confirmed.${
           ["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)
-            ? " Please complete the payment."
+            ? "Payment successful. Verification in progress."
             : ""
         }`,
         type: "order",
@@ -282,45 +338,66 @@ const createOrder = async (req, res) => {
       "username email",
     );
 
-    // --- আপডেট ৩: ইমেইল পাঠানোর সময় এরর হ্যান্ডলিং যোগ ---
-    // এটি করলে ইমেইল সেন্ড হতে দেরি হলে বা ফেইল করলে কাস্টমার রেসপন্স পেতে দেরি হবে না
-     const sendEmails = async () => {
-       try {
-         let paymentInstructions = "";
-         if (["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)) {
-           paymentInstructions = `<p style="color: #d97706; font-weight: bold;">Please complete your payment using ${paymentMethod} and submit the Transaction ID.</p>`;
-         }
+    const sendEmails = async () => {
+      try {
+        let paymentInstructions = "";
+        if (["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod)) {
+          paymentInstructions = `
+        <div style="background-color: #fff9db; padding: 15px; border-left: 4px solid #fab005; margin-bottom: 20px;">
+          <p style="color: #856404; font-weight: bold; margin: 0;">Payment Received!</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;">
+            Your payment via <strong>${paymentMethod}</strong> is currently undergoing verification. 
+            We will notify you once it's confirmed.
+          </p>
+        </div>`;
+          
+        }
 
-         // Build variant info for email
-         let variantDetails = "";
-         dbOrderItems.forEach((item) => {
-           if (item.variantInfo?.hasVariants) {
-             variantDetails += `<p style="font-size: 12px; color: #666;">Variant: ${item.variantInfo.colorName} / ${item.variantInfo.sizeName}</p>`;
-           }
-         });
+        // Build variant info for email
+        let variantDetails = "";
+        dbOrderItems.forEach((item) => {
+          if (item.variantInfo?.hasVariants) {
+            variantDetails += `<p style="font-size: 12px; color: #666;">Variant: ${item.variantInfo.colorName} / ${item.variantInfo.sizeName}</p>`;
+          }
+        });
 
-         await sendEmail({
-           to: populatedOrder.user.email,
-           subject: "Order Confirmation",
-           html: `<h2>Hi ${populatedOrder.user.username},</h2>
-                  <p>Your order (${populatedOrder.orderId}) has been placed successfully!</p>
-                  ${paymentInstructions}
-                  ${variantDetails}
-                  <p>Total: ৳${totalPrice}</p>`,
-         });
+       await sendEmail({
+         to: populatedOrder.user.email,
+         subject: `Order Success - ${populatedOrder.orderId}`, // Subject line update
+         html: `<h2>Hi ${populatedOrder.user.username},</h2>
+         <p>Thank you for your order! Your payment has been successfully submitted and is now being processed.</p>
+         ${paymentInstructions}
+         <h3>Order Summary:</h3>
+         ${itemsDetails}
+         <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
+           <p style="margin: 5px 0;"><strong>Order ID:</strong> #${populatedOrder.orderId}</p>
+           <p style="margin: 5px 0;"><strong>Subtotal:</strong> ৳${itemsPrice}</p>
+           <p style="margin: 5px 0;"><strong>Shipping:</strong> ${shippingPrice === "0.00" ? "FREE" : "৳" + shippingPrice}</p>
+           ${totalSavings > 0 ? `<p style="margin: 5px 0; color: #dc2626;"><strong>Total Savings:</strong> ৳${totalSavings.toFixed(2)}</p>` : ""}
+           <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;"><strong>Total Paid:</strong> ৳${totalPrice}</p>
+         </div>
+         <p style="font-size: 12px; color: #666; margin-top: 20px;">Note: Verification usually takes 10-30 minutes during working hours.</p>`,
+       });
 
-         await sendEmail({
-           to: process.env.ADMIN_EMAIL,
-           subject: "New Order Placed",
-           html: `<p>New order (${populatedOrder.orderId}) placed by ${populatedOrder.user.username}.</p>
-          <p>Payment Method: ${paymentMethod}</p>
-                  <p>Total: ৳${totalPrice}</p>`,
-         });
-       } catch (mailErr) {
-         console.error("Email Sending Error:", mailErr.message);
-       }
-     };
-
+        await sendEmail({
+          to: process.env.ADMIN_EMAIL,
+          subject: `🔔 Action Required: New Order #${populatedOrder.orderId}`,
+          html: `<div style="font-family: sans-serif;">
+           <h3 style="color: #2563eb;">New Order Received!</h3>
+           <p>A new order has been placed by <strong>${populatedOrder.user.username}</strong> (${populatedOrder.user.email}).</p>
+           <hr />
+           <p><strong>Order ID:</strong> ${populatedOrder.orderId}</p>
+           <p><strong>Payment Method:</strong> ${paymentMethod}</p>
+           <p><strong>Total Amount:</strong> ৳${totalPrice}</p>
+           <p style="background: #eef2ff; padding: 10px; border-radius: 5px;">
+             <strong>Action:</strong> Please check the dashboard to verify the Transaction ID and confirm the order.
+           </p>
+         </div>`,
+        });
+      } catch (mailErr) {
+        console.error("Email Sending Error:", mailErr.message);
+      }
+    };
 
     sendEmails();
 
@@ -479,7 +556,6 @@ const findOrderById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const markOrderAsDelivered = async (req, res) => {
   try {

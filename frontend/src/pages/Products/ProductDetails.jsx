@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,15 +6,32 @@ import { toast } from "react-toastify";
 import {
   useGetProductDetailsQuery,
   useCreateReviewMutation,
+  useGetRelatedProductsQuery, // 🆕 Import this
 } from "@redux/api/productApiSlice";
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
 import ProductTabs from "./ProductTabs";
-import { FaTruck, FaPlus, FaMinus, FaCheck } from "react-icons/fa";
+import ProductCard from "./ProductCard"; // 🆕 Import ProductCard
+import {
+  FaTruck,
+  FaPlus,
+  FaMinus,
+  FaCheck,
+  FaBolt,
+  FaClock,
+  FaHome,
+  FaChevronRight,
+  FaFolder,
+  FaFolderOpen,
+} from "react-icons/fa";
 import { HiOutlineShieldCheck } from "react-icons/hi";
 import AddToCartButton from "../../components/AddToCartButton";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  isFlashSaleActive,
+  getFlashSaleTimeRemaining,
 
+} from "../../components/ProductLogistics";
 
 const ProductDetails = () => {
   const { id: productId } = useParams();
@@ -35,13 +51,31 @@ const ProductDetails = () => {
     error,
   } = useGetProductDetailsQuery(productId);
 
+  // 🆕 Fetch Related Products
+  const {
+    data: relatedProducts,
+    isLoading: relatedLoading,
+    error: relatedError,
+  } = useGetRelatedProductsQuery(
+    {
+      productId: product?._id, // Use actual _id, not slug
+      limit: 5,
+    },
+    { skip: !product?._id }, // Skip until _id is available
+  );
+
   const { userInfo } = useSelector((state) => state.auth);
   const [createReview, { isLoading: loadingProductReview }] =
     useCreateReviewMutation();
-    
+
+  // Flash sale check
+  const hasFlashSale = product ? isFlashSaleActive(product) : false;
+  const flashSaleInfo = hasFlashSale
+    ? getFlashSaleTimeRemaining(product)
+    : null;
+
   useEffect(() => {
     if (product) {
-      // Set default selections from product data
       if (product.defaultColorIndex !== undefined) {
         setSelectedColorIndex(product.defaultColorIndex);
       }
@@ -49,7 +83,6 @@ const ProductDetails = () => {
         setSelectedSizeIndex(product.defaultSizeIndex);
       }
 
-      // ✅ FIXED: Set main product image as default initially
       if (!activeImage) {
         if (product.images?.length > 0) {
           setActiveImage(product.images[0]);
@@ -60,20 +93,18 @@ const ProductDetails = () => {
     }
   }, [product]);
 
-  // Get images based on variant selection
+  // ... rest of your existing functions (getDisplayImages, getCurrentPrice, etc.)
+
   const getDisplayImages = () => {
     if (!product) return [];
-    
-    // ✅ If user has selected a color (not default), show variant images
-    // Check if activeImage is from a variant
-    const isVariantSelected = product.variants?.some((v, idx) => 
-      idx === selectedColorIndex && (
-        v.color.images?.includes(activeImage) || 
-        v.color.image === activeImage
-      )
+
+    const isVariantSelected = product.variants?.some(
+      (v, idx) =>
+        idx === selectedColorIndex &&
+        (v.color.images?.includes(activeImage) ||
+          v.color.image === activeImage),
     );
 
-    // If variant is selected, show variant images
     if (isVariantSelected && product.variants[selectedColorIndex]) {
       const variant = product.variants[selectedColorIndex];
       if (variant.color.images && variant.color.images.length > 0) {
@@ -83,8 +114,7 @@ const ProductDetails = () => {
         return [variant.color.image];
       }
     }
-    
-    // Otherwise show main product images
+
     return product.images?.length > 0
       ? product.images
       : product.image
@@ -92,35 +122,52 @@ const ProductDetails = () => {
         : [];
   };
 
-  // Get current price based on variant selection
   const getCurrentPrice = () => {
     if (!product) return 0;
-    
-    if (product.hasVariants && product.variants && product.variants[selectedColorIndex]) {
+
+    let basePrice = product.price || 0;
+
+    if (
+      product.hasVariants &&
+      product.variants &&
+      product.variants[selectedColorIndex]
+    ) {
       const variant = product.variants[selectedColorIndex];
       if (variant.sizes && variant.sizes[selectedSizeIndex]) {
-        return variant.sizes[selectedSizeIndex].price;
+        basePrice = variant.sizes[selectedSizeIndex].price;
       }
     }
-    
-    return product.price || 0;
+
+    if (hasFlashSale) {
+      const flashDiscount = product.flashSale.discountPercentage || 0;
+      return basePrice - (basePrice * flashDiscount) / 100;
+    }
+
+    const discountPercent = product.discountPercentage || 0;
+    if (discountPercent > 0) {
+      return basePrice - (basePrice * discountPercent) / 100;
+    }
+
+    return basePrice;
   };
 
-  // Get current stock based on variant selection
   const getCurrentStock = () => {
     if (!product) return 0;
-    
-    if (product.hasVariants && product.variants && product.variants[selectedColorIndex]) {
+
+    if (
+      product.hasVariants &&
+      product.variants &&
+      product.variants[selectedColorIndex]
+    ) {
       const variant = product.variants[selectedColorIndex];
       if (variant.sizes && variant.sizes[selectedSizeIndex]) {
         return variant.sizes[selectedSizeIndex].countInStock;
       }
     }
-    
+
     return product.countInStock || 0;
   };
 
-  // Get variant info for cart
   const getVariantInfo = () => {
     if (!product || !product.hasVariants) {
       return {
@@ -137,6 +184,7 @@ const ProductDetails = () => {
 
     const variant = product.variants[selectedColorIndex];
     const size = variant?.sizes?.[selectedSizeIndex];
+    const variantBasePrice = size?.price || product.price;
 
     return {
       hasVariants: true,
@@ -145,28 +193,30 @@ const ProductDetails = () => {
       colorHex: variant?.color?.hexCode || "",
       sizeIndex: selectedSizeIndex,
       sizeName: size?.size || "",
-      variantPrice: size?.price || product.price,
+      variantPrice: variantBasePrice,
       sku: size?.sku || "",
     };
   };
 
-  // Calculate prices
-  const basePrice = getCurrentPrice();
-  const discountPercent = product?.discountPercentage || 0;
-  const discountAmount = (basePrice * discountPercent) / 100;
-  const finalPrice = basePrice - discountAmount;
+  const basePrice = product?.hasVariants
+    ? product.variants?.[selectedColorIndex]?.sizes?.[selectedSizeIndex]
+        ?.price || product.price
+    : product?.price || 0;
+
+  const finalPrice = getCurrentPrice();
   const currentStock = getCurrentStock();
   const displayImages = getDisplayImages();
 
-  // Handle color change
+  const displayDiscountPercent = hasFlashSale
+    ? product.flashSale.discountPercentage
+    : product?.discountPercentage || 0;
+
   const handleColorChange = (index) => {
     setSelectedColorIndex(index);
-    // Reset size to first available
     if (product.variants[index]?.sizes?.length > 0) {
       setSelectedSizeIndex(0);
     }
-    
-    // ✅ Update main image to variant image when color changes
+
     const variant = product.variants[index];
     if (variant?.color?.images?.length > 0) {
       setActiveImage(variant.color.images[0]);
@@ -174,22 +224,23 @@ const ProductDetails = () => {
       setActiveImage(variant.color.image);
     }
   };
-  // Handle size change
+
   const handleSizeChange = (index) => {
     setSelectedSizeIndex(index);
   };
 
-  // Create product object for cart with variant info
   const getProductForCart = () => {
     if (!product) return null;
-    
+
     return {
       ...product,
-      price: finalPrice, // Use discounted price
+      price: finalPrice,
       basePrice: basePrice,
       variantInfo: getVariantInfo(),
       image: displayImages[0] || product.images[0],
       images: displayImages,
+      _flashSaleActive: hasFlashSale,
+      _effectivePrice: finalPrice,
     };
   };
 
@@ -206,27 +257,113 @@ const ProductDetails = () => {
     }
   };
 
+
+  const getCategoryHierarchy = (category) => {
+  const hierarchy = [];
+  let current = category;
+  
+  while (current) {
+    hierarchy.unshift(current); // Add to beginning
+    current = current.parent;
+  }
+  
+  return hierarchy;
+};
+
+// In your component:
+const categoryHierarchy = product?.category 
+  ? getCategoryHierarchy(product.category) 
+  : [];
+
   if (isLoading) return <Loader />;
   if (error) return <Message variant="danger">{error?.data?.message}</Message>;
 
   return (
     <div className="bg-white min-h-screen font-figtree selection:bg-black selection:text-white">
-      {/* Breadcrumb */}
-      <nav className="mt-[105px] py-6 border-b border-gray-50">
-        <div className="container mx-auto px-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.25em] text-gray-400 font-bold font-dosis">
-          <Link to="/" className="hover:text-black transition-colors">
-            Home
+
+ 
+<nav className="mt-[105px] py-6 border-b border-gray-50 bg-white/80 backdrop-blur-sm sticky top-[60px] z-40">
+  <div className="container mx-auto px-6">
+    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-gray-400 font-bold font-dosis flex-wrap">
+      
+      {/* Home */}
+      <Link to="/" className="flex items-center gap-1.5 hover:text-black transition-colors px-2 py-1 rounded-lg hover:bg-gray-50">
+        <FaHome className="text-[10px]" />
+        <span>Home</span>
+      </Link>
+
+      <FaChevronRight className="text-[8px] text-gray-300" />
+
+      {/* Shop */}
+      <Link to="/shop" className="hover:text-black transition-colors px-2 py-1 rounded-lg hover:bg-gray-50">
+        Shop
+      </Link>
+
+      {/* 🆕 All Parent Categories */}
+      {categoryHierarchy.map((cat, index) => (
+        <div key={cat._id} className="contents">
+          <FaChevronRight className="text-[8px] text-gray-300" />
+          <Link
+            to={`/shop?category=${cat._id}`}
+            className={`flex items-center gap-1.5 transition-colors px-2 py-1 rounded-lg ${
+              index === categoryHierarchy.length - 1 
+                ? 'hover:text-[#B88E2F] hover:bg-[#B88E2F]/5 text-[#B88E2F]' // Last category (main)
+                : 'hover:text-gray-600 hover:bg-gray-50 text-gray-500' // Parent categories
+            }`}
+          >
+            {index === categoryHierarchy.length - 1 ? (
+              <FaFolder className="text-[10px]" />
+            ) : (
+              <FaFolderOpen className="text-[10px]" />
+            )}
+            <span className="truncate max-w-[100px]">{cat.name}</span>
           </Link>
-          <span className="text-gray-200">/</span>
-          <Link to="/shop" className="hover:text-black transition-colors">
-            Shop
-          </Link>
-          <span className="text-gray-200">/</span>
-          <span className="text-gray-900 truncate font-semibold">
-            {product.name}
-          </span>
         </div>
-      </nav>
+      ))}
+
+      <FaChevronRight className="text-[8px] text-gray-300" />
+
+      {/* Current Product */}
+      <span className="text-gray-900 font-semibold truncate max-w-[200px] px-2 py-1 bg-gray-100 rounded-lg">
+        {product.name}
+      </span>
+    </div>
+  </div>
+</nav>
+
+      {/* Flash Sale Banner */}
+      <AnimatePresence>
+        {hasFlashSale && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-gradient-to-r from-red-500 to-pink-600 text-white"
+          >
+            <div className="container mx-auto px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FaBolt className="text-2xl animate-pulse" />
+                <div>
+                  <span className="font-bold text-lg">
+                    ⚡ Flash Sale Active!
+                  </span>
+                  <span className="ml-3 text-white/90">
+                    {displayDiscountPercent}% OFF - Limited Time Only!
+                  </span>
+                </div>
+              </div>
+              {flashSaleInfo && (
+                <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-xl">
+                  <FaClock />
+                  <span className="font-mono font-bold">
+                    Ends in: {flashSaleInfo.hours}h {flashSaleInfo.minutes}m
+                  </span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="container mx-auto px-6 py-12">
         <div className="flex flex-col lg:flex-row gap-5">
@@ -261,15 +398,34 @@ const ProductDetails = () => {
               </div>
 
               {/* Display Area */}
-              <div className="relative flex-1 bg-gradient-to-br from-[#fcfcfc] to-[#f5f5f5] rounded-[2.5rem] overflow-hidden aspect-square flex items-center justify-center p-12 border border-gray-100/50 group shadow-sm">
-                {discountPercent > 0 && (
+              <div
+                className={`relative flex-1 bg-gradient-to-br from-[#fcfcfc] to-[#f5f5f5] rounded-[2.5rem] overflow-hidden aspect-square flex items-center justify-center p-12 border border-gray-100/50 group shadow-sm ${
+                  hasFlashSale ? "ring-2 ring-red-200" : ""
+                }`}
+              >
+                {/* Discount Badge */}
+                {displayDiscountPercent > 0 && (
                   <div className="absolute top-8 left-8 z-10">
-                    <div className="backdrop-blur-md bg-white/60 border border-white/40 px-5 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] flex flex-col items-center">
-                      <span className="text-[9px] font-black font-dosis uppercase tracking-[0.2em] text-gray-400 leading-none mb-1">
-                        Tech Offer
+                    <div
+                      className={`backdrop-blur-md border px-5 py-2.5 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] flex flex-col items-center ${
+                        hasFlashSale
+                          ? "bg-red-500/90 border-red-400 text-white"
+                          : "bg-white/60 border-white/40"
+                      }`}
+                    >
+                      <span
+                        className={`text-[9px] font-black font-dosis uppercase tracking-[0.2em] leading-none mb-1 ${
+                          hasFlashSale ? "text-white/80" : "text-gray-400"
+                        }`}
+                      >
+                        {hasFlashSale ? "Flash Sale" : "Tech Offer"}
                       </span>
-                      <span className="text-2xl font-black font-figtree text-black">
-                        -{Math.round(discountPercent)}%
+                      <span
+                        className={`text-2xl font-black font-figtree ${
+                          hasFlashSale ? "text-white" : "text-black"
+                        }`}
+                      >
+                        -{Math.round(displayDiscountPercent)}%
                       </span>
                     </div>
                   </div>
@@ -307,6 +463,7 @@ const ProductDetails = () => {
 
           {/* Product Info */}
           <div className="lg:w-[55%] space-y-2">
+            {/* ... Your existing product info code ... */}
             <header className="space-y-8">
               <div className="w-full">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -316,6 +473,25 @@ const ProductDetails = () => {
                       {product.name}
                     </h1>
 
+                    {/* Flash Sale Timer */}
+                    {hasFlashSale && flashSaleInfo && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 mb-3 bg-red-50 border border-red-200 rounded-xl p-3"
+                      >
+                        <FaBolt className="text-red-500 text-xl animate-pulse" />
+                        <div>
+                          <p className="text-red-600 font-bold text-sm">
+                            Flash Sale Ends In:
+                          </p>
+                          <p className="text-red-500 font-mono font-bold text-lg">
+                            {flashSaleInfo.hours}h {flashSaleInfo.minutes}m
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+
                     {/* Variant Display */}
                     {product.hasVariants && (
                       <div className="flex items-center gap-2 mb-3">
@@ -323,8 +499,12 @@ const ProductDetails = () => {
                           Selected:
                         </span>
                         <span className="text-[12px] font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-full">
-                          {product.variants[selectedColorIndex]?.color?.name} / {" "}
-                          {product.variants[selectedColorIndex]?.sizes[selectedSizeIndex]?.size}
+                          {product.variants[selectedColorIndex]?.color?.name} /{" "}
+                          {
+                            product.variants[selectedColorIndex]?.sizes[
+                              selectedSizeIndex
+                            ]?.size
+                          }
                         </span>
                       </div>
                     )}
@@ -336,12 +516,21 @@ const ProductDetails = () => {
                         <span className="text-[14px] text-[#666666] font-normal font-trebuchet">
                           Price:
                         </span>
-                        <span className="text-[14px] font-bold font-trebuchet text-gray-900">
+                        <span
+                          className={`text-[14px] font-bold font-trebuchet ${
+                            hasFlashSale ? "text-red-500" : "text-gray-900"
+                          }`}
+                        >
                           ৳{Math.round(finalPrice * qty).toLocaleString()}
                         </span>
-                        {discountPercent > 0 && (
+                        {displayDiscountPercent > 0 && (
                           <span className="text-[12px] text-gray-400 line-through ml-2">
                             ৳{Math.round(basePrice * qty).toLocaleString()}
+                          </span>
+                        )}
+                        {hasFlashSale && (
+                          <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-2 font-bold">
+                            SAVE ৳{Math.round((basePrice - finalPrice) * qty)}
                           </span>
                         )}
                       </div>
@@ -353,10 +542,14 @@ const ProductDetails = () => {
                         </span>
                         <span
                           className={`text-[14px] font-bold font-trebuchet ${
-                            currentStock > 0 ? "text-emerald-600" : "text-rose-500"
+                            currentStock > 0
+                              ? "text-emerald-600"
+                              : "text-rose-500"
                           }`}
                         >
-                          {currentStock > 0 ? `In Stock (${currentStock})` : "Out of Stock"}
+                          {currentStock > 0
+                            ? `In Stock (${currentStock})`
+                            : "Out of Stock"}
                         </span>
                       </div>
 
@@ -375,75 +568,86 @@ const ProductDetails = () => {
               </div>
 
               {/* Color Selection */}
-              {product.hasVariants && product.variants && product.variants.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-[12px] font-black text-gray-500 uppercase tracking-widest">
-                    Select Color
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    {product.variants.map((variant, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleColorChange(index)}
-                        className={`relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all ${
-                          selectedColorIndex === index
-                            ? "border-black bg-black text-white"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
-                        }`}
-                      >
-                        {/* Color Circle */}
-                        <span
-                          className="w-5 h-5 rounded-full border border-gray-200"
-                          style={{ backgroundColor: variant.color.hexCode || "#ccc" }}
-                        />
-                        <span className="text-[12px] font-bold">{variant.color.name}</span>
-                        {selectedColorIndex === index && (
-                          <FaCheck className="text-[10px]" />
-                        )}
-                      </motion.button>
-                    ))}
+              {product.hasVariants &&
+                product.variants &&
+                product.variants.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-[12px] font-black text-gray-500 uppercase tracking-widest">
+                      Select Color
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                      {product.variants.map((variant, index) => (
+                        <motion.button
+                          key={index}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleColorChange(index)}
+                          className={`relative flex items-center gap-2 px-4 py-2 rounded-xl border-2 transition-all ${
+                            selectedColorIndex === index
+                              ? "border-black bg-black text-white"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                          }`}
+                        >
+                          <span
+                            className="w-5 h-5 rounded-full border border-gray-200"
+                            style={{
+                              backgroundColor: variant.color.hexCode || "#ccc",
+                            }}
+                          />
+                          <span className="text-[12px] font-bold">
+                            {variant.color.name}
+                          </span>
+                          {selectedColorIndex === index && (
+                            <FaCheck className="text-[10px]" />
+                          )}
+                        </motion.button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Size Selection */}
-              {product.hasVariants && 
-               product.variants[selectedColorIndex]?.sizes && 
-               product.variants[selectedColorIndex].sizes.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-[12px] font-black text-gray-500 uppercase tracking-widest">
-                    Select Size
-                  </h4>
-                  <div className="flex flex-wrap gap-3">
-                    {product.variants[selectedColorIndex].sizes.map((size, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleSizeChange(index)}
-                        disabled={size.countInStock === 0}
-                        className={`relative px-4 py-2 rounded-xl border-2 transition-all min-w-[60px] ${
-                          selectedSizeIndex === index
-                            ? "border-black bg-black text-white"
-                            : size.countInStock === 0
-                            ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
-                        }`}
-                      >
-                        <span className="text-[12px] font-bold">{size.size}</span>
-                        {selectedSizeIndex === index && (
-                          <FaCheck className="text-[10px] absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5" />
-                        )}
-                        {size.countInStock === 0 && (
-                          <span className="text-[8px] block text-gray-400">Out</span>
-                        )}
-                      </motion.button>
-                    ))}
+              {product.hasVariants &&
+                product.variants[selectedColorIndex]?.sizes &&
+                product.variants[selectedColorIndex].sizes.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-[12px] font-black text-gray-500 uppercase tracking-widest">
+                      Select Size
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                      {product.variants[selectedColorIndex].sizes.map(
+                        (size, index) => (
+                          <motion.button
+                            key={index}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSizeChange(index)}
+                            disabled={size.countInStock === 0}
+                            className={`relative px-4 py-2 rounded-xl border-2 transition-all min-w-[60px] ${
+                              selectedSizeIndex === index
+                                ? "border-black bg-black text-white"
+                                : size.countInStock === 0
+                                  ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                            }`}
+                          >
+                            <span className="text-[12px] font-bold">
+                              {size.size}
+                            </span>
+                            {selectedSizeIndex === index && (
+                              <FaCheck className="text-[10px] absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5" />
+                            )}
+                            {size.countInStock === 0 && (
+                              <span className="text-[8px] block text-gray-400">
+                                Out
+                              </span>
+                            )}
+                          </motion.button>
+                        ),
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Key Features */}
               {product.specifications && product.specifications.length > 0 && (
@@ -507,14 +711,18 @@ const ProductDetails = () => {
                   <FaPlus size={14} />
                 </button>
               </div>
-              
+
               <div className="flex-1">
                 <AddToCartButton
                   product={getProductForCart()}
                   qty={qty}
-                  buttonText="Add to Cart"
+                  buttonText={
+                    hasFlashSale ? "⚡ Grab Flash Deal" : "Add to Cart"
+                  }
                   isOrderNow={true}
-                  className="w-full py-5 rounded-2xl font-poppins text-lg tracking-wide shadow-md transition-all duration-300 hover:shadow-xl active:scale-[0.99]"
+                  className={`w-full py-5 rounded-2xl font-poppins text-lg tracking-wide shadow-md transition-all duration-300 hover:shadow-xl active:scale-[0.99] ${
+                    hasFlashSale ? "bg-red-500 hover:bg-red-600 text-white" : ""
+                  }`}
                 />
               </div>
             </div>
@@ -544,8 +752,8 @@ const ProductDetails = () => {
                   </h4>
                   <div className="flex flex-col">
                     <span className="text-3xl font-bold font-figtree text-gray-900">
-                      {product.shippingDetails?.shippingType === "free" 
-                        ? "Free" 
+                      {product.shippingDetails?.shippingType === "free"
+                        ? "Free"
                         : `৳${product.shippingDetails?.insideDhakaCharge || 80}`}
                     </span>
                   </div>
@@ -589,6 +797,55 @@ const ProductDetails = () => {
               product,
             }}
           />
+        </div>
+
+        {/* 🆕 RELATED PRODUCTS SECTION */}
+        <div className="mt-24 pt-16 border-t border-gray-100">
+          <div className="mb-10">
+            <h2 className="text-2xl font-bold flex items-center gap-3">
+              <span className="w-1.5 h-8 bg-[#B88E2F] rounded-full"></span>
+              Related Products
+            </h2>
+            <p className="text-gray-500 text-sm mt-2 ml-5">
+              More products you might be interested in
+            </p>
+          </div>
+
+          {relatedLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="h-[420px] bg-gray-100 rounded-lg animate-pulse"
+                />
+              ))}
+            </div>
+          ) : relatedError ? (
+            <Message variant="danger">Failed to load related products</Message>
+          ) : relatedProducts?.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {relatedProducts.map((relatedProduct, index) => (
+                <motion.div
+                  key={relatedProduct._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <ProductCard p={relatedProduct} viewMode="grid" />
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-2xl">
+              <p className="text-gray-500">No related products found</p>
+              <Link
+                to="/shop"
+                className="text-[#B88E2F] font-bold mt-2 inline-block hover:underline"
+              >
+                Browse all products
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

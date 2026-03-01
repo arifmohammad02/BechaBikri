@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   saveShippingAddress,
@@ -11,10 +10,29 @@ import { GiVibratingSmartphone } from "react-icons/gi";
 import { TfiLocationPin } from "react-icons/tfi";
 import { MdOutlineLocalPostOffice, MdOutlinePayments } from "react-icons/md";
 import { Link } from "react-router-dom";
-import { FaGlobe, FaMoneyBillWave } from "react-icons/fa6";
+import { FaGlobe, FaMoneyBillWave, FaBolt } from "react-icons/fa6";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 import { FaMoneyBillWaveAlt, FaUniversity } from "react-icons/fa";
+
+// ✅ হেল্পার: আইটেমের জন্য সঠিক ফাইনাল প্রাইস
+const getItemFinalPrice = (item) => {
+  return Number(item._finalPrice) || 
+         Number(item._effectivePrice) || 
+         Number(item.finalPrice) || 
+         Number(item.price) || 0;
+};
+
+const getItemBasePrice = (item) => {
+  return Number(item.basePrice) || Number(item.price) || 0;
+};
+
+// ✅ হেল্পার: ফ্লাশ সেল চেক
+const isFlashSaleActive = (item) => {
+  return item._flashSaleActive || 
+         item.flashSaleActive || 
+         (item.flashSale?.isActive && new Date() >= new Date(item.flashSale.startTime) && new Date() <= new Date(item.flashSale.endTime));
+};
 
 const Shipping = () => {
   const cart = useSelector((state) => state.cart);
@@ -31,14 +49,25 @@ const Shipping = () => {
     shippingAddress?.phoneNumber || "",
   );
   
-  // 🆕 Payment Method State
   const [paymentMethod, setPaymentMethod] = useState(
     shippingAddress?.paymentMethod || "Cash on Delivery"
   );
 
   const dispatch = useDispatch();
 
-  // শিপিং চার্জ ক্যালকুলেশন
+  // Check for flash sale items
+  const hasFlashSaleItems = cartItems.some(item => isFlashSaleActive(item));
+
+  // ✅ সঠিক সাবটোটাল ক্যালকুলেশন
+  const calculateTotals = () => {
+    return cartItems.reduce((acc, item) => {
+      const finalPrice = getItemFinalPrice(item);
+      const qty = Number(item.qty) || 1;
+      return acc + finalPrice * qty;
+    }, 0);
+  };
+
+  // ✅ সঠিক শিপিং চার্জ ক্যালকুলেশন
   const calculateShippingCharge = (selectedCity) => {
     if (cartItems.length === 0) return 0;
 
@@ -47,12 +76,8 @@ const Shipping = () => {
     let baseShippingRate = 0;
     const isInsideDhaka = selectedCity?.toLowerCase().includes("dhaka");
 
-    const itemsPrice = cartItems.reduce((acc, item) => {
-      const price = Number(item.price) || 0;
-      const discountPercent = Number(item.discountPercentage || item.disdiscountPercentage || 0);
-      const discountedPrice = price - (price * discountPercent) / 100;
-      return acc + discountedPrice * (Number(item.qty) || 1);
-    }, 0);
+    // ✅ সঠিক আইটেমস প্রাইস (ফ্লাশ সেল প্রাইস সহ)
+    const itemsPrice = calculateTotals();
 
     const activeThresholds = cartItems
       .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
@@ -61,6 +86,7 @@ const Shipping = () => {
 
     const freeThreshold = activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
 
+    // ✅ ফ্রি শিপিং চেক
     if (itemsPrice >= freeThreshold) return 0;
 
     cartItems.forEach((item) => {
@@ -89,6 +115,24 @@ const Shipping = () => {
     return weightCharge + maxFixedShipping;
   };
 
+  // ✅ নতুন: পেমেন্ট মেথড চেঞ্জ হ্যান্ডলার
+  const handlePaymentMethodChange = (newMethodId) => {
+    setPaymentMethod(newMethodId);
+    dispatch(savePaymentMethod(newMethodId));
+    
+    // ✅ নতুন: localStorage এর pendingOrderData আপডেট করুন
+    const pendingOrderData = localStorage.getItem("pendingOrderData");
+    if (pendingOrderData) {
+      const parsedOrder = JSON.parse(pendingOrderData);
+      const updatedOrder = {
+        ...parsedOrder,
+        paymentMethod: newMethodId
+      };
+      localStorage.setItem("pendingOrderData", JSON.stringify(updatedOrder));
+      console.log("Updated pendingOrderData paymentMethod:", newMethodId);
+    }
+  };
+
   const handleShippingDetails = () => {
     const charge = calculateShippingCharge(city);
     dispatch(
@@ -105,10 +149,6 @@ const Shipping = () => {
     dispatch(savePaymentMethod(paymentMethod));
   };
 
-  useEffect(() => {
-    handleShippingDetails();
-  }, [city, cartItems, name, address, phoneNumber, paymentMethod]);
-
   const divisions = [
     "Dhaka",
     "Chittagong",
@@ -120,7 +160,6 @@ const Shipping = () => {
     "Mymensingh",
   ];
 
-  // 🆕 Payment Methods Configuration
   const paymentMethods = [
     { id: "Cash on Delivery", label: "Cash on Delivery", icon: <FaMoneyBillWave />, color: "bg-green-50 border-green-200 text-green-700" },
     { id: "bKash", label: "bKash", icon: <FaMoneyBillWaveAlt />, color: "bg-pink-50 border-pink-200 text-pink-700" },
@@ -134,12 +173,27 @@ const Shipping = () => {
   const labelStyle =
     "flex items-center gap-2 mb-2 font-mono font-black uppercase text-[11px] tracking-widest text-gray-500";
 
+  const subtotal = calculateTotals();
+  const shippingCharge = calculateShippingCharge(city);
+  const totalPrice = subtotal + shippingCharge;
+  
+  // ✅ সঠিক সেভিংস ক্যালকুলেশন
+  const totalSavings = cartItems.reduce((acc, item) => {
+    const basePrice = getItemBasePrice(item);
+    const finalPrice = getItemFinalPrice(item);
+    return acc + (basePrice - finalPrice) * (Number(item.qty) || 1);
+  }, 0);
+
   return (
     <div className="bg-[#FDFDFD] min-h-screen">
       <div className="py-8 bg-[#F9F1E7]/30 mt-[100px] border-b border-gray-100">
         <div className="container mx-auto px-4 flex items-center gap-3 font-mono text-sm">
           <Link to="/" className="text-gray-400 hover:text-blue-600 font-bold">
             Home
+          </Link>
+          <span className="text-gray-300">/</span>
+          <Link to="/cart" className="text-gray-400 hover:text-blue-600 font-bold">
+            Cart
           </Link>
           <span className="text-gray-300">/</span>
           <span className="text-blue-600 font-black tracking-tighter uppercase">
@@ -149,6 +203,21 @@ const Shipping = () => {
       </div>
 
       <div className="container mx-auto py-12 px-4">
+        {/* Flash Sale Alert */}
+        {hasFlashSaleItems && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 bg-gradient-to-r from-red-500 to-pink-600 text-white p-4 rounded-2xl shadow-lg flex items-center gap-3"
+          >
+            <FaBolt className="text-2xl animate-pulse" />
+            <div>
+              <p className="font-bold">⚡ Flash Sale Active on Some Items!</p>
+              <p className="text-sm text-white/80">You are saving ৳{totalSavings.toFixed(2)} total!</p>
+            </div>
+          </motion.div>
+        )}
+
         <div className="flex flex-col xl:flex-row gap-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -250,7 +319,7 @@ const Shipping = () => {
               </form>
             </div>
 
-            {/* 🆕 Payment Method Selection */}
+            {/* Payment Method Selection */}
             <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
               <h2 className="text-2xl font-mono font-black text-gray-900 tracking-tighter uppercase mb-6 flex items-center gap-3">
                 <MdOutlinePayments className="text-blue-600" />
@@ -263,7 +332,8 @@ const Shipping = () => {
                     key={method.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => setPaymentMethod(method.id)}
+                    // ✅ আপডেটেড: নতুন হ্যান্ডলার ব্যবহার করুন
+                    onClick={() => handlePaymentMethodChange(method.id)}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                       paymentMethod === method.id
                         ? `${method.color} border-current ring-2 ring-offset-2 ring-blue-100`
@@ -295,7 +365,7 @@ const Shipping = () => {
                 ))}
               </div>
 
-              {/* 🆕 Selected Payment Info */}
+              {/* Selected Payment Info */}
               <div className="mt-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                 <div className="flex items-start gap-3">
                   <BsCreditCard className="text-blue-600 mt-1" />
@@ -306,14 +376,21 @@ const Shipping = () => {
                     </p>
                     {paymentMethod === "Cash on Delivery" ? (
                       <p className="text-[11px] text-gray-500 font-mono mt-1">
-                        You will pay ৳{cart.cartItems.reduce((acc, item) => {
-                          const discount = (item.price * (item.discountPercentage || 0)) / 100;
-                          return acc + (item.price - discount) * item.qty;
-                        }, 0) + (Number(cart.shippingAddress?.shippingCharge) || 0)} when the product is delivered.
+                        You will pay ৳{totalPrice.toFixed(2)} when the product is delivered.
+                        {totalSavings > 0 && (
+                          <span className="text-green-600 block mt-1">
+                            💰 You saved ৳{totalSavings.toFixed(2)}!
+                          </span>
+                        )}
                       </p>
                     ) : (
                       <p className="text-[11px] text-gray-500 font-mono mt-1">
                         You will be redirected to payment instructions after placing the order.
+                        {totalSavings > 0 && (
+                          <span className="text-green-600 block mt-1">
+                            💰 Pay ৳{totalPrice.toFixed(2)} (Saved ৳{totalSavings.toFixed(2)}!)
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>

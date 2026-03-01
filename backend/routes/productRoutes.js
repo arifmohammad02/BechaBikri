@@ -13,7 +13,12 @@ import {
   addProductReview,
   fetchTopProducts,
   fetchNewProducts,
+  fetchNewArrivals,
+  fetchBestSellers,
+  fetchFlashSaleProducts,
+  updateProductSalesCount,
   filterProducts,
+  fetchRelatedProducts,
 } from "../controllers/productController.js";
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 import checkId from "../middlewares/checkId.js";
@@ -25,10 +30,16 @@ router
 
   router.route("/allproducts").get(fetchAllProducts);
   router.route("/:id/reviews").post(authenticate, checkId, addProductReview);
+  router.get("/related/:id", fetchRelatedProducts);
 
   router.get("/top", fetchTopProducts);
   router.get("/new", fetchNewProducts);
 
+  // 🆕 New routes for New Arrivals, Best Sellers, Flash Sale
+router.get("/new-arrivals", fetchNewArrivals);
+router.get("/best-sellers", fetchBestSellers);
+router.get("/flash-sale", fetchFlashSaleProducts);
+router.post("/update-sales", authenticate, authorizeAdmin, updateProductSalesCount);
 
 router
   .route("/:id")
@@ -38,5 +49,6 @@ router
 
 
   router.route("/filtered-products").post(filterProducts);
+
 
 export default router;

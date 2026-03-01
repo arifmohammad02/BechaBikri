@@ -52,6 +52,27 @@ const parseVariants = (variantsData) => {
   }
 };
 
+const parseFlashSale = (flashSaleData) => {
+  if (!flashSaleData) return { isActive: false, discountPercentage: 0 };
+
+  try {
+    const parsed =
+      typeof flashSaleData === "string"
+        ? JSON.parse(flashSaleData)
+        : flashSaleData;
+    return {
+      isActive: parsed.isActive === true || parsed.isActive === "true",
+      discountPercentage: Number(parsed.discountPercentage) || 0,
+      startTime: parsed.startTime ? new Date(parsed.startTime) : null,
+      endTime: parsed.endTime ? new Date(parsed.endTime) : null,
+      flashSalePrice: Number(parsed.flashSalePrice) || 0,
+    };
+  } catch (error) {
+    console.error("Error parsing flash sale:", error);
+    return { isActive: false, discountPercentage: 0 };
+  }
+};
+
 const addProduct = asyncHandler(async (req, res) => {
   try {
     const fields = req.fields;
@@ -70,6 +91,8 @@ const addProduct = asyncHandler(async (req, res) => {
       variants,
       defaultColorIndex,
       defaultSizeIndex,
+      flashSale,
+      salesCount,
     } = fields;
 
     // ১. ভ্যালিডেশন
@@ -125,8 +148,17 @@ const addProduct = asyncHandler(async (req, res) => {
       parsedVariants = parseVariants(variants);
     }
 
+    // Parse flash sale
+    const parsedFlashSale = parseFlashSale(flashSale);
+
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
     const product = new Product({
       ...fields,
+      slug,
       description: sanitizeDescription(description),
       images: imagesArray, // ডাটাবেসে [img1, img2, img3] আকারে যাবে
       image: imagesArray[0],
@@ -142,6 +174,8 @@ const addProduct = asyncHandler(async (req, res) => {
       variants: parsedVariants,
       defaultColorIndex: Number(defaultColorIndex) || 0,
       defaultSizeIndex: Number(defaultSizeIndex) || 0,
+      flashSale: parsedFlashSale,
+      salesCount: Number(salesCount) || 0,
     });
 
     await product.save();
@@ -152,13 +186,11 @@ const addProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 const updateProductDetails = asyncHandler(async (req, res) => {
   try {
     const fields = req.fields;
     let {
-      name, // নাম বাদ পড়েছিল
+      name, 
       description,
       price,
       category,
@@ -178,6 +210,8 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       variants,
       defaultColorIndex,
       defaultSizeIndex,
+      flashSale,
+      salesCount,
     } = fields;
 
     // ভ্যালিডেশন
@@ -231,8 +265,16 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       parsedVariants = parseVariants(variants);
     }
 
+    // Parse flash sale
+    const parsedFlashSale = parseFlashSale(flashSale);
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
     const updatedFields = {
       ...fields,
+      slug,
       description: sanitizeDescription(description),
       images: imagesArray,
       specifications: specifications
@@ -254,6 +296,8 @@ const updateProductDetails = asyncHandler(async (req, res) => {
       variants: parsedVariants,
       defaultColorIndex: Number(defaultColorIndex) || 0,
       defaultSizeIndex: Number(defaultSizeIndex) || 0,
+      flashSale: parsedFlashSale,
+      salesCount: Number(fields.salesCount) || 0,
     };
 
     const product = await Product.findByIdAndUpdate(
@@ -283,31 +327,79 @@ const removeProduct = asyncHandler(async (req, res) => {
   }
 });
 
+// productController.js
 const fetchProducts = asyncHandler(async (req, res) => {
   try {
-    const pageSize = 20;
+    const pageSize = 16; // Match frontend itemsPerPage
+    const page = Number(req.query.page) || 1;
 
-    const keyword = req.query.keyword
-      ? {
-          name: {
-            $regex: req.query.keyword,
-            $options: "i",
-          },
-        }
-      : {};
+    // Build query object
+    let query = { isActive: { $ne: false } };
+    let sortOption = { createdAt: -1 };
 
-    const count = await Product.countDocuments({ ...keyword });
-    const products = await Product.find({ ...keyword })
-      .populate("category")
+    // 🔍 Keyword search
+    if (req.query.keyword) {
+      query.$or = [
+        { name: { $regex: req.query.keyword, $options: "i" } },
+        { brand: { $regex: req.query.keyword, $options: "i" } },
+        { description: { $regex: req.query.keyword, $options: "i" } }
+      ];
+    }
+
+    // 🏷️ Category filter
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+
+    // 💰 Price range filter
+    if (req.query.minPrice || req.query.maxPrice) {
+      query.price = {};
+      if (req.query.minPrice) query.price.$gte = Number(req.query.minPrice);
+      if (req.query.maxPrice) query.price.$lte = Number(req.query.maxPrice);
+    }
+
+    // 📊 Sorting
+    if (req.query.sort) {
+      switch (req.query.sort) {
+        case "price-low":
+          sortOption = { price: 1 };
+          break;
+        case "price-high":
+          sortOption = { price: -1 };
+          break;
+        case "bestselling":
+          sortOption = { salesCount: -1, rating: -1 };
+          break;
+        case "rating":
+          sortOption = { rating: -1 };
+          break;
+        case "name":
+          sortOption = { name: 1 };
+          break;
+        case "newest":
+        default:
+          sortOption = { createdAt: -1 };
+      }
+    }
+
+    // Execute queries
+    const count = await Product.countDocuments(query);
+    
+    const products = await Product.find(query)
+      .populate("category", "name")
+      .sort(sortOption)
       .limit(pageSize)
-      .sort({ createdAt: -1 });
+      .skip(pageSize * (page - 1));
 
     res.json({
       products,
-      page: 1,
+      page,
       pages: Math.ceil(count / pageSize),
-      hasMore: count > pageSize,
+      total: count,
+      hasMore: count > pageSize * page,
+      sort: req.query.sort || 'newest'
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server Error" });
@@ -347,7 +439,7 @@ const fetchAllProducts = asyncHandler(async (req, res) => {
       .populate({
         path: "category",
         populate: {
-          path: "parent", 
+          path: "parent",
           populate: {
             path: "parent",
           },
@@ -433,6 +525,78 @@ const fetchNewProducts = asyncHandler(async (req, res) => {
   }
 });
 
+const fetchNewArrivals = asyncHandler(async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 8;
+    const products = await Product.find({})
+      .populate("category")
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+// 🆕 Best Sellers - Get products with highest sales count
+const fetchBestSellers = asyncHandler(async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 8;
+    const products = await Product.find({})
+      .populate("category")
+      .sort({ salesCount: -1, rating: -1 })
+      .limit(limit);
+    res.json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+// 🆕 Flash Sale - Get products with active flash sale
+const fetchFlashSaleProducts = asyncHandler(async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 8;
+    const now = new Date();
+
+    const products = await Product.find({
+      "flashSale.isActive": true,
+      "flashSale.startTime": { $lte: now },
+      "flashSale.endTime": { $gte: now },
+    })
+      .populate("category")
+      .limit(limit);
+
+    res.json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
+// 🆕 Update sales count (to be called when order is placed)
+const updateProductSalesCount = asyncHandler(async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    product.salesCount = (product.salesCount || 0) + (quantity || 1);
+    await product.save();
+
+    res.json({
+      message: "Sales count updated",
+      salesCount: product.salesCount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
+
 const filterProducts = asyncHandler(async (req, res) => {
   try {
     const { checked, radio } = req.body;
@@ -455,10 +619,9 @@ const filterProducts = asyncHandler(async (req, res) => {
       args.category = { $in: finalCategoryIds };
     }
 
-
-     if (radio && radio.length) {
-       args.price = { $gte: radio[0], $lte: radio[1] };
-     }
+    if (radio && radio.length) {
+      args.price = { $gte: radio[0], $lte: radio[1] };
+    }
 
     const products = await Product.find(args).populate("category");
     res.json(products);
@@ -468,7 +631,87 @@ const filterProducts = asyncHandler(async (req, res) => {
   }
 });
 
+// productController.js - Updated fetchRelatedProducts
 
+// @desc    Get related products based on category and brand
+// @route   GET /api/products/related/:id
+// @access  Public
+const fetchRelatedProducts = asyncHandler(async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const limit = Number(req.query.limit) || 5;
+
+    // 🆕 Find product by ID or Slug (same logic as fetchProductById)
+    const currentProduct = await Product.findOne({
+      $or: [
+        { _id: mongoose.isValidObjectId(productId) ? productId : null },
+        { slug: productId },
+      ],
+    });
+    
+    if (!currentProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const { category, brand, _id: actualProductId } = currentProduct;
+
+    // Build query to find related products
+    let relatedProducts = [];
+
+    // Step 1: Find products with same category (excluding current product)
+    if (category) {
+      const sameCategory = await Product.find({
+        _id: { $ne: actualProductId }, // Use actual ObjectId here
+        category: category,
+        isActive: { $ne: false }
+      })
+      .populate("category", "name")
+      .limit(limit)
+      .select("name price images brand slug discountPercentage flashSale rating");
+
+      relatedProducts = [...sameCategory];
+    }
+
+    // Step 2: If not enough, add same brand products
+    if (relatedProducts.length < limit && brand) {
+      const existingIds = relatedProducts.map(p => p._id.toString());
+      existingIds.push(actualProductId.toString());
+
+      const sameBrand = await Product.find({
+        _id: { $nin: existingIds },
+        brand: brand,
+        isActive: { $ne: false }
+      })
+      .populate("category", "name")
+      .limit(limit - relatedProducts.length)
+      .select("name price images brand slug discountPercentage flashSale rating");
+
+      relatedProducts = [...relatedProducts, ...sameBrand];
+    }
+
+    // Step 3: If still not enough, add random products
+    if (relatedProducts.length < limit) {
+      const existingIds = relatedProducts.map(p => p._id.toString());
+      existingIds.push(actualProductId.toString());
+
+      const randomProducts = await Product.find({
+        _id: { $nin: existingIds },
+        isActive: { $ne: false }
+      })
+      .populate("category", "name")
+      .limit(limit - relatedProducts.length)
+      .select("name price images brand slug discountPercentage flashSale rating");
+
+      relatedProducts = [...relatedProducts, ...randomProducts];
+    }
+
+    res.json(relatedProducts);
+    
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 export {
   addProduct,
@@ -480,5 +723,10 @@ export {
   addProductReview,
   fetchTopProducts,
   fetchNewProducts,
+  fetchNewArrivals,
+  fetchBestSellers,
+  fetchFlashSaleProducts,
+  updateProductSalesCount,
   filterProducts,
+  fetchRelatedProducts,
 };

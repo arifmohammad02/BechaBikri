@@ -8,6 +8,7 @@ import {
   RouterProvider,
   createRoutesFromElements,
   createBrowserRouter,
+  ScrollRestoration,
 } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store";
@@ -150,6 +151,14 @@ const router = createBrowserRouter(
       />
       <Route
         path="/shop"
+        element={
+          <Suspense fallback={<Loader />}>
+            <Shop />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/shop/:keyword" // 🆕 URL parameter সহ
         element={
           <Suspense fallback={<Loader />}>
             <Shop />

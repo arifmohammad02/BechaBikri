@@ -1,7 +1,32 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { addToCart } from "../redux/features/cart/cartSlice";
-import { FaMinus, FaPlus } from "react-icons/fa6";
+import { FaMinus, FaPlus, FaBolt } from "react-icons/fa6";
+
+// ✅ হেল্পার: সঠিক ফাইনাল প্রাইস পাওয়া
+const getItemFinalPrice = (item) => {
+  // ✅ সরাসরি _finalPrice বা _effectivePrice ব্যবহার করুন
+  return Number(item._finalPrice) || 
+         Number(item._effectivePrice) || 
+         Number(item.finalPrice) || 
+         Number(item.price) || 0;
+};
+
+// ✅ হেল্পার: বেস প্রাইস পাওয়া
+const getItemBasePrice = (item) => {
+  return Number(item.basePrice) || 
+         Number(item.variantInfo?.variantPrice) || 
+         Number(item.price) || 0;
+};
+
+// ✅ হেল্পার: ফ্লাশ সেল চেক
+const isFlashSaleActive = (item) => {
+  return item._flashSaleActive || 
+         item.flashSaleActive || 
+         (item.flashSale?.isActive && 
+          new Date() >= new Date(item.flashSale.startTime) && 
+          new Date() <= new Date(item.flashSale.endTime));
+};
 
 const OrderSummery = () => {
   const cart = useSelector((state) => state.cart);
@@ -12,11 +37,9 @@ const OrderSummery = () => {
     dispatch(addToCart({ ...product, qty }));
   };
 
-  const calculateDiscountedPrice = (item) => {
-    const price = item.variantInfo?.variantPrice || item.price || 0;
-    return item.discountPercentage > 0
-      ? price - (price * item.discountPercentage) / 100
-      : price;
+  // ✅ সঠিক প্রাইস ক্যালকুলেশন (ফ্লাশ সেল সহ)
+  const calculateItemPrice = (item) => {
+    return getItemFinalPrice(item);
   };
 
   return (
@@ -45,7 +68,16 @@ const OrderSummery = () => {
             ? item.images[0] 
             : item?.image || "/placeholder.jpg";
 
-          const unitPrice = calculateDiscountedPrice(item);
+          // ✅ সঠিক প্রাইস এবং সেভিংস ক্যালকুলেশন
+          const unitPrice = calculateItemPrice(item);
+          const basePrice = getItemBasePrice(item);
+          const hasFlashSale = isFlashSaleActive(item);
+          const discountPercent = hasFlashSale 
+            ? (item.flashSale?.discountPercentage || 0)
+            : (item.discountPercentage || 0);
+          const savingsPerUnit = basePrice - unitPrice;
+          const totalSavings = savingsPerUnit * item.qty;
+          
           const variantText = item.variantInfo?.hasVariants
             ? `${item.variantInfo.colorName} / ${item.variantInfo.sizeName}`
             : "";
@@ -53,7 +85,11 @@ const OrderSummery = () => {
           return (
             <div
               key={`${item._id}-${item.variantInfo?.colorIndex}-${item.variantInfo?.sizeIndex}`}
-              className="group relative flex items-center gap-4 p-3 rounded-2xl border border-gray-50 bg-gray-50/30 hover:bg-white hover:border-blue-100 hover:shadow-xl hover:shadow-blue-50/50 transition-all duration-300"
+              className={`group relative flex items-center gap-4 p-3 rounded-2xl border bg-gray-50/30 hover:bg-white hover:shadow-xl transition-all duration-300 ${
+                hasFlashSale 
+                  ? 'border-red-100 hover:border-red-200 hover:shadow-red-50/50' 
+                  : 'border-gray-50 hover:border-blue-100 hover:shadow-blue-50/50'
+              }`}
             >
               {/* Product Image */}
               <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 overflow-hidden rounded-xl bg-white border border-gray-100">
@@ -62,13 +98,22 @@ const OrderSummery = () => {
                   alt={item.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                {/* ✅ ফ্লাশ সেল ব্যাজ */}
+                {hasFlashSale && (
+                  <div className="absolute top-0 left-0 bg-red-500 text-white text-[7px] font-bold px-1.5 py-0.5 rounded-br-lg flex items-center gap-0.5">
+                    <FaBolt size={6} />
+                    FLASH
+                  </div>
+                )}
               </div>
 
               {/* Info Section */}
               <div className="flex-1 min-w-0">
                 <Link
                   to={`/product/${item._id}`}
-                  className="text-sm font-mono font-black text-gray-800 hover:text-blue-600 transition-colors line-clamp-1 uppercase tracking-tighter"
+                  className={`text-sm font-mono font-black hover:transition-colors line-clamp-1 uppercase tracking-tighter ${
+                    hasFlashSale ? 'text-red-600 hover:text-red-700' : 'text-gray-800 hover:text-blue-600'
+                  }`}
                 >
                   {item.name}
                 </Link>
@@ -82,6 +127,20 @@ const OrderSummery = () => {
                     />
                     <span className="text-[10px] text-gray-500 font-mono">
                       {variantText}
+                    </span>
+                  </div>
+                )}
+                
+                {/* ✅ ডিসকাউন্ট ব্যাজ */}
+                {discountPercent > 0 && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                      hasFlashSale 
+                        ? 'bg-red-100 text-red-600' 
+                        : 'bg-green-100 text-green-600'
+                    }`}>
+                      {hasFlashSale && <FaBolt size={6} className="inline mr-0.5" />}
+                      {Math.round(discountPercent)}% OFF
                     </span>
                   </div>
                 )}
@@ -109,12 +168,24 @@ const OrderSummery = () => {
 
                   {/* Price */}
                   <div className="text-right">
-                    <p className="text-sm font-mono font-black text-gray-900">
+                    <p className={`text-sm font-mono font-black ${
+                      hasFlashSale ? 'text-red-600' : 'text-gray-900'
+                    }`}>
                       ৳{(item.qty * unitPrice).toLocaleString("en-BD")}
                     </p>
-                    {item.discountPercentage > 0 && (
-                      <p className="text-[9px] font-mono font-bold text-green-500 uppercase">
-                        Saved ৳{Math.round(((item.variantInfo?.variantPrice || item.price) - unitPrice) * item.qty)}
+                    {/* ✅ সঠিক সেভিংস দেখান */}
+                    {savingsPerUnit > 0 && (
+                      <p className={`text-[9px] font-mono font-bold uppercase ${
+                        hasFlashSale ? 'text-red-500' : 'text-green-500'
+                      }`}>
+                        {hasFlashSale && <FaBolt size={6} className="inline mr-0.5" />}
+                        Saved ৳{Math.round(totalSavings)}
+                      </p>
+                    )}
+                    {/* ✅ স্ট্রাইকথ্রু প্রাইস */}
+                    {savingsPerUnit > 0 && (
+                      <p className="text-[9px] text-gray-400 line-through">
+                        ৳{basePrice.toLocaleString("en-BD")}
                       </p>
                     )}
                   </div>

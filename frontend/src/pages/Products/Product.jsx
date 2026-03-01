@@ -1,14 +1,60 @@
 /* eslint-disable react/prop-types */
 import { Link } from "react-router-dom";
-import HeartIcon from "./HeartIcon";
-import { FaArrowRight, FaBagShopping, FaEye } from "react-icons/fa6";
-import { motion } from "framer-motion";
+import HeartIcon from "../../pages/Products/HeartIcon";
+import { FaBolt, FaShoppingCart, FaClock } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../redux/features/cart/cartSlice";
+import { toast } from "react-toastify";
+import { isFlashSaleActive, calculateEffectivePrice } from "../../components/ProductLogistics";
+import { useState, useEffect } from "react";
 
 const Product = ({ product }) => {
-  const discountedPrice =
-    product.discountPercentage > 0
-      ? product.price - (product.price * product.discountPercentage) / 100
-      : product.price;
+  const dispatch = useDispatch();
+  const [timeLeft, setTimeLeft] = useState({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  const hasFlashSale = isFlashSaleActive(product);
+  const finalPrice = calculateEffectivePrice(product);
+  const originalPrice = product?.price || 0;
+  const displayDiscountPercent = hasFlashSale 
+    ? product.flashSale.discountPercentage 
+    : product.discountPercentage;
+
+  useEffect(() => {
+    if (!hasFlashSale || !product.flashSale?.endTime) return;
+
+    const calculateTimeLeft = () => {
+      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+      const endTime = new Date(product.flashSale.endTime);
+      const bdEndTime = new Date(endTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+      
+      const difference = bdEndTime - now;
+
+      if (difference > 0) {
+        const totalDays = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const months = Math.floor(totalDays / 30);
+        const remainingDays = totalDays % 30;
+        
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+
+        setTimeLeft({
+          months: months,
+          days: remainingDays,
+          hours: hours,
+          minutes: minutes,
+          seconds: seconds
+        });
+      } else {
+        setTimeLeft({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
+    
+    return () => clearInterval(interval);
+  }, [hasFlashSale, product]);
 
   const mainImage = Array.isArray(product?.images) && product.images.length > 0 
     ? product.images[0] 
@@ -16,85 +62,174 @@ const Product = ({ product }) => {
 
   const productPath = `/product/${product.slug || product._id}`;
 
+  const addToCartHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const productToAdd = {
+      ...product,
+      _flashSaleActive: hasFlashSale,
+      _effectivePrice: finalPrice
+    };
+    
+    dispatch(addToCart({ ...productToAdd, qty: 1 }));
+    toast.success(hasFlashSale ? "⚡ Flash Sale item added!" : "Added to cart");
+  };
+
+  const formatNum = (n) => String(n).padStart(2, '0');
+
+  const showMonths = timeLeft.months > 0;
+  const showDays = timeLeft.days > 0 || timeLeft.months > 0;
+
   return (
-    <div className="group relative w-full bg-white rounded-[1.5rem] p-3 border border-gray-100 hover:border-blue-100 hover:shadow-[0_20px_40px_rgba(37,99,235,0.08)] transition-all duration-500 ease-in-out">
-      
-      {/* 1. Image Container */}
-      <div className="relative overflow-hidden rounded-[1.2rem] bg-[#fcfcfc] aspect-[1/1]">
-        <Link to={productPath}>
-          <motion.img 
-            whileHover={{ scale: 1.08 }}
-            transition={{ duration: 0.6 }}
-            className="w-full h-full object-contain p-4" 
+    <div 
+      className="group bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-[500px]"
+      style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
+    >
+      {/* Image - Fixed Height */}
+      <div className="relative h-fit bg-gray-50 overflow-hidden flex-shrink-0">
+        <Link to={productPath} className="block w-full h-full">
+          <img 
+            className="w-full h-full object-cover p-3 group-hover:scale-105 transition-transform duration-500" 
             src={mainImage} 
-            alt={product.name} 
+            alt={product.name}
+            loading="lazy"
           />
         </Link>
 
-        {/* Floating Badges (Blue/Tech Style) */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
-          {product.discountPercentage > 0 && (
-            <span className="bg-blue-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg uppercase tracking-tighter">
-              {product.discountPercentage}% OFF
+        {/* Discount Badge */}
+        {displayDiscountPercent > 0 && (
+          <div className={`absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 shadow-sm ${hasFlashSale ? 'bg-red-500' : 'bg-gray-800'}`}>
+            {hasFlashSale && <FaBolt className="text-[8px]" />}
+            -{displayDiscountPercent}%
+          </div>
+        )}
+
+        {/* Heart Icon */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <HeartIcon product={product} />
+        </div>
+
+        {/* Quick Add Button */}
+        <button
+          onClick={addToCartHandler}
+          className="absolute bottom-0 left-0 right-0 bg-gray-900 text-white text-xs font-bold py-2.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+        >
+          <FaShoppingCart size={12} />
+          Add to Cart
+        </button>
+      </div>
+
+      {/* Content - Flexible with Fixed Areas */}
+      <div className="p-3 flex flex-col flex-grow">
+        {/* Brand */}
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 h-4 flex-shrink-0">
+          {product?.brand || "AriX GeaR"}
+        </p>
+
+        {/* Title - Fixed 2 Lines */}
+        <Link to={productPath} className="block h-[36px] mb-2 flex-shrink-0">
+          <h3 className="text-[13px] font-bold text-gray-800 line-clamp-2 hover:text-red-500 transition-colors leading-tight">
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Price */}
+        <div className="flex items-baseline gap-2 h-6 mb-2 flex-shrink-0">
+          <span className={`text-base font-bold ${hasFlashSale ? 'text-red-500' : 'text-gray-900'}`}>
+            ৳{Math.round(finalPrice).toLocaleString("en-BD")}
+          </span>
+          {displayDiscountPercent > 0 && (
+            <span className="text-xs text-gray-400 line-through">
+              ৳{originalPrice.toLocaleString("en-BD")}
             </span>
           )}
         </div>
 
-        {/* Action Icons Overlay (Logo Style Blur) */}
-        <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
-          <Link to={productPath} className="p-3 bg-white/90 backdrop-blur-md rounded-xl text-gray-800 hover:bg-blue-600 hover:text-white transition-all shadow-xl">
-            <FaEye size={18} />
-          </Link>
-          <button className="p-3 bg-white/90 backdrop-blur-md rounded-xl text-gray-800 hover:bg-[#B88E2F] hover:text-white transition-all shadow-xl">
-            <FaBagShopping size={18} />
-          </button>
+        {/* Countdown Area - Fixed Height 70px */}
+        <div className="h-[70px] mb-2 flex-shrink-0">
+          {hasFlashSale ? (
+            <div className="bg-gray-900 text-white rounded-lg p-2 h-full flex flex-col justify-center">
+              <div className="flex items-center justify-center gap-1 text-[9px] font-bold mb-1 text-red-400">
+                <FaClock className="animate-pulse" />
+                <span>ENDS IN</span>
+              </div>
+              
+              <div className="flex justify-center gap-1">
+                {showMonths && (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
+                        {formatNum(timeLeft.months)}
+                      </div>
+                      <span className="text-[7px] text-gray-400 uppercase">mo</span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
+                  </>
+                )}
+                
+                {showDays && (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
+                        {formatNum(timeLeft.days)}
+                      </div>
+                      <span className="text-[7px] text-gray-400 uppercase">d</span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
+                  </>
+                )}
+                
+                <div className="flex flex-col items-center">
+                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
+                    {formatNum(timeLeft.hours)}
+                  </div>
+                  <span className="text-[7px] text-gray-400 uppercase">h</span>
+                </div>
+                
+                <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
+                
+                <div className="flex flex-col items-center">
+                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
+                    {formatNum(timeLeft.minutes)}
+                  </div>
+                  <span className="text-[7px] text-gray-400 uppercase">m</span>
+                </div>
+                
+                <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
+                
+                <div className="flex flex-col items-center">
+                  <div className="bg-red-500 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px] animate-pulse">
+                    {formatNum(timeLeft.seconds)}
+                  </div>
+                  <span className="text-[7px] text-red-300 uppercase">s</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Empty space for non-flash items */
+            <div className="h-full" />
+          )}
         </div>
 
-        {/* Heart Icon (Top Right) */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 translate-y-[-10px] group-hover:translate-y-0 transition-all duration-300">
-            <HeartIcon product={product} />
-        </div>
-      </div>
-
-      {/* 2. Content Area */}
-      <div className="px-2 py-4">
-        <div className="text-center">
-          <span className="text-[9px] font-black text-blue-600/60 uppercase tracking-[0.3em] font-mono">
-            {product?.brand || "AriX GeaR"}
-          </span>
-          <Link to={productPath}>
-            <h5 className="text-[15px] font-mono font-bold text-gray-800 mt-1 hover:text-blue-600 transition-colors line-clamp-1">
-              {product.name}
-            </h5>
-          </Link>
-        </div>
-
-        {/* Pricing (Logo Colors) */}
-        <div className="mt-3 flex flex-col items-center gap-0">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-black text-gray-900">
-              ৳{Math.round(discountedPrice).toLocaleString("en-BD")}
-            </span>
-            {product.discountPercentage > 0 && (
-              <span className="text-xs text-gray-400 line-through">
-                ৳{product.price.toLocaleString("en-BD")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 3. AriX Style Button (Centered Line) */}
-        <div className="mt-4 pt-2 border-t border-gray-50">
-          <Link 
-            to={productPath}
-            className="group/btn flex items-center justify-center gap-2 w-full py-2.5 text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-blue-600 transition-all"
-          >
-            <span>Details</span>
-            <FaArrowRight className="text-[10px] group-hover/btn:translate-x-1 transition-transform" />
-            
-            {/* Centered Line Animation like Logo/ServiceTag */}
-            <div className="absolute bottom-0 h-[2px] w-0 bg-gradient-to-r from-blue-600 to-[#B88E2F] group-hover/btn:w-1/2 transition-all duration-500" />
-          </Link>
+        {/* Progress Bar Area - Fixed Height 30px */}
+        <div className="h-[30px] flex-shrink-0 mt-auto">
+          {hasFlashSale && product.flashSale?.soldCount !== undefined && product.flashSale?.totalCount ? (
+            <div>
+              <div className="flex justify-between text-[9px] text-gray-500 mb-1 font-medium">
+                <span>{Math.round((product.flashSale.soldCount / product.flashSale.totalCount) * 100)}% Sold</span>
+                <span className="text-red-500 font-bold">{product.flashSale.totalCount - product.flashSale.soldCount} left</span>
+              </div>
+              <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-red-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${(product.flashSale.soldCount / product.flashSale.totalCount) * 100}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="h-full" />
+          )}
         </div>
       </div>
     </div>

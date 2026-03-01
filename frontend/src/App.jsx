@@ -1,19 +1,14 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, ScrollRestoration, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Navigation from "./pages/Auth/Navigation";
 import Loader from "./components/Loader";
 import { useEffect, useState } from "react";
 import Footer from "./components/Footer";
-import ServiceTag from "./components/ServiceTag";
 import { useNotifications } from "./hooks/useNotifications";
 
-
-// import PopupBanner from "./components/PopupBanner";
 import FooterBanners from "./components/FooterBanners";
-// import { useSelector } from "react-redux";
-// import PopupBanner from "./components/PopupBanner";
-// import AdminRoute from "./pages/Admin/AdminRoute";
+
 
 function App() {
   useNotifications();
@@ -63,6 +58,8 @@ function App() {
         style={{ zIndex: 99999 }}
       />
 
+       <ScrollRestoration />
+
          {/* 🆕 Popup Banner - Only on non-admin pages */}
       {/* {!userInfo.isAdmin && <PopupBanner/>} */}
 
@@ -79,7 +76,7 @@ function App() {
           {shouldShowExtras && (
             <>
              <FooterBanners />
-              <ServiceTag />
+        
               <Footer />
             </>
           )}

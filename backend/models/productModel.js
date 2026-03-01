@@ -37,6 +37,15 @@ const variantSchema = mongoose.Schema({
   isActive: { type: Boolean, default: true },
 });
 
+// Flash Sale Schema
+const flashSaleSchema = mongoose.Schema({
+  isActive: { type: Boolean, default: false },
+  discountPercentage: { type: Number, default: 0 },
+  startTime: { type: Date },
+  endTime: { type: Date },
+  flashSalePrice: { type: Number, default: 0 },
+});
+
 // Product Schema
 const productSchema = mongoose.Schema(
   {
@@ -74,6 +83,12 @@ const productSchema = mongoose.Schema(
     defaultColorIndex: { type: Number, default: 0 },
     defaultSizeIndex: { type: Number, default: 0 },
 
+    // Flash Sale
+    flashSale: flashSaleSchema,
+
+    // Best Sellers - sales count
+    salesCount: { type: Number, default: 0 },
+
     shippingDetails: {
       shippingType: {
         type: String,
@@ -86,7 +101,6 @@ const productSchema = mongoose.Schema(
       outsideDhakaCharge: { type: Number, default: 150 },
       isFreeShippingActive: { type: Boolean, default: false },
     },
-
   },
 
   { timestamps: true },
@@ -108,6 +122,14 @@ productSchema.pre("save", function (next) {
       }
     });
     this.countInStock = totalStock;
+  }
+  if (
+    this.flashSale &&
+    this.flashSale.isActive &&
+    this.flashSale.discountPercentage > 0
+  ) {
+    this.flashSale.flashSalePrice =
+      this.price - (this.price * this.flashSale.discountPercentage) / 100;
   }
 
   next();
@@ -146,6 +168,21 @@ productSchema.methods.getColorImages = function (colorIndex) {
   return variant.color.images && variant.color.images.length > 0
     ? variant.color.images
     : [variant.color.image];
+};
+
+// Method to get effective price (considering flash sale)
+productSchema.methods.getEffectivePrice = function () {
+  const now = new Date();
+  if (this.flashSale && 
+      this.flashSale.isActive && 
+      this.flashSale.startTime <= now && 
+      this.flashSale.endTime >= now) {
+    return this.flashSale.flashSalePrice;
+  }
+  if (this.discountPercentage > 0) {
+    return this.price - (this.price * this.discountPercentage) / 100;
+  }
+  return this.price;
 };
 
 // Creating Product Model

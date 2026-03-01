@@ -1,32 +1,39 @@
 import mongoose from "mongoose";
+const { ObjectId } = mongoose.Schema;
 
-const categorySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    trim: true,
-    required: true,
-    maxLength: 32,
-    unique: true,
+const categorySchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      lowercase: true,
+    },
+    parent: {
+      type: ObjectId,
+      ref: "Category",
+      default: null,
+    },
+    image: {
+      type: String,
+      default: "",
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  image: {
-    type: String,
-    trim: true,
-  },
-  parent: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
-    default: null, // মেইন ক্যাটাগরি হলে এটি null থাকবে
-  },
-});
+  { timestamps: true },
+);
 
-categorySchema.pre("find", function (next) {
-  this.populate("parent");
-  next();
-});
+const Category = mongoose.model("Category", categorySchema);
 
-categorySchema.pre("findOne", function (next) {
-  this.populate("parent");
-  next();
-});
-
-export default mongoose.model("Category", categorySchema);
+export default Category;

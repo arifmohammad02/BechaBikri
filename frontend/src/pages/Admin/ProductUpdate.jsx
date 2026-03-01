@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import AdminMenu from "./AdminMenu";
 import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   useUpdateProductMutation,
   useDeleteProductMutation,
@@ -11,7 +12,7 @@ import {
 } from "@redux/api/productApiSlice";
 import { useFetchCategoriesQuery } from "@redux/api/categoryApiSlice";
 import { toast } from "react-toastify";
-import { TreeSelect } from 'antd';
+import { TreeSelect } from "antd";
 import {
   FaTrash,
   FaCloudUploadAlt,
@@ -22,6 +23,7 @@ import {
   FaPlus,
   FaPalette,
   FaRuler,
+  FaBolt,
 } from "react-icons/fa";
 import ReactQuill, { Quill } from "react-quill";
 import ImageResize from "quill-image-resize-module-react";
@@ -71,6 +73,15 @@ const ProductUpdate = () => {
   const [variants, setVariants] = useState([]);
   const [activeVariantTab, setActiveVariantTab] = useState("basic");
 
+  // 🆕 FLASH SALE STATES - NEW ADDITION
+
+  const [flashSale, setFlashSale] = useState({
+    isActive: false,
+    discountPercentage: 0,
+    startTime: "",
+    endTime: "",
+  });
+
   const [uploadLoading, setUploadLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -94,8 +105,8 @@ const ProductUpdate = () => {
             : String(currentParentId) === String(parentId);
         })
         .map((category) => {
-          const currentPath = parentPath 
-            ? `${parentPath} > ${category.name}` 
+          const currentPath = parentPath
+            ? `${parentPath} > ${category.name}`
             : category.name;
 
           return {
@@ -202,9 +213,9 @@ const ProductUpdate = () => {
       if (productData.keyFeatures) setKeyFeatures(productData.keyFeatures);
       if (productData.specifications)
         setSpecifications(productData.specifications);
-      
+
       setWeight(productData.weight || productData.shippingDetails?.weight || 0);
-      
+
       // Shipping Data Load
       if (productData.shippingDetails) {
         const s = productData.shippingDetails;
@@ -222,6 +233,21 @@ const ProductUpdate = () => {
       }
       if (productData.variants && productData.variants.length > 0) {
         setVariants(productData.variants);
+      }
+      // 🆕 LOAD FLASH SALE DATA - NEW ADDITION
+      if (productData.flashSale) {
+        setFlashSale({
+          isActive: productData.flashSale.isActive || false,
+          discountPercentage: productData.flashSale.discountPercentage || 0,
+          startTime: productData.flashSale.startTime
+            ? new Date(productData.flashSale.startTime)
+                .toISOString()
+                .slice(0, 16)
+            : "",
+          endTime: productData.flashSale.endTime
+            ? new Date(productData.flashSale.endTime).toISOString().slice(0, 16)
+            : "",
+        });
       }
     }
   }, [productData]);
@@ -256,7 +282,13 @@ const ProductUpdate = () => {
         images: [],
       },
       sizes: [
-        { size: "", price: Number(price) || 0, countInStock: 0, sku: "", isAvailable: true },
+        {
+          size: "",
+          price: Number(price) || 0,
+          countInStock: 0,
+          sku: "",
+          isAvailable: true,
+        },
       ],
       isActive: true,
     };
@@ -309,7 +341,9 @@ const ProductUpdate = () => {
 
   const removeSizeFromVariant = (colorIndex, sizeIndex) => {
     const newVariants = [...variants];
-    newVariants[colorIndex].sizes = newVariants[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
+    newVariants[colorIndex].sizes = newVariants[colorIndex].sizes.filter(
+      (_, i) => i !== sizeIndex,
+    );
     setVariants(newVariants);
   };
 
@@ -317,6 +351,22 @@ const ProductUpdate = () => {
     const newVariants = [...variants];
     newVariants[colorIndex].sizes[sizeIndex][field] = value;
     setVariants(newVariants);
+  };
+
+  // 🆕 FLASH SALE HANDLERS - NEW ADDITION
+  // ============================================================
+  const handleFlashSaleToggle = (e) => {
+    setFlashSale({
+      ...flashSale,
+      isActive: e.target.checked,
+    });
+  };
+
+  const handleFlashSaleChange = (field, value) => {
+    setFlashSale({
+      ...flashSale,
+      [field]: value,
+    });
   };
 
   const moveImage = (index, direction) => {
@@ -383,11 +433,36 @@ const ProductUpdate = () => {
             return;
           }
           if (v.sizes[j].price <= 0) {
-            toast.error(`Valid price required for ${v.color.name} - ${v.sizes[j].size}`);
+            toast.error(
+              `Valid price required for ${v.color.name} - ${v.sizes[j].size}`,
+            );
             setUpdateLoading(false);
             return;
           }
         }
+      }
+    }
+
+    // 🆕 FLASH SALE VALIDATION - NEW ADDITION
+
+    if (flashSale.isActive) {
+      if (!flashSale.startTime || !flashSale.endTime) {
+        toast.error("Flash Sale start and end time are required.");
+        setUpdateLoading(false);
+        return;
+      }
+      if (
+        flashSale.discountPercentage <= 0 ||
+        flashSale.discountPercentage > 100
+      ) {
+        toast.error("Flash Sale discount must be between 1 and 100.");
+        setUpdateLoading(false);
+        return;
+      }
+      if (new Date(flashSale.startTime) >= new Date(flashSale.endTime)) {
+        toast.error("Flash Sale end time must be after start time.");
+        setUpdateLoading(false);
+        return;
       }
     }
 
@@ -432,6 +507,10 @@ const ProductUpdate = () => {
         formData.append("defaultColorIndex", 0);
         formData.append("defaultSizeIndex", 0);
       }
+
+      // 🆕 FLASH SALE DATA APPEND - NEW ADDITION
+
+      formData.append("flashSale", JSON.stringify(flashSale));
 
       const data = await updateProduct({
         productId: params._id,
@@ -507,10 +586,32 @@ const ProductUpdate = () => {
                 <FaPalette />
                 Variants {hasVariants && `(${variants.length} Colors)`}
               </button>
+              {/* ============================================================
+                                🆕 FLASH SALE TAB - NEW ADDITION
+                            ============================================================ */}
+              <button
+                onClick={() => setActiveVariantTab("flashsale")}
+                className={`px-6 py-3 font-black uppercase text-[12px] tracking-widest transition-all flex items-center gap-2 ${
+                  activeVariantTab === "flashsale"
+                    ? "border-b-2 border-red-600 text-red-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <FaBolt
+                  className={
+                    flashSale.isActive ? "text-red-500 animate-pulse" : ""
+                  }
+                />
+                Flash Sale
+                {flashSale.isActive && (
+                  <span className="bg-red-500 text-white text-[8px] px-2 py-0.5 rounded-full">
+                    ON
+                  </span>
+                )}
+              </button>
             </div>
 
             <div className="bg-white border border-gray-100 shadow-2xl p-6 lg:p-10 relative">
-              
               {/* BASIC INFO TAB */}
               {activeVariantTab === "basic" && (
                 <>
@@ -586,15 +687,60 @@ const ProductUpdate = () => {
                   {/* Data Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
                     {[
-                      { label: "PRODUCT_NAME", val: name, set: setName, type: "text" },
-                      { label: "BASE_PRICE", val: price, set: setPrice, type: "number" },
-                      { label: "QTY_AVAIL", val: quantity, set: setQuantity, type: "number" },
-                      { label: "BRAND_NAME", val: brand, set: setBrand, type: "text" },
-                      { label: "STOCK_COUNT", val: stock, set: setStock, type: "number" },
-                      { label: "OFFER_TEXT", val: offer, set: setOffer, type: "text" },
-                      { label: "WARRANTY_INFO", val: warranty, set: setWarranty, type: "text" },
-                      { label: "DISCOUNT_%", val: discountPercentage, set: setDiscountPercentage, type: "number" },
-                      { label: "DISCOUNT_AMT", val: discountedAmount, set: setDiscountedAmount, type: "number" },
+                      {
+                        label: "PRODUCT_NAME",
+                        val: name,
+                        set: setName,
+                        type: "text",
+                      },
+                      {
+                        label: "BASE_PRICE",
+                        val: price,
+                        set: setPrice,
+                        type: "number",
+                      },
+                      {
+                        label: "QTY_AVAIL",
+                        val: quantity,
+                        set: setQuantity,
+                        type: "number",
+                      },
+                      {
+                        label: "BRAND_NAME",
+                        val: brand,
+                        set: setBrand,
+                        type: "text",
+                      },
+                      {
+                        label: "STOCK_COUNT",
+                        val: stock,
+                        set: setStock,
+                        type: "number",
+                      },
+                      {
+                        label: "OFFER_TEXT",
+                        val: offer,
+                        set: setOffer,
+                        type: "text",
+                      },
+                      {
+                        label: "WARRANTY_INFO",
+                        val: warranty,
+                        set: setWarranty,
+                        type: "text",
+                      },
+                      {
+                        label: "DISCOUNT_%",
+                        val: discountPercentage,
+                        set: setDiscountPercentage,
+                        type: "number",
+                      },
+                      {
+                        label: "DISCOUNT_AMT",
+                        val: discountedAmount,
+                        set: setDiscountedAmount,
+                        type: "number",
+                      },
                     ].map((field, idx) => (
                       <div key={idx} className="group relative">
                         <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block transition-colors group-focus-within:text-red-600">
@@ -615,9 +761,9 @@ const ProductUpdate = () => {
                       </label>
                       <TreeSelect
                         showSearch
-                        style={{ width: '100%' }}
+                        style={{ width: "100%" }}
                         value={category}
-                        dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                        dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
                         placeholder="SELECT_CATEGORY"
                         allowClear
                         treeDefaultExpandAll
@@ -805,7 +951,9 @@ const ProductUpdate = () => {
                           type="number"
                           value={freeShippingThreshold}
                           disabled={!isFreeShippingActive}
-                          onChange={(e) => setFreeShippingThreshold(e.target.value)}
+                          onChange={(e) =>
+                            setFreeShippingThreshold(e.target.value)
+                          }
                           className="w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
                         />
                       </div>
@@ -829,7 +977,9 @@ const ProductUpdate = () => {
                         <input
                           type="number"
                           value={outsideDhakaCharge}
-                          onChange={(e) => setOutsideDhakaCharge(e.target.value)}
+                          onChange={(e) =>
+                            setOutsideDhakaCharge(e.target.value)
+                          }
                           className="w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
                         />
                       </div>
@@ -842,7 +992,9 @@ const ProductUpdate = () => {
                           type="number"
                           value={fixedShippingCharge}
                           disabled={shippingType !== "fixed"}
-                          onChange={(e) => setFixedShippingCharge(e.target.value)}
+                          onChange={(e) =>
+                            setFixedShippingCharge(e.target.value)
+                          }
                           className={`w-full bg-white border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all ${
                             shippingType !== "fixed" ? "opacity-30" : ""
                           }`}
@@ -880,7 +1032,8 @@ const ProductUpdate = () => {
                         Product Variants
                       </h2>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Configure color and size combinations with individual pricing
+                        Configure color and size combinations with individual
+                        pricing
                       </p>
                     </div>
                     <button
@@ -896,7 +1049,8 @@ const ProductUpdate = () => {
                     <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                       <FaPalette className="mx-auto text-4xl text-gray-300 mb-4" />
                       <p className="text-gray-500 font-mono text-sm">
-                        No variants added yet. Click &quot;Add Color&quot; to start.
+                        No variants added yet. Click &quot;Add Color&quot; to
+                        start.
                       </p>
                     </div>
                   )}
@@ -917,7 +1071,11 @@ const ProductUpdate = () => {
                               type="text"
                               value={variant.color.name}
                               onChange={(e) =>
-                                updateColorInfo(colorIndex, "name", e.target.value)
+                                updateColorInfo(
+                                  colorIndex,
+                                  "name",
+                                  e.target.value,
+                                )
                               }
                               placeholder="e.g. Red"
                               className="w-full bg-white border border-gray-200 rounded-lg p-3 font-bold text-black focus:ring-2 focus:ring-red-600 outline-none"
@@ -932,7 +1090,11 @@ const ProductUpdate = () => {
                                 type="color"
                                 value={variant.color.hexCode}
                                 onChange={(e) =>
-                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                  updateColorInfo(
+                                    colorIndex,
+                                    "hexCode",
+                                    e.target.value,
+                                  )
                                 }
                                 className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer"
                               />
@@ -940,7 +1102,11 @@ const ProductUpdate = () => {
                                 type="text"
                                 value={variant.color.hexCode}
                                 onChange={(e) =>
-                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                  updateColorInfo(
+                                    colorIndex,
+                                    "hexCode",
+                                    e.target.value,
+                                  )
                                 }
                                 className="flex-1 bg-white border border-gray-200 rounded-lg p-3 font-mono text-sm uppercase"
                               />
@@ -974,7 +1140,9 @@ const ProductUpdate = () => {
                                   <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => uploadColorImage(e, colorIndex)}
+                                    onChange={(e) =>
+                                      uploadColorImage(e, colorIndex)
+                                    }
                                     className="hidden"
                                   />
                                 </label>
@@ -995,7 +1163,8 @@ const ProductUpdate = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="text-[11px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <FaRuler /> Sizes for {variant.color.name || `Color ${colorIndex + 1}`}
+                            <FaRuler /> Sizes for{" "}
+                            {variant.color.name || `Color ${colorIndex + 1}`}
                           </h4>
                           <button
                             type="button"
@@ -1019,7 +1188,12 @@ const ProductUpdate = () => {
                                 type="text"
                                 value={size.size}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "size", e.target.value)
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "size",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="S, M, L"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1033,7 +1207,12 @@ const ProductUpdate = () => {
                                 type="number"
                                 value={size.price}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "price", Number(e.target.value))
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "price",
+                                    Number(e.target.value),
+                                  )
                                 }
                                 placeholder="0"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1047,7 +1226,12 @@ const ProductUpdate = () => {
                                 type="number"
                                 value={size.countInStock}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "countInStock", Number(e.target.value))
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "countInStock",
+                                    Number(e.target.value),
+                                  )
                                 }
                                 placeholder="0"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1061,7 +1245,12 @@ const ProductUpdate = () => {
                                 type="text"
                                 value={size.sku}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "sku", e.target.value)
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "sku",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="SKU-001"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-mono text-sm uppercase focus:ring-2 focus:ring-red-600 outline-none"
@@ -1070,7 +1259,9 @@ const ProductUpdate = () => {
                             <div className="flex items-end">
                               <button
                                 type="button"
-                                onClick={() => removeSizeFromVariant(colorIndex, sizeIndex)}
+                                onClick={() =>
+                                  removeSizeFromVariant(colorIndex, sizeIndex)
+                                }
                                 className="w-full p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center gap-1"
                               >
                                 <FaTrash size={12} /> Remove
@@ -1083,6 +1274,155 @@ const ProductUpdate = () => {
                   ))}
                 </div>
               )}
+
+               {/* ============================================================
+                                🆕 FLASH SALE TAB - NEW ADDITION
+                            ============================================================ */}
+                            {activeVariantTab === "flashsale" && (
+                              <div className="space-y-8">
+                                <div className="flex items-center justify-between mb-6">
+                                  <div>
+                                    <h2 className="text-xl font-black text-black tracking-tighter uppercase flex items-center gap-2">
+                                      <FaBolt className="text-red-500" />
+                                      Flash Sale Configuration
+                                    </h2>
+                                    <p className="text-[11px] text-gray-400 mt-1">
+                                      Set up limited-time discounts to boost sales urgency
+                                    </p>
+                                  </div>
+                                </div>
+              
+                                {/* Flash Sale Toggle */}
+                                <div className={`p-6 rounded-2xl border-2 transition-all ${
+                                  flashSale.isActive 
+                                    ? "bg-red-50 border-red-200" 
+                                    : "bg-gray-50 border-gray-200"
+                                }`}>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                                        flashSale.isActive ? "bg-red-500" : "bg-gray-300"
+                                      }`}>
+                                        <FaBolt className="text-white text-2xl" />
+                                      </div>
+                                      <div>
+                                        <h3 className="font-black text-black tracking-tight">
+                                          Enable Flash Sale
+                                        </h3>
+                                        <p className="text-[11px] text-gray-500 mt-1">
+                                          {flashSale.isActive 
+                                            ? "Flash Sale is ACTIVE - Product will appear in Flash Sale section" 
+                                            : "Toggle to enable flash sale for this product"}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={flashSale.isActive}
+                                        onChange={handleFlashSaleToggle}
+                                        className="sr-only peer"
+                                      />
+                                      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>
+                                    </label>
+                                  </div>
+                                </div>
+              
+                                {/* Flash Sale Settings */}
+                                {flashSale.isActive && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="space-y-6"
+                                  >
+                                    {/* Discount Percentage */}
+                                    <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                                      <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                                        Flash Sale Discount (%)
+                                      </label>
+                                      <div className="flex items-center gap-4">
+                                        <input
+                                          type="range"
+                                          min="1"
+                                          max="99"
+                                          value={flashSale.discountPercentage}
+                                          onChange={(e) =>
+                                            handleFlashSaleChange("discountPercentage", parseInt(e.target.value))
+                                          }
+                                          className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+                                        />
+                                        <div className="w-20 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+                                          <span className="text-white font-black text-lg">
+                                            {flashSale.discountPercentage}%
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <p className="text-[10px] text-gray-400 mt-2">
+                                        Regular Price: ৳{price || 0} → Flash Sale Price: 
+                                        <span className="text-red-500 font-bold ml-1">
+                                          ৳{price ? Math.round(price * (1 - flashSale.discountPercentage / 100)) : 0}
+                                        </span>
+                                      </p>
+                                    </div>
+              
+                                    {/* Date & Time */}
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                      <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                                          Sale Start Time
+                                        </label>
+                                        <input
+                                          type="datetime-local"
+                                          value={flashSale.startTime}
+                                          onChange={(e) =>
+                                            handleFlashSaleChange("startTime", e.target.value)
+                                          }
+                                          className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-4 font-mono text-black focus:border-red-500 focus:outline-none transition-all"
+                                        />
+                                      </div>
+              
+                                      <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                                          Sale End Time
+                                        </label>
+                                        <input
+                                          type="datetime-local"
+                                          value={flashSale.endTime}
+                                          onChange={(e) =>
+                                            handleFlashSaleChange("endTime", e.target.value)
+                                          }
+                                          className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-4 font-mono text-black focus:border-red-500 focus:outline-none transition-all"
+                                        />
+                                      </div>
+                                    </div>
+              
+                                    {/* Preview Card */}
+                                    <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 rounded-2xl text-white">
+                                      <div className="flex items-center gap-3 mb-4">
+                                        <FaBolt className="text-2xl animate-pulse" />
+                                        <h4 className="font-black uppercase tracking-wider">
+                                          Flash Sale Preview
+                                        </h4>
+                                      </div>
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <p className="text-white/80 text-sm">Product will appear in Flash Sale section</p>
+                                          <p className="text-white/60 text-xs mt-1">
+                                            {flashSale.startTime && flashSale.endTime 
+                                              ? `${new Date(flashSale.startTime).toLocaleString()} - ${new Date(flashSale.endTime).toLocaleString()}`
+                                              : "Set start and end time to activate"}
+                                          </p>
+                                        </div>
+                                        <div className="text-right">
+                                          <p className="text-3xl font-black">{flashSale.discountPercentage}%</p>
+                                          <p className="text-white/80 text-xs uppercase tracking-wider">OFF</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </div>
+                            )}
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row justify-end gap-4 border-t border-gray-100 pt-10 mt-10">

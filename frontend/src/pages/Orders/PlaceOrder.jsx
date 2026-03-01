@@ -9,6 +9,19 @@ import OrderSummery from "../../components/OrderSummery";
 import { motion } from "framer-motion";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 
+// ✅ হেল্পার: সঠিক প্রাইস পাওয়া
+const getItemFinalPrice = (item) => {
+  // ✅ অর্ডারের জন্য সরাসরি _finalPrice বা _effectivePrice ব্যবহার করুন
+  return Number(item._finalPrice) || 
+         Number(item._effectivePrice) || 
+         Number(item.finalPrice) || 
+         Number(item.price) || 0;
+};
+
+const getItemBasePrice = (item) => {
+  return Number(item.basePrice) || Number(item.price) || 0;
+};
+
 const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const cart = useSelector((state) => state.cart);
   const { cartItems, shippingAddress, paymentMethod } = cart;
@@ -17,16 +30,39 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
 
-  // Calculate subtotal considering variant prices
+  // ✅ সঠিক সাবটোটাল ক্যালকুলেশন
   const subtotal = cartItems.reduce((acc, item) => {
-    const price = item.variantInfo?.variantPrice || item.price || 0;
-    const discountPercent = item.discountPercentage || 0;
-    const discount = (price * discountPercent) / 100;
-    return acc + (price - discount) * item.qty;
+    const finalPrice = getItemFinalPrice(item);
+    return acc + finalPrice * item.qty;
+  }, 0);
+
+  // ✅ সঠিক সেভিংস ক্যালকুলেশন
+  const totalSavings = cartItems.reduce((acc, item) => {
+    const basePrice = getItemBasePrice(item);
+    const finalPrice = getItemFinalPrice(item);
+    return acc + (basePrice - finalPrice) * item.qty;
   }, 0);
 
   const shippingCharge = Number(cart.shippingAddress?.shippingCharge) || 0;
-  const totalPrice = (subtotal + shippingCharge).toFixed(2);
+  
+  // ✅ সঠিক টোটাল প্রাইস
+  const totalPrice = subtotal + shippingCharge;
+
+  console.log("PlaceOrder Calculation:", {
+    cartItems: cartItems.map(i => ({
+      name: i.name,
+      basePrice: getItemBasePrice(i),
+      finalPrice: getItemFinalPrice(i),
+      qty: i.qty,
+      _finalPrice: i._finalPrice,
+      _effectivePrice: i._effectivePrice,
+      price: i.price
+    })),
+    subtotal,
+    totalSavings,
+    shippingCharge,
+    totalPrice
+  });
 
   // Check if manual payment
   const isManualPayment = ["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod);
@@ -40,28 +76,34 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
     try {
       setIsLoading(true);
 
-      // Prepare order items with variant info
-      const orderItemsWithVariants = cartItems.map((item) => ({
-        name: item.name,
-        qty: Number(item.qty),
-        image: item.image || (item.images && item.images[0]),
-        price: item.variantInfo?.variantPrice || Number(item.price) || 0,
-        product: item._id || item.product,
-        discountPercentage: Number(item.discountPercentage || 0),
-        weight: Number(item.weight || 0.5),
-        shippingDetails: item.shippingDetails,
-        // Include variant information
-        variantInfo: item.variantInfo || {
-          hasVariants: false,
-          colorIndex: null,
-          colorName: "",
-          colorHex: "",
-          sizeIndex: null,
-          sizeName: "",
-          variantPrice: null,
-          sku: "",
-        },
-      }));
+      // ✅ অর্ডার আইটেম প্রিপার করুন সঠিক প্রাইস দিয়ে
+      const orderItemsWithVariants = cartItems.map((item) => {
+        const finalPrice = getItemFinalPrice(item);
+
+        
+        return {
+          name: item.name,
+          qty: Number(item.qty),
+          image: item.image || (item.images && item.images[0]),
+          price: finalPrice, // ✅ চূড়ান্ত প্রাইস (ডিসকাউন্ট করা)
+          product: item._id || item.product,
+          discountPercentage: Number(item.discountPercentage || 0),
+          flashSale: item.flashSale || null,
+          _flashSaleActive: item._flashSaleActive || item.flashSaleActive || false,
+          weight: Number(item.weight || 0.5),
+          shippingDetails: item.shippingDetails,
+          variantInfo: item.variantInfo || {
+            hasVariants: false,
+            colorIndex: null,
+            colorName: "",
+            colorHex: "",
+            sizeIndex: null,
+            sizeName: "",
+            variantPrice: null,
+            sku: "",
+          },
+        };
+      });
 
       if (isManualPayment) {
         // Save order data for payment page
@@ -71,7 +113,8 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
           paymentMethod: paymentMethod,
           itemsPrice: subtotal.toFixed(2),
           shippingPrice: shippingCharge.toFixed(2),
-          totalPrice: totalPrice,
+          totalPrice: totalPrice.toFixed(2),
+          totalSavings: totalSavings.toFixed(2),
         }));
         
         navigate(`/payment/checkout`);
@@ -83,7 +126,8 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
           paymentMethod: paymentMethod,
           itemsPrice: subtotal.toFixed(2),
           shippingPrice: shippingCharge.toFixed(2),
-          totalPrice: totalPrice,
+          totalPrice: totalPrice.toFixed(2),
+          totalSavings: totalSavings.toFixed(2),
         };
 
         const res = await createOrder(orderData).unwrap();
@@ -124,6 +168,15 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
             ৳{subtotal.toFixed(2)}
           </span>
         </div>
+        
+        {/* ✅ সেভিংস দেখান */}
+        {totalSavings > 0 && (
+          <div className="flex justify-between items-center text-sm font-mono text-green-600 font-bold uppercase bg-green-50 p-2 rounded-lg">
+            <span className="flex items-center gap-2">💰 You Saved</span>
+            <span className="font-black">- ৳{totalSavings.toFixed(2)}</span>
+          </div>
+        )}
+        
         <div className="flex justify-between items-center text-sm font-mono text-gray-500 font-bold uppercase">
           <span>Shipping Fee</span>
           <span
@@ -139,7 +192,7 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
           Total Payable
         </span>
         <span className="text-2xl font-mono font-black text-blue-600">
-          ৳{totalPrice}
+          ৳{totalPrice.toFixed(2)}
         </span>
       </div>
 
@@ -172,4 +225,4 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
   );
 };
 
-export default PlaceOrder
+export default PlaceOrder;

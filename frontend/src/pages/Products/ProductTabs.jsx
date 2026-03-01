@@ -2,9 +2,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Ratings from "./Ratings";
-import { useGetTopProductsQuery } from "@redux/api/productApiSlice";
-import ProductCard from "./ProductCard"; // SmallProduct থেকে ProductCard এ পরিবর্তন
-import Loader from "../../components/Loader";
 import DOMPurify from "dompurify";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,15 +15,11 @@ const ProductTabs = ({
   setComment,
   product,
 }) => {
-  const { data, isLoading } = useGetTopProductsQuery();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [product]);
 
   const [activeTab, setActiveTab] = useState(1);
-
-  if (isLoading) return <Loader />;
 
   const sanitizedDescription = DOMPurify.sanitize(product.description);
 
@@ -181,61 +174,6 @@ const ProductTabs = ({
           </AnimatePresence>
         </div>
       </div>
-
-      {/* 🟢 ৩. Related Products Section (ProductCard এর সাথে হুবহু ম্যাচ) */}
-      {/* 🟢 ৩. Related Products Section (AriX GeaR Premium Style) */}
-      <section className="pt-20">
-        <div className="flex flex-col items-center mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            {/* ছোট ট্যাগলাইন */}
-            <span className="text-blue-600 font-mono font-bold tracking-[0.4em] uppercase text-[10px]">
-              You Might Also Like
-            </span>
-
-            {/* মেইন টাইটেল */}
-            <h2 className="text-3xl md:text-4xl font-mono font-black text-[#212B36] mt-2 mb-4 tracking-tighter uppercase">
-              Related <span className="text-blue-600">Gear</span>
-            </h2>
-
-            {/* Signature Underline Animation (হোমপেজের সাথে ম্যাচ করে) */}
-            <div className="flex justify-center">
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: "60px" }}
-                transition={{ duration: 1, delay: 0.2 }}
-                className="h-[3px] bg-gradient-to-r from-blue-600 to-[#B88E2F] rounded-full"
-              />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* প্রোডাক্ট গ্রিড */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-5">
-          {!data ? (
-            <div className="col-span-full flex justify-center">
-              <Loader />
-            </div>
-          ) : (
-            data.slice(0, 4).map((p, index) => (
-              <motion.div
-                key={p._id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <ProductCard p={p} />
-              </motion.div>
-            ))
-          )}
-        </div>
-      </section>
     </div>
   );
 };

@@ -27,7 +27,6 @@ const Cart = () => {
     dispatch(addToCart({ ...product, qty }));
   };
 
-  // ✅ FIXED: Properly extract variantInfo from item
   const removeFromCartHandler = (item) => {
     dispatch(removeFromCart({ 
       _id: item._id, 
@@ -43,20 +42,16 @@ const Cart = () => {
     }
   };
 
-  // Calculate prices considering variants
+  // ✅ সরল সাবটোটাল - ব্যাকেন্ড থেকে _finalPrice ব্যবহার করুন
   const subtotal = cartItems.reduce((acc, item) => {
-    const price = item.variantInfo?.variantPrice || item.price || 0;
-    const discountPercent = item.discountPercentage || 0;
-    const discount = (price * discountPercent) / 100;
-    const finalPrice = price - discount;
+    const finalPrice = Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0;
     return acc + finalPrice * item.qty;
   }, 0);
 
+  // ✅ সরল সেভিংস - ব্যাকেন্ড থেকে _savings ব্যবহার করুন
   const totalSavings = cartItems.reduce((acc, item) => {
-    const price = item.variantInfo?.variantPrice || item.price || 0;
-    const discountPercent = item.discountPercentage || 0;
-    const discount = (price * discountPercent) / 100;
-    return acc + discount * item.qty;
+    const savings = Number(item._savings) || Number(item.savings) || 0;
+    return acc + savings * item.qty;
   }, 0);
 
   const totalWeight = cartItems.reduce(
@@ -74,8 +69,8 @@ const Cart = () => {
 
     cartItems.forEach((item) => {
       const s = item.shippingDetails || {};
+      const itemPrice = (Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0) * item.qty;
       
-      const itemPrice = (item.variantInfo?.variantPrice || item.price || 0) * item.qty;
       if (s.isFreeShippingActive && itemPrice >= (s.freeShippingThreshold || 0)) {
         hasFreeShipping = true;
         return;
@@ -197,10 +192,15 @@ const Cart = () => {
 
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item) => {
-                  const itemPrice = item.variantInfo?.variantPrice || item.price || 0;
-                  const discountPercent = item.discountPercentage || 0;
-                  const discount = (itemPrice * discountPercent) / 100;
-                  const finalPrice = itemPrice - discount;
+                  // ✅ ব্যাকেন্ড থেকে আসা প্রাইস এবং সেভিংস ব্যবহার করুন
+                  const finalPrice = Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0;
+                  const basePrice = Number(item.basePrice) || item.price || 0;
+                  const savings = Number(item._savings) || Number(item.savings) || 0;
+                  const isFlashSale = item._flashSaleActive || item.flashSaleActive || false;
+                  const discountPercent = isFlashSale 
+                    ? (item.flashSale?.discountPercentage || 0)
+                    : (item.discountPercentage || 0);
+                  
                   const sDetails = item.shippingDetails || {};
                   
                   const variantText = item.variantInfo?.hasVariants
@@ -222,9 +222,12 @@ const Cart = () => {
                           alt={item.name}
                           className="w-full h-full object-contain p-2"
                         />
+                        {/* ✅ ডিসকাউন্ট ব্যাজ */}
                         {discountPercent > 0 && (
-                          <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg">
-                            {Math.round(discountPercent)}% OFF
+                          <div className={`absolute top-0 right-0 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg ${
+                            isFlashSale ? 'bg-purple-600' : 'bg-red-600'
+                          }`}>
+                            {isFlashSale ? '⚡ FLASH' : ''} {Math.round(discountPercent)}% OFF
                           </div>
                         )}
                       </div>
@@ -255,12 +258,22 @@ const Cart = () => {
                           <span className="text-red-600 font-black font-mono">
                             ৳ {finalPrice.toLocaleString()}
                           </span>
-                          {discountPercent > 0 && (
+                          {/* ✅ শুধু সেভিংস থাকলে স্ট্রাইকথ্রু দেখান */}
+                          {savings > 0 && (
                             <span className="text-gray-400 text-xs line-through">
-                              ৳{Number(itemPrice).toLocaleString()}
+                              ৳{Number(basePrice).toLocaleString()}
                             </span>
                           )}
                         </div>
+
+                        {/* ✅ ফ্লাশ সেল ব্যাজ */}
+                        {isFlashSale && (
+                          <div className="mt-1">
+                            <span className="text-[9px] bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold uppercase">
+                              ⚡ Flash Sale Active
+                            </span>
+                          </div>
+                        )}
 
                         <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
                           <span className="text-[9px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-bold uppercase">
@@ -300,7 +313,6 @@ const Cart = () => {
                         </p>
                       </div>
 
-                      {/* ✅ FIXED: Pass full item object to remove handler */}
                       <button
                         onClick={() => removeFromCartHandler(item)}
                         className="p-2 text-gray-300 hover:text-red-600 hover:rotate-90 transition-all"
@@ -347,7 +359,7 @@ const Cart = () => {
                         className="flex justify-between text-green-500 bg-green-500/10 p-3 rounded-xl border border-green-500/20"
                       >
                         <span className="flex items-center gap-2 font-black uppercase text-[10px]">
-                          <FaTag /> Savings
+                          <FaTag /> Total Savings
                         </span>
                         <span className="font-black">
                           - ৳{totalSavings.toFixed()}

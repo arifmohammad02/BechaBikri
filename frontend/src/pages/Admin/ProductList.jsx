@@ -3,6 +3,7 @@
 
 import { useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   useCreateProductMutation,
   useUploadProductImageMutation,
@@ -19,6 +20,7 @@ import {
   FaArrowRight,
   FaPalette,
   FaRuler,
+  FaBolt,
 } from "react-icons/fa";
 import Quill from "quill";
 import ReactQuill from "react-quill";
@@ -64,6 +66,17 @@ const ProductList = () => {
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState([]);
   const [activeVariantTab, setActiveVariantTab] = useState("basic");
+
+ 
+  // 🆕 FLASH SALE STATES - NEW ADDITION
+
+
+    const [flashSale, setFlashSale] = useState({
+    isActive: false,
+    discountPercentage: 0,
+    startTime: "",
+    endTime: "",
+  });
 
   const navigate = useNavigate();
   const [uploadProductImage] = useUploadProductImageMutation();
@@ -235,6 +248,23 @@ const ProductList = () => {
   };
 
 
+   // 🆕 FLASH SALE HANDLERS - NEW ADDITION
+ 
+  const handleFlashSaleToggle = (e) => {
+    setFlashSale({
+      ...flashSale,
+      isActive: e.target.checked,
+    });
+  };
+
+  const handleFlashSaleChange = (field, value) => {
+    setFlashSale({
+      ...flashSale,
+      [field]: value,
+    });
+  };
+
+
   const moveImage = (index, direction) => {
     const updatedImages = [...images];
     const newIndex = direction === "left" ? index - 1 : index + 1;
@@ -310,6 +340,22 @@ const ProductList = () => {
       }
     }
 
+      // 🆕 FLASH SALE VALIDATION - NEW ADDITION
+    if (flashSale.isActive) {
+      if (!flashSale.startTime || !flashSale.endTime) {
+        return toast.error("Flash Sale start and end time are required.");
+      }
+      if (
+        flashSale.discountPercentage <= 0 ||
+        flashSale.discountPercentage > 100
+      ) {
+        return toast.error("Flash Sale discount must be between 1 and 100.");
+      }
+      if (new Date(flashSale.startTime) >= new Date(flashSale.endTime)) {
+        return toast.error("Flash Sale end time must be after start time.");
+      }
+    }
+
 
     try {
       setLoading(true);
@@ -355,6 +401,10 @@ const ProductList = () => {
         productData.append("defaultColorIndex", 0);
         productData.append("defaultSizeIndex", 0);
       }
+
+// 🆕 FLASH SALE DATA APPEND - NEW ADDITION
+ 
+      productData.append("flashSale", JSON.stringify(flashSale));
 
       const res = await createProduct(productData).unwrap();
 
@@ -426,6 +476,26 @@ const ProductList = () => {
               >
                 <FaPalette />
                 Variants {hasVariants && `(${variants.length} Colors)`}
+              </button>
+               <button
+                onClick={() => setActiveVariantTab("flashsale")}
+                className={`px-6 py-3 font-black uppercase text-[12px] tracking-widest transition-all flex items-center gap-2 ${
+                  activeVariantTab === "flashsale"
+                    ? "border-b-2 border-red-600 text-red-600"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                <FaBolt
+                  className={
+                    flashSale.isActive ? "text-red-500 animate-pulse" : ""
+                  }
+                />
+                Flash Sale
+                {flashSale.isActive && (
+                  <span className="bg-red-500 text-white text-[8px] px-2 py-0.5 rounded-full">
+                    ON
+                  </span>
+                )}
               </button>
             </div>
 
@@ -1071,6 +1141,174 @@ const ProductList = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+                 {/* ============================================================
+                  🆕 FLASH SALE TAB - NEW ADDITION
+              ============================================================ */}
+              {activeVariantTab === "flashsale" && (
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-black text-black tracking-tighter uppercase flex items-center gap-2">
+                        <FaBolt className="text-red-500" />
+                        Flash Sale Configuration
+                      </h2>
+                      <p className="text-[11px] text-gray-400 mt-1">
+                        Set up limited-time discounts to boost sales urgency
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Flash Sale Toggle */}
+                  <div
+                    className={`p-6 rounded-2xl border-2 transition-all ${
+                      flashSale.isActive
+                        ? "bg-red-50 border-red-200"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-14 h-14 rounded-xl flex items-center justify-center ${
+                            flashSale.isActive ? "bg-red-500" : "bg-gray-300"
+                          }`}
+                        >
+                          <FaBolt className="text-white text-2xl" />
+                        </div>
+                        <div>
+                          <h3 className="font-black text-black tracking-tight">
+                            Enable Flash Sale
+                          </h3>
+                          <p className="text-[11px] text-gray-500 mt-1">
+                            {flashSale.isActive
+                              ? "Flash Sale is ACTIVE - Product will appear in Flash Sale section"
+                              : "Toggle to enable flash sale for this product"}
+                          </p>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={flashSale.isActive}
+                          onChange={handleFlashSaleToggle}
+                          className="sr-only peer"
+                        />
+                        <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-500"></div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Flash Sale Settings */}
+                  {flashSale.isActive && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-6"
+                    >
+                      {/* Discount Percentage */}
+                      <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                          Flash Sale Discount (%)
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="range"
+                            min="1"
+                            max="99"
+                            value={flashSale.discountPercentage}
+                            onChange={(e) =>
+                              handleFlashSaleChange(
+                                "discountPercentage",
+                                parseInt(e.target.value),
+                              )
+                            }
+                            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-500"
+                          />
+                          <div className="w-20 h-12 bg-red-500 rounded-xl flex items-center justify-center">
+                            <span className="text-white font-black text-lg">
+                              {flashSale.discountPercentage}%
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-2">
+                          Regular Price: ৳{price || 0} → Flash Sale Price:
+                          <span className="text-red-500 font-bold ml-1">
+                            ৳
+                            {price
+                              ? Math.round(
+                                  price *
+                                    (1 - flashSale.discountPercentage / 100),
+                                )
+                              : 0}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Date & Time */}
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                          <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                            Sale Start Time
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={flashSale.startTime}
+                            onChange={(e) =>
+                              handleFlashSaleChange("startTime", e.target.value)
+                            }
+                            className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-4 font-mono text-black focus:border-red-500 focus:outline-none transition-all"
+                          />
+                        </div>
+
+                        <div className="bg-white p-6 rounded-2xl border border-gray-200">
+                          <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-4 block">
+                            Sale End Time
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={flashSale.endTime}
+                            onChange={(e) =>
+                              handleFlashSaleChange("endTime", e.target.value)
+                            }
+                            className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-4 font-mono text-black focus:border-red-500 focus:outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Preview Card */}
+                      <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 rounded-2xl text-white">
+                        <div className="flex items-center gap-3 mb-4">
+                          <FaBolt className="text-2xl animate-pulse" />
+                          <h4 className="font-black uppercase tracking-wider">
+                            Flash Sale Preview
+                          </h4>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-white/80 text-sm">
+                              Product will appear in Flash Sale section
+                            </p>
+                            <p className="text-white/60 text-xs mt-1">
+                              {flashSale.startTime && flashSale.endTime
+                                ? `${new Date(flashSale.startTime).toLocaleString()} - ${new Date(flashSale.endTime).toLocaleString()}`
+                                : "Set start and end time to activate"}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-3xl font-black">
+                              {flashSale.discountPercentage}%
+                            </p>
+                            <p className="text-white/80 text-xs uppercase tracking-wider">
+                              OFF
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               )}
 

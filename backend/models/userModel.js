@@ -8,6 +8,7 @@ const usersSchema = mongoose.Schema(
     username: {
       type: String,
       required: true,
+      unique: true,
     },
     email: {
       type: String,
@@ -20,13 +21,19 @@ const usersSchema = mongoose.Schema(
     },
     isAdmin: {
       type: Boolean,
-      required: true,
       default: false,
     },
+
+    avatar: {
+      type: String,
+      default: "",
+    },
+
     isVerified: { type: Boolean, default: false },
     otp: {
       type: String,
     },
+
     otpExpires: {
       type: Date,
     },

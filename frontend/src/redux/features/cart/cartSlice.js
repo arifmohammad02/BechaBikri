@@ -31,6 +31,52 @@ const isSameItem = (item1, item2) => {
   return false;
 };
 
+const normalizeItemPrices = (item) => {
+  if (!item) return null;
+
+  // ✅ সংখ্যায় কনভার্ট করুন এবং ডিফল্ট ভ্যালু সেট করুন
+  const price = Number(item.price) || 0;
+  const basePrice = Number(item.basePrice) || price || 0;
+
+  // ✅ _finalPrice পাওয়া না গেলে নিজে ক্যালকুলেট করুন
+  let finalPrice =
+    Number(item._finalPrice) ||
+    Number(item.finalPrice) ||
+    Number(item._effectivePrice);
+
+  if (!finalPrice || isNaN(finalPrice)) {
+    // ✅ ফ্লাশ সেল চেক করে ক্যালকুলেট করুন
+    const hasFlashSale = item._flashSaleActive || item.flashSaleActive || false;
+    if (hasFlashSale && item.flashSale?.discountPercentage) {
+      finalPrice =
+        basePrice - (basePrice * item.flashSale.discountPercentage) / 100;
+    } else if (item.discountPercentage) {
+      finalPrice = basePrice - (basePrice * item.discountPercentage) / 100;
+    } else {
+      finalPrice = price || basePrice;
+    }
+  }
+
+  const savings = basePrice - finalPrice;
+  const flashSaleActive =
+    item._flashSaleActive || item.flashSaleActive || false;
+
+
+  return {
+    ...item,
+    price: price,
+    basePrice: basePrice,
+    _finalPrice: finalPrice,
+    finalPrice: finalPrice,
+    _effectivePrice: finalPrice,
+    effectivePrice: finalPrice,
+    _flashSaleActive: flashSaleActive,
+    flashSaleActive: flashSaleActive,
+    _savings: savings,
+    savings: savings,
+  };
+};
+
 const cartSlice = createSlice({
   name: "cart",
   initialState,
@@ -43,15 +89,6 @@ const cartSlice = createSlice({
         return state;
       }
 
-      console.log(
-        "Adding item:",
-        item._id,
-        "Qty:",
-        item.qty,
-        "Variant:",
-        item.variantInfo,
-      );
-
       // Find existing item with same ID and variant
       const existItemIndex = state.cartItems.findIndex((x) =>
         isSameItem(x, item),
@@ -60,10 +97,20 @@ const cartSlice = createSlice({
       if (existItemIndex !== -1) {
         // Update existing item quantity
         state.cartItems[existItemIndex].qty = item.qty;
+        // ✅ Update prices in case they changed
+        state.cartItems[existItemIndex] = {
+          ...state.cartItems[existItemIndex],
+          _finalPrice: item._finalPrice,
+          _effectivePrice: item._effectivePrice,
+          _flashSaleActive: item._flashSaleActive,
+          basePrice: item.basePrice,
+          _savings: item._savings,
+        };
       } else {
         // Add new item
         state.cartItems.push(item);
       }
+
 
       return updateCart(state, state.shippingAddress);
     },
