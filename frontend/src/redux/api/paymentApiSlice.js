@@ -13,6 +13,14 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
       keepUnusedDataFor: 5,
     }),
 
+    checkTransactionId: builder.query({
+      query: (transactionId) =>
+        `${PAYMENTS_URL}/check-transaction/${transactionId}`,
+      skip: (transactionId) => !transactionId || transactionId.length < 8,
+ 
+      keepUnusedDataFor: 1,
+    }),
+
     updatePaymentMethod: builder.mutation({
       query: (data) => ({
         url: `${PAYMENTS_URL}/methods`,
@@ -58,6 +66,7 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
 export const {
   useGetPaymentMethodsQuery,
   useGetPaymentStatsQuery,
+  useCheckTransactionIdQuery,
   useUpdatePaymentMethodMutation,
   useDeletePaymentMethodMutation,
   useSubmitManualPaymentMutation,

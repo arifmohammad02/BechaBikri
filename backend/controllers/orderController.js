@@ -19,12 +19,10 @@ const isFlashSaleActive = (flashSale) => {
 const calculateEffectivePrice = (product, variantPrice = null) => {
   const basePrice = variantPrice || product.price || 0;
 
- 
   if (isFlashSaleActive(product.flashSale)) {
     const flashDiscount = product.flashSale.discountPercentage || 0;
     return basePrice - (basePrice * flashDiscount) / 100;
   }
-
 
   const discountPercent = product.discountPercentage || 0;
   if (discountPercent > 0) {
@@ -33,7 +31,6 @@ const calculateEffectivePrice = (product, variantPrice = null) => {
 
   return basePrice;
 };
-
 
 const calculateSavings = (product, variantPrice = null) => {
   const basePrice = variantPrice || product.price || 0;
@@ -51,28 +48,29 @@ function calcPrices(dbOrderItems, shippingAddress) {
   const itemsPrice = dbOrderItems.reduce((acc, item) => {
     const finalPrice = Number(item.finalPrice) || 0;
     const qty = Number(item.qty) || 1;
-
     return acc + finalPrice * qty;
   }, 0);
 
-    const totalSavings = dbOrderItems.reduce((acc, item) => {
-      const basePrice =
-        Number(item.variantInfo?.variantPrice) || Number(item.price) || 0;
-      const qty = Number(item.qty) || 1;
-      const savingsPerItem = calculateSavings(
-        item,
-        item.variantInfo?.variantPrice,
-      );
-      return acc + savingsPerItem * qty;
-    }, 0);
+  const totalSavings = dbOrderItems.reduce((acc, item) => {
+    const basePrice =
+      Number(item.variantInfo?.variantPrice) || Number(item.price) || 0;
+    const qty = Number(item.qty) || 1;
+    const savingsPerItem = calculateSavings(
+      item,
+      item.variantInfo?.variantPrice,
+    );
+    return acc + savingsPerItem * qty;
+  }, 0);
 
   let totalWeight = 0;
   let maxFixedShipping = 0;
-  let baseShippingRate = 0;
+  let hasWeightBased = false;
+  let weightBasedCharge = 0;
 
   const city = shippingAddress?.city?.trim().toLowerCase() || "";
   const isInsideDhaka = city.includes("dhaka");
 
+  // 👇 আপডেটেড লুপ
   dbOrderItems.forEach((item) => {
     const s = item.shippingDetails;
     const type = s?.shippingType?.toLowerCase();
@@ -80,18 +78,34 @@ function calcPrices(dbOrderItems, shippingAddress) {
     if (type === "fixed") {
       const currentFixed = Number(s.fixedShippingCharge) || 0;
       if (currentFixed > maxFixedShipping) maxFixedShipping = currentFixed;
-    } else if (type === "weight-based") {
+    }
+    // 👇 নতুন কেস: inside-outside
+    else if (type === "inside-outside") {
+      const charge = isInsideDhaka
+        ? Number(s.insideDhakaCharge) || 80
+        : Number(s.outsideDhakaCharge) || 150;
+      if (charge > maxFixedShipping) maxFixedShipping = charge;
+    }
+    // 👇 ঠিক করা: weight-based
+    else if (type === "weight-based") {
+      hasWeightBased = true;
       const weight = Number(item.weight) || 0.5;
       const qty = Number(item.qty) || 1;
       totalWeight += weight * qty;
-
-      const rate = isInsideDhaka
-        ? Number(s.insideDhakaCharge) || 80
-        : Number(s.outsideDhakaCharge) || 150;
-
-      if (rate > baseShippingRate) baseShippingRate = rate;
     }
   });
+
+  // 👇 নতুন: ওজন অনুযায়ী চার্জ হিসাব
+  if (hasWeightBased && totalWeight > 0) {
+    const baseRate = isInsideDhaka ? 80 : 150;
+
+    if (totalWeight <= 1) {
+      weightBasedCharge = baseRate;
+    } else {
+      const extraWeight = Math.ceil(totalWeight - 1);
+      weightBasedCharge = baseRate + extraWeight * 20;
+    }
+  }
 
   const activeThresholds = dbOrderItems
     .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
@@ -104,36 +118,29 @@ function calcPrices(dbOrderItems, shippingAddress) {
   let finalShippingPrice = 0;
 
   if (itemsPrice < freeThreshold) {
-    let dynamicShippingPrice = 0;
-    if (totalWeight > 0) {
-      dynamicShippingPrice = baseShippingRate;
-      if (totalWeight > 1) {
-        const extraWeight = Math.ceil(totalWeight - 1);
-        dynamicShippingPrice += extraWeight * 20;
-      }
-    }
-    finalShippingPrice = dynamicShippingPrice + maxFixedShipping;
+    // 👇 ঠিক করা: ফিক্সড vs ওয়েট-বেইজড এর মধ্যে বড়টি নেওয়া
+    finalShippingPrice = Math.max(maxFixedShipping, weightBasedCharge);
   } else {
     finalShippingPrice = 0;
   }
 
   const taxRate = 0.0;
   const taxPrice = itemsPrice * taxRate;
-  const totalPrice =
-    Number(itemsPrice) + Number(finalShippingPrice) + Number(taxPrice);
+  const totalPrice = itemsPrice + finalShippingPrice + taxPrice;
+
   return {
-    itemsPrice: itemsPrice.toFixed(2),
-    shippingPrice: finalShippingPrice.toFixed(2),
-    taxPrice: taxPrice.toFixed(2),
-    totalPrice: totalPrice.toFixed(2),
-    totalSavings: totalSavings.toFixed(2),
+    itemsPrice: Number(itemsPrice.toFixed(2)),
+    shippingPrice: Number(finalShippingPrice.toFixed(2)),
+    taxPrice: Number(taxPrice.toFixed(2)),
+    totalPrice: Number(totalPrice.toFixed(2)),
+    totalSavings: Number(totalSavings.toFixed(2)),
   };
 }
 
 const generateOrderId = () => {
-  return (
-    Date.now().toString().slice(-3) + Math.floor(100 + Math.random() * 900)
-  );
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `ORD-${timestamp}-${random}`;
 };
 
 const createOrder = async (req, res) => {
@@ -165,7 +172,6 @@ const createOrder = async (req, res) => {
       _id: { $in: productIds },
     });
 
-    // Validate and map the order items
     const dbOrderItems = orderItems.map((itemFromClient) => {
       const clientId = (
         itemFromClient._id || itemFromClient.product
@@ -233,11 +239,17 @@ const createOrder = async (req, res) => {
           }
         }
       }
+
       const finalPrice = calculateEffectivePrice(matchingItemFromDB, itemPrice);
+
+      // ✅ FIXED: Define isFlashSaleApplied before using it
+      const isFlashSaleApplied = isFlashSaleActive(
+        matchingItemFromDB.flashSale,
+      );
 
       // Calculate discount percentage for order record
       let appliedDiscountPercent = 0;
-      if (isFlashSaleActive(matchingItemFromDB.flashSale)) {
+      if (isFlashSaleApplied) {
         appliedDiscountPercent =
           matchingItemFromDB.flashSale.discountPercentage || 0;
       } else {
@@ -253,16 +265,14 @@ const createOrder = async (req, res) => {
         product: matchingItemFromDB._id,
         discountPercentage: appliedDiscountPercent,
         originalDiscountPercent: matchingItemFromDB.discountPercentage || 0,
-        isFlashSaleApplied: isFlashSaleActive(matchingItemFromDB.flashSale),
-        weight: Number(matchingItemFromDB.weight) || 0,
+        isFlashSaleApplied: isFlashSaleApplied, // ✅ Now properly defined
+        weight: Number(matchingItemFromDB.weight) || 0.0,
         shippingDetails: {
           ...matchingItemFromDB.shippingDetails,
         },
         variantInfo: variantInfo,
-        _id: undefined,
       };
     });
-
     const { itemsPrice, shippingPrice, taxPrice, totalPrice, totalSavings } =
       calcPrices(dbOrderItems, shippingAddress);
 
@@ -293,13 +303,13 @@ const createOrder = async (req, res) => {
 
     const createdOrder = await order.save();
 
-    for (const item of orderItems) {
+    for (const item of dbOrderItems) {
+      // CHANGED: orderItems → dbOrderItems
       if (item.variantInfo?.hasVariants) {
         await Product.updateOne(
           {
-            _id: item._id || item.product,
+            _id: item.product, // CHANGED: simplified
             "variants.color.name": item.variantInfo.colorName,
-            "variants.sizes.size": item.variantInfo.sizeName,
           },
           {
             $inc: { "variants.$[v].sizes.$[s].countInStock": -item.qty },
@@ -311,9 +321,19 @@ const createOrder = async (req, res) => {
             ],
           },
         );
+      } else {
+        // ADDED: Simple product stock update
+        await Product.updateOne(
+          { _id: item.product },
+          {
+            $inc: {
+              countInStock: -item.qty,
+              salesCount: item.qty,
+            },
+          },
+        );
       }
     }
-
     // Notification Pathan
     try {
       await createAndSendNotification(req, {
@@ -350,41 +370,110 @@ const createOrder = async (req, res) => {
             We will notify you once it's confirmed.
           </p>
         </div>`;
-          
         }
 
-        // Build variant info for email
-        let variantDetails = "";
-        dbOrderItems.forEach((item) => {
-          if (item.variantInfo?.hasVariants) {
-            variantDetails += `<p style="font-size: 12px; color: #666;">Variant: ${item.variantInfo.colorName} / ${item.variantInfo.sizeName}</p>`;
-          }
+        // ⭐⭐⭐ ITEMS DETAILS BUILD করুন ⭐⭐⭐
+        const itemsDetails = dbOrderItems
+          .map((item) => {
+            let variantText = "";
+            if (item.variantInfo?.hasVariants) {
+              variantText = `<br/><small style="color: #666;">Variant: ${item.variantInfo.colorName} / ${item.variantInfo.sizeName}</small>`;
+            }
+
+            let savingsText = "";
+            if (item.isFlashSaleApplied || item.discountPercentage > 0) {
+              savingsText = `<br/><small style="color: #dc2626;">You saved ৳${((item.price - item.finalPrice) * item.qty).toFixed(2)}</small>`;
+            }
+
+            return `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                <img src="${item.image}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;" />
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                <strong>${item.name}</strong>
+                ${variantText}
+                ${savingsText}
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
+                ${item.qty}x
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+                ৳${(item.finalPrice * item.qty).toFixed(2)}
+              </td>
+            </tr>
+          `;
+          })
+          .join("");
+
+        const itemsTable = `
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr style="background: #f3f4f6;">
+                <th style="padding: 10px; text-align: left;">Image</th>
+                <th style="padding: 10px; text-align: left;">Product</th>
+                <th style="padding: 10px; text-align: center;">Qty</th>
+                <th style="padding: 10px; text-align: right;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsDetails}
+            </tbody>
+          </table>
+        `;
+
+        // ⭐ Customer Email
+        await sendEmail({
+          to: populatedOrder.user.email,
+          subject: `Order Success - ${populatedOrder.orderId}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Hi ${populatedOrder.user.username},</h2>
+              <p>Thank you for your order! Your payment has been successfully submitted and is now being processed.</p>
+              
+              ${paymentInstructions}
+              
+              <h3>Order Summary:</h3>
+              ${itemsTable}
+              
+              <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                <p style="margin: 5px 0;"><strong>Order ID:</strong> #${populatedOrder.orderId}</p>
+                <p style="margin: 5px 0;"><strong>Subtotal:</strong> ৳${itemsPrice}</p>
+                <p style="margin: 5px 0;"><strong>Shipping:</strong> ${shippingPrice === "0.00" ? "FREE" : "৳" + shippingPrice}</p>
+                ${Number(totalSavings) > 0 ? `<p style="margin: 5px 0; color: #dc2626;"><strong>Total Savings:</strong> ৳${Number(totalSavings).toFixed(2)}</p>` : ""}
+                <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;"><strong>Total Paid:</strong> ৳${totalPrice}</p>
+              </div>
+              
+              <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                Note: Verification usually takes 10-30 minutes during working hours.
+              </p>
+              
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+              <p style="font-size: 12px; color: #999; text-align: center;">
+                © 2024 Becha Bikri. All rights reserved.
+              </p>
+            </div>
+          `,
         });
 
-       await sendEmail({
-         to: populatedOrder.user.email,
-         subject: `Order Success - ${populatedOrder.orderId}`, // Subject line update
-         html: `<h2>Hi ${populatedOrder.user.username},</h2>
-         <p>Thank you for your order! Your payment has been successfully submitted and is now being processed.</p>
-         ${paymentInstructions}
-         <h3>Order Summary:</h3>
-         ${itemsDetails}
-         <div style="margin-top: 20px; padding: 15px; background: #f3f4f6; border-radius: 8px;">
-           <p style="margin: 5px 0;"><strong>Order ID:</strong> #${populatedOrder.orderId}</p>
-           <p style="margin: 5px 0;"><strong>Subtotal:</strong> ৳${itemsPrice}</p>
-           <p style="margin: 5px 0;"><strong>Shipping:</strong> ${shippingPrice === "0.00" ? "FREE" : "৳" + shippingPrice}</p>
-           ${totalSavings > 0 ? `<p style="margin: 5px 0; color: #dc2626;"><strong>Total Savings:</strong> ৳${totalSavings.toFixed(2)}</p>` : ""}
-           <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;"><strong>Total Paid:</strong> ৳${totalPrice}</p>
-         </div>
-         <p style="font-size: 12px; color: #666; margin-top: 20px;">Note: Verification usually takes 10-30 minutes during working hours.</p>`,
-       });
+        // ⭐ Admin Email
+        const adminItemsList = dbOrderItems
+          .map(
+            (item) =>
+              `<li>${item.name} ${item.variantInfo?.hasVariants ? `(${item.variantInfo.colorName}/${item.variantInfo.sizeName})` : ""} - ${item.qty}x - ৳${(item.finalPrice * item.qty).toFixed(2)}</li>`,
+          )
+          .join("");
 
         await sendEmail({
           to: process.env.ADMIN_EMAIL,
           subject: `🔔 Action Required: New Order #${populatedOrder.orderId}`,
-          html: `<div style="font-family: sans-serif;">
+          html: `<div style="font-family: sans-serif; max-width: 600px;">
            <h3 style="color: #2563eb;">New Order Received!</h3>
            <p>A new order has been placed by <strong>${populatedOrder.user.username}</strong> (${populatedOrder.user.email}).</p>
+           
+           <h4>Items:</h4>
+           <ul>${adminItemsList}</ul>
+           
            <hr />
            <p><strong>Order ID:</strong> ${populatedOrder.orderId}</p>
            <p><strong>Payment Method:</strong> ${paymentMethod}</p>

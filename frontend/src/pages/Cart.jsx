@@ -7,13 +7,22 @@ import {
   FaTag,
   FaTruckLoading,
   FaInfoCircle,
+  FaCheck,
 } from "react-icons/fa";
 import { addToCart, removeFromCart } from "../redux/features/cart/cartSlice";
 import { LuShoppingBag } from "react-icons/lu";
-
 import { FaArrowLeftLong, FaArrowRightLong } from "react-icons/fa6";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
+
+// ✅ ADDED: Local helpers
+const isFlashSaleActive = (item) => {
+  if (!item?.flashSale || !item.flashSale.isActive) return false;
+  const now = new Date();
+  const startTime = new Date(item.flashSale.startTime);
+  const endTime = new Date(item.flashSale.endTime);
+  return now >= startTime && now <= endTime;
+};
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -21,17 +30,45 @@ const Cart = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
   const cart = useSelector((state) => state.cart);
-  const { cartItems } = cart;
+  const { cartItems, shippingAddress } = cart;
 
+  // ✅ ঢাকা চেক
+  const city = shippingAddress?.city?.toLowerCase() || "";
+  const isInsideDhaka = city.includes("dhaka");
+
+  // ✅ weight-based আইটেম চেক
+  const hasWeightBasedItems = cartItems.some((item) => {
+    const s = item.shippingDetails || {};
+    return s.shippingType === "weight-based";
+  });
+
+  // ✅ inside-outside আইটেম চেক
+  const hasInsideOutsideItems = cartItems.some((item) => {
+    const s = item.shippingDetails || {};
+    return s.shippingType === "inside-outside";
+  });
+
+  // ✅ CHANGED: Complete cart item with all required fields
   const addToCartHandler = (product, qty) => {
-    dispatch(addToCart({ ...product, qty }));
+    const cartItem = {
+      ...product,
+      qty,
+      flashSale: product.flashSale,
+      discountPercentage: product.discountPercentage,
+      shippingDetails: product.shippingDetails,
+      weight: product.weight,
+      variantInfo: product.variantInfo,
+    };
+    dispatch(addToCart(cartItem));
   };
 
   const removeFromCartHandler = (item) => {
-    dispatch(removeFromCart({ 
-      _id: item._id, 
-      variantInfo: item.variantInfo || null 
-    }));
+    dispatch(
+      removeFromCart({
+        _id: item._id,
+        variantInfo: item.variantInfo || null,
+      })
+    );
   };
 
   const checkoutHandler = () => {
@@ -42,57 +79,104 @@ const Cart = () => {
     }
   };
 
-  // ✅ সরল সাবটোটাল - ব্যাকেন্ড থেকে _finalPrice ব্যবহার করুন
+  // ✅ সঠিক সাবটোটাল ক্যালকুলেশন
   const subtotal = cartItems.reduce((acc, item) => {
-    const finalPrice = Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0;
+    const finalPrice =
+      Number(item.finalPrice) ||
+      Number(item._finalPrice) ||
+      item.price ||
+      0;
     return acc + finalPrice * item.qty;
   }, 0);
 
-  // ✅ সরল সেভিংস - ব্যাকেন্ড থেকে _savings ব্যবহার করুন
+  // ✅ সঠিক সেভিংস ক্যালকুলেশন
   const totalSavings = cartItems.reduce((acc, item) => {
-    const savings = Number(item._savings) || Number(item.savings) || 0;
-    return acc + savings * item.qty;
+    const basePrice = Number(item.basePrice) || Number(item.price) || 0;
+    const finalPrice =
+      Number(item.finalPrice) ||
+      Number(item._finalPrice) ||
+      item.price ||
+      0;
+    const savingsPerItem = basePrice - finalPrice;
+    return acc + savingsPerItem * item.qty;
   }, 0);
 
-  const totalWeight = cartItems.reduce(
-    (acc, item) => acc + (Number(item.weight) || 0.5) * item.qty,
-    0,
-  );
+  // ✅ শুধু weight-based আইটেমের ওজন
+  const totalWeight = cartItems.reduce((acc, item) => {
+    const s = item.shippingDetails || {};
+    if (s.shippingType === "weight-based") {
+      return acc + (Number(item.weight) || 0.5) * item.qty;
+    }
+    return acc;
+  }, 0);
 
-  // Shipping calculation
+  // ✅ আপডেটেড: নতুন শিপিং ক্যালকুলেশন (Utils/cart.js এর মতো)
   const calculateShipping = () => {
-    const city = cart.shippingAddress?.city?.toLowerCase() || "";
-    const isInsideDhaka = city.includes("dhaka");
-    
-    let totalShipping = 0;
-    let hasFreeShipping = false;
+    let totalWeight = 0;
+    let maxFixedShipping = 0;
+    let hasWeightBased = false;
+    let weightBasedCharge = 0;
+    let maxInsideOutsideCharge = 0;
+
+    // ফ্রি শিপিং থ্রেশহোল্ড
+    const activeThresholds = cartItems
+      .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
+      .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
+      .filter((t) => !isNaN(t) && t > 0);
+
+    const freeThreshold =
+      activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
+
+    // ফ্রি শিপিং চেক
+    if (subtotal >= freeThreshold) {
+      return 0;
+    }
 
     cartItems.forEach((item) => {
       const s = item.shippingDetails || {};
-      const itemPrice = (Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0) * item.qty;
-      
-      if (s.isFreeShippingActive && itemPrice >= (s.freeShippingThreshold || 0)) {
-        hasFreeShipping = true;
-        return;
-      }
+      const type = s.shippingType?.toLowerCase();
 
-      if (s.shippingType === "free") {
-        hasFreeShipping = true;
-      } else if (s.shippingType === "fixed") {
-        totalShipping += Number(s.fixedShippingCharge) || 0;
-      } else {
-        const rate = isInsideDhaka
+      if (type === "fixed") {
+        maxFixedShipping = Math.max(
+          maxFixedShipping,
+          Number(s.fixedShippingCharge) || 0
+        );
+      }
+      // 👇 নতুন: inside-outside টাইপ
+      else if (type === "inside-outside") {
+        const charge = isInsideDhaka
           ? Number(s.insideDhakaCharge) || 80
           : Number(s.outsideDhakaCharge) || 150;
-        totalShipping += rate;
+        maxInsideOutsideCharge = Math.max(maxInsideOutsideCharge, charge);
+      }
+      // 👇 weight-based টাইপ
+      else if (type === "weight-based") {
+        hasWeightBased = true;
+        const weight = Number(item.weight) || 0.5;
+        const qty = Number(item.qty) || 1;
+        totalWeight += weight * qty;
       }
     });
 
-    return hasFreeShipping && totalShipping === 0 ? 0 : totalShipping;
+    // ওজন অনুযায়ী চার্জ হিসাব
+    if (hasWeightBased && totalWeight > 0) {
+      const baseRate = isInsideDhaka ? 80 : 150;
+
+      if (totalWeight <= 1) {
+        weightBasedCharge = baseRate;
+      } else {
+        const extraWeight = Math.ceil(totalWeight - 1);
+        weightBasedCharge = baseRate + extraWeight * 20;
+      }
+    }
+
+    // 👇 সবচেয়ে বেশি চার্জ নেওয়া (ফিক্সড, ইনসাইড-আউটসাইড, ওয়েট-বেইজড এর মধ্যে)
+    return Math.max(maxFixedShipping, maxInsideOutsideCharge, weightBasedCharge);
   };
 
   const shippingPrice = calculateShipping();
 
+  // ফ্রি শিপিং প্রোগ্রেস বারের জন্য
   const activeThresholds = cartItems
     .filter((i) => i.shippingDetails?.isFreeShippingActive)
     .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
@@ -104,7 +188,7 @@ const Cart = () => {
   const hasActiveFreeShipping = cartItems.some(
     (item) =>
       item.shippingDetails?.isFreeShippingActive ||
-      item.shippingDetails?.shippingType === "free",
+      item.shippingDetails?.shippingType === "free"
   );
 
   const progressPercent =
@@ -156,9 +240,7 @@ const Cart = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <FaTruckLoading
-                        className={
-                          isFreeByThreshold ? "text-green-600" : "text-red-600"
-                        }
+                        className={isFreeByThreshold ? "text-green-600" : "text-red-600"}
                         size={20}
                       />
                       <p className="text-sm font-bold text-gray-800 font-mono uppercase tracking-tighter">
@@ -167,9 +249,12 @@ const Cart = () => {
                           : `Add ৳${Math.ceil(remainingForFree)} more for FREE SHIPPING`}
                       </p>
                     </div>
-                    <span className="text-[10px] font-mono font-black bg-gray-100 px-2 py-1 rounded">
-                      Total Weight: {totalWeight.toFixed(2)} kg
-                    </span>
+                    {/* ✅ শুধু weight-based আইটেমের ওজন দেখানো */}
+                    {hasWeightBasedItems && (
+                      <span className="text-[10px] font-mono font-black bg-gray-100 px-2 py-1 rounded">
+                        Weight: {totalWeight.toFixed(2)} kg
+                      </span>
+                    )}
                   </div>
 
                   <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
@@ -192,17 +277,31 @@ const Cart = () => {
 
               <AnimatePresence mode="popLayout">
                 {cartItems.map((item) => {
-                  // ✅ ব্যাকেন্ড থেকে আসা প্রাইস এবং সেভিংস ব্যবহার করুন
-                  const finalPrice = Number(item._finalPrice) || Number(item.finalPrice) || item.price || 0;
-                  const basePrice = Number(item.basePrice) || item.price || 0;
-                  const savings = Number(item._savings) || Number(item.savings) || 0;
-                  const isFlashSale = item._flashSaleActive || item.flashSaleActive || false;
-                  const discountPercent = isFlashSale 
-                    ? (item.flashSale?.discountPercentage || 0)
-                    : (item.discountPercentage || 0);
-                  
+                  const finalPrice =
+                    Number(item.finalPrice) ||
+                    Number(item._finalPrice) ||
+                    item.price ||
+                    0;
+                  const basePrice =
+                    Number(item.basePrice) || Number(item.price) || 0;
+                  const savingsPerItem = basePrice - finalPrice;
+                  const hasFlashSale = isFlashSaleActive(item);
+                  const discountPercent = hasFlashSale
+                    ? item.flashSale?.discountPercentage || 0
+                    : item.discountPercentage || 0;
+
                   const sDetails = item.shippingDetails || {};
-                  
+
+                  // ✅ আইটেমের শিপিং টাইপ নির্ণয়
+                  const itemPrice = finalPrice * item.qty;
+                  const isItemFree =
+                    sDetails.shippingType === "free" ||
+                    (sDetails.isFreeShippingActive &&
+                      itemPrice >= (sDetails.freeShippingThreshold || 0));
+                  const itemShippingType = isItemFree
+                    ? "free"
+                    : sDetails.shippingType || "weight-based";
+
                   const variantText = item.variantInfo?.hasVariants
                     ? `${item.variantInfo.colorName} / ${item.variantInfo.sizeName}`
                     : "";
@@ -222,12 +321,14 @@ const Cart = () => {
                           alt={item.name}
                           className="w-full h-full object-contain p-2"
                         />
-                        {/* ✅ ডিসকাউন্ট ব্যাজ */}
                         {discountPercent > 0 && (
-                          <div className={`absolute top-0 right-0 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg ${
-                            isFlashSale ? 'bg-purple-600' : 'bg-red-600'
-                          }`}>
-                            {isFlashSale ? '⚡ FLASH' : ''} {Math.round(discountPercent)}% OFF
+                          <div
+                            className={`absolute top-0 right-0 text-white text-[10px] font-black px-2 py-1 rounded-bl-lg ${
+                              hasFlashSale ? "bg-purple-600" : "bg-red-600"
+                            }`}
+                          >
+                            {hasFlashSale ? "⚡ FLASH" : ""}{" "}
+                            {Math.round(discountPercent)}% OFF
                           </div>
                         )}
                       </div>
@@ -236,7 +337,7 @@ const Cart = () => {
                         <h3 className="text-lg font-mono font-black text-gray-900 uppercase group-hover:text-red-600 transition-colors">
                           {item.name}
                         </h3>
-                        
+
                         {item.variantInfo?.hasVariants && (
                           <div className="flex items-center justify-center md:justify-start gap-2 mt-1">
                             <span
@@ -258,16 +359,14 @@ const Cart = () => {
                           <span className="text-red-600 font-black font-mono">
                             ৳ {finalPrice.toLocaleString()}
                           </span>
-                          {/* ✅ শুধু সেভিংস থাকলে স্ট্রাইকথ্রু দেখান */}
-                          {savings > 0 && (
+                          {savingsPerItem > 0 && (
                             <span className="text-gray-400 text-xs line-through">
                               ৳{Number(basePrice).toLocaleString()}
                             </span>
                           )}
                         </div>
 
-                        {/* ✅ ফ্লাশ সেল ব্যাজ */}
-                        {isFlashSale && (
+                        {hasFlashSale && (
                           <div className="mt-1">
                             <span className="text-[9px] bg-purple-100 text-purple-600 px-2 py-1 rounded font-bold uppercase">
                               ⚡ Flash Sale Active
@@ -275,13 +374,33 @@ const Cart = () => {
                           </div>
                         )}
 
+                        {/* ✅ আপডেটেড: শিপিং টাইপ ব্যাজ */}
                         <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-2">
                           <span className="text-[9px] bg-gray-100 text-gray-500 px-2 py-1 rounded font-bold uppercase">
-                            Weight: {Number(item.weight) || 0.5}kg
+                            {Number(item.weight) || 0.5}kg
                           </span>
-                          {sDetails.shippingType === "free" && (
-                            <span className="text-[9px] bg-green-100 text-green-600 px-2 py-1 rounded font-bold uppercase">
-                              Free Shipping
+
+                          {itemShippingType === "free" ? (
+                            <span className="text-[9px] bg-green-100 text-green-600 px-2 py-1 rounded font-bold uppercase flex items-center gap-1">
+                              <FaCheck size={8} /> Free Shipping
+                            </span>
+                          ) : itemShippingType === "fixed" ? (
+                            <span className="text-[9px] bg-blue-100 text-blue-600 px-2 py-1 rounded font-bold uppercase">
+                              Fixed: ৳{sDetails.fixedShippingCharge || 0}
+                            </span>
+                          ) : itemShippingType === "inside-outside" ? (
+                            <span className="text-[9px] bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold uppercase">
+                              {isInsideDhaka ? "Inside" : "Outside"} Dhaka: ৳
+                              {isInsideDhaka
+                                ? sDetails.insideDhakaCharge || 80
+                                : sDetails.outsideDhakaCharge || 150}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold uppercase">
+                              Weight-based: ৳
+                              {isInsideDhaka
+                                ? sDetails.insideDhakaCharge || 80
+                                : sDetails.outsideDhakaCharge || 150}
                             </span>
                           )}
                         </div>
@@ -346,7 +465,7 @@ const Cart = () => {
 
                   <div className="space-y-4 font-mono text-sm">
                     <div className="flex justify-between text-gray-500">
-                      <span>Subtotal</span>
+                      <span>Original Subtotal</span>
                       <span className="text-white">
                         ৳{(subtotal + totalSavings).toFixed()}
                       </span>
@@ -361,19 +480,24 @@ const Cart = () => {
                         <span className="flex items-center gap-2 font-black uppercase text-[10px]">
                           <FaTag /> Total Savings
                         </span>
-                        <span className="font-black">
-                          - ৳{totalSavings.toFixed()}
-                        </span>
+                        <span className="font-black">- ৳{totalSavings.toFixed()}</span>
                       </motion.div>
                     )}
 
-                    <div className="flex justify-between text-gray-500 border-t border-gray-800 pt-4">
-                      <span>Total Weight</span>
-                      <span className="text-white">
-                        {totalWeight.toFixed(2)} KG
-                      </span>
+                    <div className="flex justify-between text-gray-500">
+                      <span>Discounted Subtotal</span>
+                      <span className="text-white font-bold">৳{subtotal.toFixed()}</span>
                     </div>
 
+                    {/* ✅ শুধু weight-based আইটেমের ওজন */}
+                    {hasWeightBasedItems && (
+                      <div className="flex justify-between text-gray-500 border-t border-gray-800 pt-4">
+                        <span>Total Weight (weight-based)</span>
+                        <span className="text-white">{totalWeight.toFixed(2)} KG</span>
+                      </div>
+                    )}
+
+                    {/* ✅ আপডেটেড: শিপিং ডিটেইলস */}
                     <div className="bg-gray-900/50 p-4 rounded-2xl space-y-2 border border-gray-800">
                       <div className="flex justify-between text-[10px]">
                         <span className="text-gray-500">Shipping:</span>
@@ -387,9 +511,73 @@ const Cart = () => {
                           {shippingPrice === 0 ? "Free" : `৳${shippingPrice}`}
                         </span>
                       </div>
-                      {shippingPrice > 0 && totalWeight > 1 && (
-                        <p className="text-[9px] text-gray-400 italic leading-relaxed text-center">
-                          Note: Extra ৳20/kg applies after 1kg.
+
+                      {/* ✅ আপডেটেড: শিপিং ব্রেকডাউন */}
+                      {shippingPrice > 0 && (
+                        <div className="space-y-1 text-[9px] text-gray-400">
+                          {/* Weight-based চার্জ */}
+                          {hasWeightBasedItems && totalWeight > 0 && (
+                            <p className="flex justify-between">
+                              <span>Weight-based ({totalWeight.toFixed(2)}kg):</span>
+                              <span>
+                                ৳
+                                {(() => {
+                                  const baseRate = isInsideDhaka ? 80 : 150;
+                                  let charge = baseRate;
+                                  if (totalWeight > 1) {
+                                    charge += Math.ceil(totalWeight - 1) * 20;
+                                  }
+                                  return charge;
+                                })()}
+                              </span>
+                            </p>
+                          )}
+
+                          {/* Inside-outside চার্জ */}
+                          {hasInsideOutsideItems && (
+                            <p className="flex justify-between text-indigo-400">
+                              <span>
+                                {isInsideDhaka ? "Inside" : "Outside"} Dhaka delivery:
+                              </span>
+                              <span>
+                                ৳
+                                {Math.max(
+                                  ...cartItems
+                                    .filter(
+                                      (i) => i.shippingDetails?.shippingType === "inside-outside"
+                                    )
+                                    .map((i) =>
+                                      isInsideDhaka
+                                        ? i.shippingDetails.insideDhakaCharge || 80
+                                        : i.shippingDetails.outsideDhakaCharge || 150
+                                    )
+                                )}
+                              </span>
+                            </p>
+                          )}
+
+                          {/* Fixed চার্জ */}
+                          {cartItems.some((i) => i.shippingDetails?.shippingType === "fixed") && (
+                            <p className="flex justify-between text-blue-400">
+                              <span>Fixed delivery (max):</span>
+                              <span>
+                                ৳
+                                {Math.max(
+                                  ...cartItems
+                                    .filter((i) => i.shippingDetails?.shippingType === "fixed")
+                                    .map((i) => i.shippingDetails.fixedShippingCharge || 0),
+                                  0
+                                )}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* ✅ নোট: weight-based এর জন্য */}
+                      {shippingPrice > 0 && hasWeightBasedItems && totalWeight > 1 && (
+                        <p className="text-[9px] text-orange-400 italic leading-relaxed text-center mt-2">
+                          * Extra ৳20/kg applies after 1kg for weight-based items
                         </p>
                       )}
                     </div>
@@ -411,8 +599,7 @@ const Cart = () => {
                     onClick={checkoutHandler}
                     className="w-full group mt-10 flex items-center justify-center gap-3 bg-red-600 py-5 rounded-xl font-mono font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-500 shadow-xl"
                   >
-                    Checkout{" "}
-                    <FaArrowRightLong className="group-hover:translate-x-2 transition-transform" />
+                    Checkout <FaArrowRightLong className="group-hover:translate-x-2 transition-transform" />
                   </button>
 
                   <p className="mt-6 text-[9px] text-center text-gray-600 uppercase tracking-widest font-bold flex items-center justify-center gap-2">

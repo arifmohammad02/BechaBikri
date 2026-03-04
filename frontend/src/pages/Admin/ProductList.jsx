@@ -53,7 +53,7 @@ const ProductList = () => {
     { label: "", value: "" },
   ]);
 
-  // --- SHIPPING STATES 
+  // --- SHIPPING STATES
   const [weight, setWeight] = useState(0.5);
   const [shippingType, setShippingType] = useState("weight-based");
   const [insideDhakaCharge, setInsideDhakaCharge] = useState(80);
@@ -62,16 +62,14 @@ const ProductList = () => {
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(0);
   const [isFreeShippingActive, setIsFreeShippingActive] = useState(false);
 
-    // --- VARIANT STATES ---
+  // --- VARIANT STATES ---
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState([]);
   const [activeVariantTab, setActiveVariantTab] = useState("basic");
 
- 
   // 🆕 FLASH SALE STATES - NEW ADDITION
 
-
-    const [flashSale, setFlashSale] = useState({
+  const [flashSale, setFlashSale] = useState({
     isActive: false,
     discountPercentage: 0,
     startTime: "",
@@ -115,10 +113,9 @@ const ProductList = () => {
           [{ size: ["small", false, "large", "huge"] }],
           ["bold", "italic", "underline", "strike", "blockquote"],
 
-
-          [{ color: [] }, { background: [] }], 
+          [{ color: [] }, { background: [] }],
           [{ align: [] }],
-          [{ script: "sub" }, { script: "super" }], 
+          [{ script: "sub" }, { script: "super" }],
           [{ list: "ordered" }, { list: "bullet" }],
           [{ indent: "-1" }, { indent: "+1" }],
           ["link", "image", "video"],
@@ -174,8 +171,7 @@ const ProductList = () => {
     setKeyFeatures(newFeatures);
   };
 
-
-    const addColorVariant = () => {
+  const addColorVariant = () => {
     const newVariant = {
       color: {
         name: "",
@@ -184,24 +180,30 @@ const ProductList = () => {
         images: [],
       },
       sizes: [
-        { size: "", price: Number(price) || 0, countInStock: 0, sku: "", isAvailable: true },
+        {
+          size: "",
+          price: Number(price) || 0,
+          countInStock: 0,
+          sku: "",
+          isAvailable: true,
+        },
       ],
       isActive: true,
     };
     setVariants([...variants, newVariant]);
   };
 
- const removeColorVariant = (colorIndex) => {
+  const removeColorVariant = (colorIndex) => {
     setVariants(variants.filter((_, i) => i !== colorIndex));
   };
 
-   const updateColorInfo = (colorIndex, field, value) => {
+  const updateColorInfo = (colorIndex, field, value) => {
     const newVariants = [...variants];
     newVariants[colorIndex].color[field] = value;
     setVariants(newVariants);
   };
 
-    const uploadColorImage = async (e, colorIndex) => {
+  const uploadColorImage = async (e, colorIndex) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -223,7 +225,7 @@ const ProductList = () => {
     }
   };
 
-    const addSizeToVariant = (colorIndex) => {
+  const addSizeToVariant = (colorIndex) => {
     const newVariants = [...variants];
     newVariants[colorIndex].sizes.push({
       size: "",
@@ -235,9 +237,11 @@ const ProductList = () => {
     setVariants(newVariants);
   };
 
-   const removeSizeFromVariant = (colorIndex, sizeIndex) => {
+  const removeSizeFromVariant = (colorIndex, sizeIndex) => {
     const newVariants = [...variants];
-    newVariants[colorIndex].sizes = newVariants[colorIndex].sizes.filter((_, i) => i !== sizeIndex);
+    newVariants[colorIndex].sizes = newVariants[colorIndex].sizes.filter(
+      (_, i) => i !== sizeIndex,
+    );
     setVariants(newVariants);
   };
 
@@ -247,9 +251,8 @@ const ProductList = () => {
     setVariants(newVariants);
   };
 
+  // 🆕 FLASH SALE HANDLERS - NEW ADDITION
 
-   // 🆕 FLASH SALE HANDLERS - NEW ADDITION
- 
   const handleFlashSaleToggle = (e) => {
     setFlashSale({
       ...flashSale,
@@ -264,6 +267,41 @@ const ProductList = () => {
     });
   };
 
+  // ✅ আপডেটেড: Shipping Type Change Handler
+  const handleShippingTypeChange = (e) => {
+    const newType = e.target.value;
+    setShippingType(newType);
+
+    // স্বয়ংক্রিয়ভাবে ডিফল্ট ভ্যালু সেট করো
+    switch (newType) {
+      case "free":
+        setInsideDhakaCharge(0);
+        setOutsideDhakaCharge(0);
+        setFixedShippingCharge(0);
+        setIsFreeShippingActive(true);
+        setFreeShippingThreshold(0);
+        break;
+      case "fixed":
+        setInsideDhakaCharge(0);
+        setOutsideDhakaCharge(0);
+        setFixedShippingCharge(fixedShippingCharge || 100); // ডিফল্ট 100
+        setIsFreeShippingActive(false);
+        break;
+      case "inside-outside":
+        setInsideDhakaCharge(insideDhakaCharge || 80);
+        setOutsideDhakaCharge(outsideDhakaCharge || 150);
+        setFixedShippingCharge(0);
+        setIsFreeShippingActive(false);
+        break;
+      case "weight-based":
+      default:
+        setInsideDhakaCharge(insideDhakaCharge || 80);
+        setOutsideDhakaCharge(outsideDhakaCharge || 150);
+        setFixedShippingCharge(0);
+        setIsFreeShippingActive(false);
+        break;
+    }
+  };
 
   const moveImage = (index, direction) => {
     const updatedImages = [...images];
@@ -313,7 +351,7 @@ const ProductList = () => {
     if (!price || price <= 0) return toast.error("Valid price is required.");
     if (!category) return toast.error("Category is required.");
 
-      // Validate variants if enabled
+    // Validate variants if enabled
     if (hasVariants) {
       if (variants.length === 0) {
         return toast.error("At least one color variant is required.");
@@ -334,13 +372,15 @@ const ProductList = () => {
             return toast.error(`Size name required for ${v.color.name}`);
           }
           if (v.sizes[j].price <= 0) {
-            return toast.error(`Valid price required for ${v.color.name} - ${v.sizes[j].size}`);
+            return toast.error(
+              `Valid price required for ${v.color.name} - ${v.sizes[j].size}`,
+            );
           }
         }
       }
     }
 
-      // 🆕 FLASH SALE VALIDATION - NEW ADDITION
+    // 🆕 FLASH SALE VALIDATION - NEW ADDITION
     if (flashSale.isActive) {
       if (!flashSale.startTime || !flashSale.endTime) {
         return toast.error("Flash Sale start and end time are required.");
@@ -355,7 +395,6 @@ const ProductList = () => {
         return toast.error("Flash Sale end time must be after start time.");
       }
     }
-
 
     try {
       setLoading(true);
@@ -394,7 +433,7 @@ const ProductList = () => {
       productData.append("freeShippingThreshold", freeShippingThreshold);
       productData.append("isFreeShippingActive", isFreeShippingActive);
 
-        // Variant Data
+      // Variant Data
       productData.append("hasVariants", hasVariants);
       if (hasVariants) {
         productData.append("variants", JSON.stringify(variants));
@@ -402,8 +441,8 @@ const ProductList = () => {
         productData.append("defaultSizeIndex", 0);
       }
 
-// 🆕 FLASH SALE DATA APPEND - NEW ADDITION
- 
+      // 🆕 FLASH SALE DATA APPEND - NEW ADDITION
+
       productData.append("flashSale", JSON.stringify(flashSale));
 
       const res = await createProduct(productData).unwrap();
@@ -440,7 +479,7 @@ const ProductList = () => {
   };
 
   return (
-     <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
+    <div className="min-h-screen bg-white font-mono pt-24 lg:pt-32 transition-all duration-500">
       <div className="flex flex-col 2xl:flex-row">
         <AdminMenu />
         <div className="flex-1 px-4 lg:px-12 pb-20">
@@ -477,7 +516,7 @@ const ProductList = () => {
                 <FaPalette />
                 Variants {hasVariants && `(${variants.length} Colors)`}
               </button>
-               <button
+              <button
                 onClick={() => setActiveVariantTab("flashsale")}
                 className={`px-6 py-3 font-black uppercase text-[12px] tracking-widest transition-all flex items-center gap-2 ${
                   activeVariantTab === "flashsale"
@@ -500,7 +539,6 @@ const ProductList = () => {
             </div>
 
             <div className="bg-white border border-gray-100 shadow-2xl p-6 lg:p-10 relative overflow-hidden">
-              
               {/* BASIC INFO TAB */}
               {activeVariantTab === "basic" && (
                 <>
@@ -793,6 +831,7 @@ const ProductList = () => {
                   </div>
 
                   {/* SHIPPING CONFIGURATION SECTION */}
+                  {/* SHIPPING CONFIGURATION SECTION */}
                   <div className="mb-12 border-t border-gray-100 pt-10">
                     <p className="text-[12px] font-black uppercase tracking-widest text-red-600 mb-8 flex items-center gap-2">
                       <span className="w-8 h-[2px] bg-red-600"></span>
@@ -800,22 +839,45 @@ const ProductList = () => {
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
+                      {/* ✅ আপডেটেড: Shipping Type with auto-update */}
                       <div className="group relative">
                         <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
                           Shipping_Logic_Type
                         </label>
                         <select
                           className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all cursor-pointer appearance-none"
-                          onChange={(e) => setShippingType(e.target.value)}
+                          onChange={handleShippingTypeChange} // ✅ নতুন হ্যান্ডলার
                           value={shippingType}
                         >
-                          <option value="weight-based">WEIGHT_BASED</option>
+                          <option value="weight-based">
+                            WEIGHT_BASED (Default)
+                          </option>
                           <option value="fixed">FIXED_RATE</option>
+                          <option value="inside-outside">
+                            INSIDE_OUTSIDE_DHAKA
+                          </option>
                           <option value="free">ALWAYS_FREE</option>
                         </select>
+                        <p className="text-[9px] text-gray-400 mt-1">
+                          {shippingType === "weight-based" &&
+                            "Charges based on product weight"}
+                          {shippingType === "fixed" &&
+                            "Flat rate regardless of location"}
+                          {shippingType === "inside-outside" &&
+                            "Different rates for Dhaka vs Outside"}
+                          {shippingType === "free" && "No shipping charges"}
+                        </p>
                       </div>
 
-                      <div className="group relative">
+                      {/* Weight - শুধু weight-based এর জন্য */}
+                      <div
+                        className={`group relative transition-all duration-500 ${
+                          shippingType !== "weight-based" &&
+                          shippingType !== "inside-outside"
+                            ? "opacity-30"
+                            : "opacity-100"
+                        }`}
+                      >
                         <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
                           Item_Weight_(KG)
                         </label>
@@ -823,11 +885,21 @@ const ProductList = () => {
                           type="number"
                           step="0.01"
                           value={weight}
+                          disabled={
+                            shippingType !== "weight-based" &&
+                            shippingType !== "inside-outside"
+                          }
                           onChange={(e) => setWeight(e.target.value)}
                           className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all placeholder:text-gray-300"
                         />
+                        {shippingType === "weight-based" && (
+                          <p className="text-[9px] text-orange-400 mt-1">
+                            Extra ৳20/kg after 1kg
+                          </p>
+                        )}
                       </div>
 
+                      {/* Free Shipping Toggle */}
                       <div className="bg-gray-50 p-4 border border-gray-100 rounded-sm flex items-center justify-between group hover:border-red-200 transition-all">
                         <div>
                           <label className="text-[10px] font-black text-gray-400 tracking-widest uppercase block mb-1">
@@ -847,13 +919,14 @@ const ProductList = () => {
                         />
                       </div>
 
+                      {/* Free Shipping Threshold */}
                       <div
                         className={`group relative transition-all duration-500 ${
                           !isFreeShippingActive ? "opacity-30" : "opacity-100"
                         }`}
                       >
                         <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                          Free_Shipping_Threshold
+                          Free_Shipping_Threshold (৳)
                         </label>
                         <input
                           type="number"
@@ -866,25 +939,49 @@ const ProductList = () => {
                         />
                       </div>
 
-                      <div className="group relative">
-                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
-                          Inside_Dhaka_Charge
+                      {/* Inside Dhaka Charge - weight-based & inside-outside এর জন্য */}
+                      <div
+                        className={`group relative transition-all duration-500 ${
+                          shippingType === "fixed" || shippingType === "free"
+                            ? "opacity-30"
+                            : "opacity-100"
+                        }`}
+                      >
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          {shippingType === "inside-outside"
+                            ? "Inside Dhaka Charge"
+                            : "Base Charge (Inside Dhaka)"}
                         </label>
                         <input
                           type="number"
                           value={insideDhakaCharge}
+                          disabled={
+                            shippingType === "fixed" || shippingType === "free"
+                          }
                           onChange={(e) => setInsideDhakaCharge(e.target.value)}
                           className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
                         />
                       </div>
 
-                      <div className="group relative">
-                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block ">
-                          Outside_Dhaka_Charge
+                      {/* Outside Dhaka Charge - weight-based & inside-outside এর জন্য */}
+                      <div
+                        className={`group relative transition-all duration-500 ${
+                          shippingType === "fixed" || shippingType === "free"
+                            ? "opacity-30"
+                            : "opacity-100"
+                        }`}
+                      >
+                        <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
+                          {shippingType === "inside-outside"
+                            ? "Outside Dhaka Charge"
+                            : "Base Charge (Outside Dhaka)"}
                         </label>
                         <input
                           type="number"
                           value={outsideDhakaCharge}
+                          disabled={
+                            shippingType === "fixed" || shippingType === "free"
+                          }
                           onChange={(e) =>
                             setOutsideDhakaCharge(e.target.value)
                           }
@@ -892,9 +989,16 @@ const ProductList = () => {
                         />
                       </div>
 
-                      <div className="group relative">
+                      {/* Fixed Shipping Charge - শুধু fixed এর জন্য */}
+                      <div
+                        className={`group relative transition-all duration-500 ${
+                          shippingType !== "fixed"
+                            ? "opacity-30"
+                            : "opacity-100"
+                        }`}
+                      >
                         <label className="text-[11px] font-black text-gray-400 tracking-widest uppercase mb-2 block">
-                          Fixed_Shipping_Charge
+                          Fixed_Shipping_Charge (৳)
                         </label>
                         <input
                           type="number"
@@ -903,10 +1007,67 @@ const ProductList = () => {
                           onChange={(e) =>
                             setFixedShippingCharge(e.target.value)
                           }
-                          className={`w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all ${
-                            shippingType !== "fixed" ? "opacity-30" : ""
-                          }`}
+                          placeholder={
+                            shippingType === "fixed" ? "Enter fixed amount" : ""
+                          }
+                          className="w-full bg-transparent border-b-2 border-gray-100 py-2 font-bold text-black focus:outline-none focus:border-red-600 transition-all"
                         />
+                        {shippingType === "fixed" && (
+                          <p className="text-[9px] text-blue-400 mt-1">
+                            Same charge for all locations
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ✅ নতুন: Preview Section */}
+                    <div className="mt-8 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                      <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                        Shipping Preview
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                          <p className="text-[9px] text-gray-400 uppercase">
+                            Type
+                          </p>
+                          <p className="text-sm font-bold text-black uppercase">
+                            {shippingType.replace("-", " ")}
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                          <p className="text-[9px] text-gray-400 uppercase">
+                            Inside Dhaka
+                          </p>
+                          <p className="text-sm font-bold text-black">
+                            ৳
+                            {shippingType === "free"
+                              ? "0"
+                              : insideDhakaCharge || 0}
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                          <p className="text-[9px] text-gray-400 uppercase">
+                            Outside Dhaka
+                          </p>
+                          <p className="text-sm font-bold text-black">
+                            ৳
+                            {shippingType === "free"
+                              ? "0"
+                              : shippingType === "fixed"
+                                ? fixedShippingCharge || 0
+                                : outsideDhakaCharge || 0}
+                          </p>
+                        </div>
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                          <p className="text-[9px] text-gray-400 uppercase">
+                            Free Shipping
+                          </p>
+                          <p className="text-sm font-bold text-black">
+                            {isFreeShippingActive
+                              ? `Above ৳${freeShippingThreshold || 0}`
+                              : "Disabled"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -940,7 +1101,8 @@ const ProductList = () => {
                         Product Variants
                       </h2>
                       <p className="text-[11px] text-gray-400 mt-1">
-                        Configure color and size combinations with individual pricing
+                        Configure color and size combinations with individual
+                        pricing
                       </p>
                     </div>
                     <button
@@ -956,7 +1118,8 @@ const ProductList = () => {
                     <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                       <FaPalette className="mx-auto text-4xl text-gray-300 mb-4" />
                       <p className="text-gray-500 font-mono text-sm">
-                        No variants added yet. Click &quot;Add Color&quot; to start.
+                        No variants added yet. Click &quot;Add Color&quot; to
+                        start.
                       </p>
                     </div>
                   )}
@@ -977,7 +1140,11 @@ const ProductList = () => {
                               type="text"
                               value={variant.color.name}
                               onChange={(e) =>
-                                updateColorInfo(colorIndex, "name", e.target.value)
+                                updateColorInfo(
+                                  colorIndex,
+                                  "name",
+                                  e.target.value,
+                                )
                               }
                               placeholder="e.g. Red"
                               className="w-full bg-white border border-gray-200 rounded-lg p-3 font-bold text-black focus:ring-2 focus:ring-red-600 outline-none"
@@ -992,7 +1159,11 @@ const ProductList = () => {
                                 type="color"
                                 value={variant.color.hexCode}
                                 onChange={(e) =>
-                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                  updateColorInfo(
+                                    colorIndex,
+                                    "hexCode",
+                                    e.target.value,
+                                  )
                                 }
                                 className="w-12 h-12 rounded-lg border border-gray-200 cursor-pointer"
                               />
@@ -1000,7 +1171,11 @@ const ProductList = () => {
                                 type="text"
                                 value={variant.color.hexCode}
                                 onChange={(e) =>
-                                  updateColorInfo(colorIndex, "hexCode", e.target.value)
+                                  updateColorInfo(
+                                    colorIndex,
+                                    "hexCode",
+                                    e.target.value,
+                                  )
                                 }
                                 className="flex-1 bg-white border border-gray-200 rounded-lg p-3 font-mono text-sm uppercase"
                               />
@@ -1034,7 +1209,9 @@ const ProductList = () => {
                                   <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(e) => uploadColorImage(e, colorIndex)}
+                                    onChange={(e) =>
+                                      uploadColorImage(e, colorIndex)
+                                    }
                                     className="hidden"
                                   />
                                 </label>
@@ -1055,7 +1232,8 @@ const ProductList = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <h4 className="text-[11px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                            <FaRuler /> Sizes for {variant.color.name || `Color ${colorIndex + 1}`}
+                            <FaRuler /> Sizes for{" "}
+                            {variant.color.name || `Color ${colorIndex + 1}`}
                           </h4>
                           <button
                             type="button"
@@ -1079,7 +1257,12 @@ const ProductList = () => {
                                 type="text"
                                 value={size.size}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "size", e.target.value)
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "size",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="S, M, L"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1093,7 +1276,12 @@ const ProductList = () => {
                                 type="number"
                                 value={size.price}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "price", Number(e.target.value))
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "price",
+                                    Number(e.target.value),
+                                  )
                                 }
                                 placeholder="0"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1107,7 +1295,12 @@ const ProductList = () => {
                                 type="number"
                                 value={size.countInStock}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "countInStock", Number(e.target.value))
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "countInStock",
+                                    Number(e.target.value),
+                                  )
                                 }
                                 placeholder="0"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-bold text-sm focus:ring-2 focus:ring-red-600 outline-none"
@@ -1121,7 +1314,12 @@ const ProductList = () => {
                                 type="text"
                                 value={size.sku}
                                 onChange={(e) =>
-                                  updateSizeInfo(colorIndex, sizeIndex, "sku", e.target.value)
+                                  updateSizeInfo(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "sku",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="SKU-001"
                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 font-mono text-sm uppercase focus:ring-2 focus:ring-red-600 outline-none"
@@ -1130,7 +1328,9 @@ const ProductList = () => {
                             <div className="flex items-end">
                               <button
                                 type="button"
-                                onClick={() => removeSizeFromVariant(colorIndex, sizeIndex)}
+                                onClick={() =>
+                                  removeSizeFromVariant(colorIndex, sizeIndex)
+                                }
                                 className="w-full p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center gap-1"
                               >
                                 <FaTrash size={12} /> Remove
@@ -1144,7 +1344,7 @@ const ProductList = () => {
                 </div>
               )}
 
-                 {/* ============================================================
+              {/* ============================================================
                   🆕 FLASH SALE TAB - NEW ADDITION
               ============================================================ */}
               {activeVariantTab === "flashsale" && (

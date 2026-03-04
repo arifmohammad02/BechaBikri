@@ -8,12 +8,14 @@ import {
   submitManualPayment,
   verifyManualPayment,
   getPaymentStats,
+  checkTransactionId,
 } from "../controllers/paymentController.js";
 
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
 router.get("/methods", getPaymentMethods);
 router.put("/submit/:orderId", authenticate, submitManualPayment);
+router.get("/check-transaction/:transactionId", checkTransactionId);
 router.get("/stats", authenticate, authorizeAdmin, getPaymentStats);
 router.post(
   "/methods",

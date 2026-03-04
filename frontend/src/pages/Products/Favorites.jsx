@@ -3,9 +3,9 @@ import { selectFavoriteProduct } from "../../redux/features/favorite/favoriteSli
 import Product from "./Product";
 import { useEffect, useState } from "react";
 import Loader from "../../components/Loader";
-import { LuHeart } from "react-icons/lu"; // ফেভারিটের জন্য হার্ট আইকন বেটার
+import { LuHeart } from "react-icons/lu";
 import { FaArrowRight } from "react-icons/fa";
-import { FaArrowRightLong } from "react-icons/fa6"; // Vite এরর এড়াতে সঠিক ইমপোর্ট
+import { FaArrowRightLong } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -26,7 +26,7 @@ const Favorites = () => {
         <Loader />
       ) : (
         <div className="mt-[105px]">
-          {/* 🟢 ১. স্টাইলিশ হেডার (Cart পেজের সাথে ম্যাচ করে) */}
+          {/* Header */}
           <div className="py-10 bg-white border-b border-gray-100 shadow-sm">
             <div className="container mx-auto px-4">
               <h1 className="text-2xl font-bold border-l-4 border-red-600 pl-4 text-gray-800 uppercase tracking-widest font-mono">
@@ -42,7 +42,6 @@ const Favorites = () => {
 
           <div className="container mx-auto px-4 mt-12">
             {favorites.length === 0 ? (
-              /* 🟢 ২. এম্পটি স্টেট (Smooth Animation) */
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -69,7 +68,6 @@ const Favorites = () => {
                 </Link>
               </motion.div>
             ) : (
-              /* 🟢 ৩. প্রোডাক্ট গ্রিড (Ease-in Transition) */
               <div className="space-y-8">
                 <div className="flex items-center justify-between px-2">
                    <span className="font-mono text-xs font-black text-gray-400 uppercase tracking-[0.3em]">
@@ -94,13 +92,13 @@ const Favorites = () => {
                         transition={{ duration: 0.3 }}
                         className="hover:translate-y-[-5px] transition-transform duration-300"
                       >
+                        {/* ✅ Product কম্পোনেন্ট আপডেট করা হয়েছে */}
                         <Product product={product} />
                       </motion.div>
                     ))}
                   </AnimatePresence>
                 </motion.div>
 
-                {/* ব্যাক বাটন */}
                 <div className="pt-10 border-t border-gray-100">
                   <Link to="/shop" className="inline-flex items-center gap-3 text-gray-400 hover:text-black font-mono text-[11px] font-black uppercase tracking-widest transition-all group">
                     <FaArrowRightLong className="rotate-180 group-hover:-translate-x-2 transition-transform" />

@@ -40,6 +40,32 @@ const createOrUpdatePaymentMethod = asyncHandler(async (req, res) => {
   res.status(201).json(paymentMethod);
 });
 
+
+// paymentController.js এ যোগ করুন
+
+// @desc    Check if transaction ID exists
+// @route   GET /api/payments/check-transaction/:transactionId
+// @access  Public
+const checkTransactionId = asyncHandler(async (req, res) => {
+  const { transactionId } = req.params;
+
+  if (!transactionId || transactionId.length < 8) {
+    return res.status(400).json({ error: "Invalid transaction ID" });
+  }
+
+  const existingOrder = await Order.findOne({
+    "manualPaymentDetails.transactionId": transactionId.toUpperCase(),
+  });
+
+  res.json({
+    exists: !!existingOrder,
+    orderId: existingOrder ? existingOrder.orderId : null,
+  });
+});
+
+// Route এ যোগ করুন
+// router.get('/check-transaction/:transactionId', checkTransactionId);
+
 // @desc    Delete payment method
 // @route   DELETE /api/payments/methods/:type
 // @access  Admin
@@ -275,4 +301,5 @@ export {
   submitManualPayment,
   verifyManualPayment,
   getPaymentStats,
+  checkTransactionId,
 };

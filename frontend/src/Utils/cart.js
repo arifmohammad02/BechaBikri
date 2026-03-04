@@ -4,31 +4,39 @@ export const addDecimals = (num) => {
 };
 
 export const updateCart = (state, shippingAddress = {}) => {
-  const addr = shippingAddress.city ? shippingAddress : state.shippingAddress;
+  const addr =
+    shippingAddress && shippingAddress.city
+      ? shippingAddress
+      : state.shippingAddress || {};
 
-  // ১. আইটেম প্রাইস ক্যালকুলেশন (ডিসকাউন্ট এবং ভেরিয়েন্ট সহ)
+  // ✅ FIXED: সঠিক itemsPrice calculation
+  let totalSavings = 0;
+
   state.itemsPrice = addDecimals(
     state.cartItems.reduce((acc, item) => {
-      // Use variant price if available
-      const price = item.variantInfo?.variantPrice || item.price || 0;
-      const discountPercent = Number(item.discountPercentage || 0);
+      // ✅ Use the already normalized finalPrice from item
+      const finalPrice =
+        Number(item._finalPrice) ||
+        Number(item.finalPrice) ||
+        Number(item.price) ||
+        0;
       const qty = Number(item.qty) || 1;
 
-      const discount = (price * discountPercent) / 100;
-      const priceAfterDiscount = price - discount;
-      return acc + priceAfterDiscount * qty;
+      // ✅ Calculate savings from the item
+      const basePrice = Number(item.basePrice) || finalPrice;
+      const savingsPerItem = basePrice - finalPrice;
+      totalSavings += savingsPerItem * qty;
+
+      return acc + finalPrice * qty;
     }, 0),
   );
 
-  let totalWeight = 0;
-  let maxFixedShipping = 0;
-  let baseShippingRate = 0;
-
-  // ২. ঢাকা সিটি চেক
   const city = addr?.city?.trim().toLowerCase() || "";
   const isInsideDhaka = city.includes("dhaka");
+  const itemsPriceNum = Number(state.itemsPrice);
 
-  // ৩. ফ্রি শিপিং থ্রেশহোল্ড বের করা
+  let finalShippingPrice = 0;
+
   const activeThresholds = state.cartItems
     .filter((i) => i.shippingDetails?.isFreeShippingActive === true)
     .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
@@ -37,57 +45,69 @@ export const updateCart = (state, shippingAddress = {}) => {
   const freeThreshold =
     activeThresholds.length > 0 ? Math.min(...activeThresholds) : Infinity;
 
-  let finalShippingPrice = 0;
+  // ✅ FIXED: Declare charges array before using it
+  const charges = [];
 
-  // ৪. শিপিং চার্জ ক্যালকুলেশন
-  if (Number(state.itemsPrice) < freeThreshold) {
+  if (itemsPriceNum < freeThreshold) {
     state.cartItems.forEach((item) => {
       const s = item.shippingDetails || {};
       const type = s.shippingType?.toLowerCase();
 
-      if (type === "fixed") {
-        const currentFixed = Number(s.fixedShippingCharge) || 0;
-        if (currentFixed > maxFixedShipping) {
-          maxFixedShipping = currentFixed;
+      const qty = Number(item.qty) || 1;
+      const weight = Number(item.weight) || 0.5;
+
+      switch (type) {
+        case "free": {
+          charges.push(0);
+          break;
         }
-      } else if (type === "weight-based") {
-        const weight = Number(item.weight) || 0.5;
-        const qty = Number(item.qty) || 1;
-        totalWeight += weight * qty;
 
-        const rate = isInsideDhaka
-          ? Number(s.insideDhakaCharge) || 80
-          : Number(s.outsideDhakaCharge) || 150;
+        case "fixed": {
+          charges.push(Number(s.fixedShippingCharge) || 0);
+          break;
+        }
 
-        if (rate > baseShippingRate) {
-          baseShippingRate = rate;
+        case "inside-outside": {
+          charges.push(
+            isInsideDhaka
+              ? Number(s.insideDhakaCharge) || 80
+              : Number(s.outsideDhakaCharge) || 150,
+          );
+          break;
+        }
+
+        case "weight-based":
+        default: {
+          const totalWeight = weight * qty;
+          const baseRate = isInsideDhaka ? 80 : 150;
+          if (totalWeight <= 1) {
+            charges.push(baseRate);
+          } else {
+            const extra = Math.ceil(totalWeight - 1);
+            charges.push(baseRate + extra * 20);
+          }
+          break;
         }
       }
     });
 
-    let weightBasedCharge = 0;
-    if (totalWeight > 0) {
-      weightBasedCharge = baseShippingRate;
-      if (totalWeight > 1) {
-        weightBasedCharge += Math.ceil(totalWeight - 1) * 20;
-      }
-    }
-
-    finalShippingPrice = weightBasedCharge + maxFixedShipping;
-  } else {
-    finalShippingPrice = 0;
+    // ✅ FIXED: Only calculate max if charges array has items
+    finalShippingPrice = charges.length > 0 ? Math.max(...charges, 0) : 0;
   }
 
-  // ৫. ফাইনাল স্টেট আপডেট
   state.shippingPrice = addDecimals(finalShippingPrice);
-  state.taxPrice = addDecimals(Number(0.0 * Number(state.itemsPrice)));
+  state.taxPrice = addDecimals(0);
 
   state.totalPrice = addDecimals(
-    Number(state.itemsPrice) +
-      Number(state.shippingPrice) +
-      Number(state.taxPrice),
+    itemsPriceNum + Number(state.shippingPrice) + Number(state.taxPrice),
   );
 
+  state.totalSavings = addDecimals(totalSavings);
+
+  state.shippingPrice = addDecimals(finalShippingPrice);
+  state.taxPrice = addDecimals(0);
+  state.totalPrice = addDecimals(itemsPriceNum + finalShippingPrice);
+  state.totalSavings = addDecimals(totalSavings);
   localStorage.setItem("cart", JSON.stringify(state));
   return state;
 };

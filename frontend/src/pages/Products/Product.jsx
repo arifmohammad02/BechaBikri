@@ -5,29 +5,78 @@ import { FaBolt, FaShoppingCart, FaClock } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../redux/features/cart/cartSlice";
 import { toast } from "react-toastify";
-import { isFlashSaleActive, calculateEffectivePrice } from "../../components/ProductLogistics";
 import { useState, useEffect } from "react";
 
 const Product = ({ product }) => {
   const dispatch = useDispatch();
   const [timeLeft, setTimeLeft] = useState({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
 
+  // ✅ ADDED: Local helpers (since ProductLogistics removed)
+  const isFlashSaleActive = (product) => {
+    if (!product?.flashSale || !product.flashSale.isActive) return false;
+    const now = new Date();
+    const startTime = new Date(product.flashSale.startTime);
+    const endTime = new Date(product.flashSale.endTime);
+    return now >= startTime && now <= endTime;
+  };
+
+  const getVariantPrice = (product) => {
+    if (!product.hasVariants || !product.variants) return product?.price || 0;
+    
+    const colorIndex = product.defaultColorIndex || 0;
+    const sizeIndex = product.defaultSizeIndex || 0;
+    
+    const variant = product.variants[colorIndex];
+    if (!variant?.sizes?.[sizeIndex]) return product?.price || 0;
+    
+    return variant.sizes[sizeIndex].price;
+  };
+
+  const calculateEffectivePrice = (product, basePrice) => {
+    if (isFlashSaleActive(product)) {
+      const flashDiscount = product.flashSale.discountPercentage || 0;
+      return basePrice - (basePrice * flashDiscount) / 100;
+    }
+    
+    const discountPercent = product?.discountPercentage || 0;
+    if (discountPercent > 0) {
+      return basePrice - (basePrice * discountPercent) / 100;
+    }
+    
+    return basePrice;
+  };
+
+  const getMainImage = (product) => {
+    if (!product.hasVariants || !product.variants?.length) {
+      return Array.isArray(product?.images) && product.images.length > 0 
+        ? product.images[0] 
+        : product?.image || "/placeholder.jpg";
+    }
+    
+    const colorIndex = product.defaultColorIndex || 0;
+    const variant = product.variants[colorIndex];
+    
+    return variant?.color?.image || product.images?.[0] || "/placeholder.jpg";
+  };
+
+  // ✅ CHANGED: Use helpers with variant price
+  const basePrice = getVariantPrice(product);
   const hasFlashSale = isFlashSaleActive(product);
-  const finalPrice = calculateEffectivePrice(product);
-  const originalPrice = product?.price || 0;
+  const finalPrice = calculateEffectivePrice(product, basePrice);
+  const originalPrice = basePrice;
   const displayDiscountPercent = hasFlashSale 
     ? product.flashSale.discountPercentage 
     : product.discountPercentage;
 
+  // ✅ CHANGED: Fixed timezone calculation
   useEffect(() => {
     if (!hasFlashSale || !product.flashSale?.endTime) return;
 
     const calculateTimeLeft = () => {
-      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
+      const now = new Date();
       const endTime = new Date(product.flashSale.endTime);
-      const bdEndTime = new Date(endTime.toLocaleString("en-US", { timeZone: "Asia/Dhaka" }));
       
-      const difference = bdEndTime - now;
+      const difference = endTime - now;
 
       if (difference > 0) {
         const totalDays = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -56,23 +105,66 @@ const Product = ({ product }) => {
     return () => clearInterval(interval);
   }, [hasFlashSale, product]);
 
-  const mainImage = Array.isArray(product?.images) && product.images.length > 0 
-    ? product.images[0] 
-    : product?.image || "/placeholder.jpg";
+  // ✅ CHANGED: Use getMainImage helper
+  const mainImage = getMainImage(product);
 
   const productPath = `/product/${product.slug || product._id}`;
 
+  // ✅ CHANGED: Fixed addToCartHandler with all required fields
   const addToCartHandler = (e) => {
     e.preventDefault();
     e.stopPropagation();
     
+    const colorIndex = product.defaultColorIndex || 0;
+    const sizeIndex = product.defaultSizeIndex || 0;
+    const variant = product.variants?.[colorIndex];
+    const sizeVariant = variant?.sizes?.[sizeIndex];
+    
     const productToAdd = {
       ...product,
+      _id: product._id,
+      name: product.name,
+      price: originalPrice, // Base price
+      finalPrice: finalPrice, // After discount
       _flashSaleActive: hasFlashSale,
-      _effectivePrice: finalPrice
+      _effectivePrice: finalPrice,
+      effectivePrice: finalPrice,
+      basePrice: originalPrice,
+      _savings: originalPrice - finalPrice,
+      savings: originalPrice - finalPrice,
+      flashSale: product.flashSale, // Required for cartSlice isFlashSaleActive
+      discountPercentage: product.discountPercentage,
+      // ✅ ADDED: variantInfo for cartSlice isSameItem
+      variantInfo: product.hasVariants ? {
+        hasVariants: true,
+        colorIndex: colorIndex,
+        sizeIndex: sizeIndex,
+        colorName: variant?.color?.name || "",
+        colorHex: variant?.color?.hexCode || "",
+        sizeName: sizeVariant?.size || "",
+        variantPrice: sizeVariant?.price || originalPrice,
+        sku: sizeVariant?.sku || "",
+      } : {
+        hasVariants: false,
+        colorIndex: null,
+        sizeIndex: null,
+        colorName: "",
+        sizeName: "",
+        variantPrice: null,
+        sku: "",
+      },
+      // ✅ ADDED: Required for shipping calculation in updateCart
+      shippingDetails: product.shippingDetails || {
+        shippingType: "weight-based",
+        insideDhakaCharge: 80,
+        outsideDhakaCharge: 150,
+      },
+      weight: product.weight || 0.5,
+      image: mainImage,
+      qty: 1,
     };
     
-    dispatch(addToCart({ ...productToAdd, qty: 1 }));
+    dispatch(addToCart(productToAdd));
     toast.success(hasFlashSale ? "⚡ Flash Sale item added!" : "Added to cart");
   };
 
@@ -207,7 +299,6 @@ const Product = ({ product }) => {
               </div>
             </div>
           ) : (
-            /* Empty space for non-flash items */
             <div className="h-full" />
           )}
         </div>

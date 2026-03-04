@@ -9,89 +9,73 @@ import OrderSummery from "../../components/OrderSummery";
 import { motion } from "framer-motion";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 
-// ✅ হেল্পার: সঠিক প্রাইস পাওয়া
 const getItemFinalPrice = (item) => {
-  // ✅ অর্ডারের জন্য সরাসরি _finalPrice বা _effectivePrice ব্যবহার করুন
-  return Number(item._finalPrice) || 
-         Number(item._effectivePrice) || 
-         Number(item.finalPrice) || 
-         Number(item.price) || 0;
+  return (
+    Number(item._finalPrice) ||
+    Number(item._effectivePrice) ||
+    Number(item.finalPrice) ||
+    Number(item.price) ||
+    0
+  );
 };
 
-const getItemBasePrice = (item) => {
-  return Number(item.basePrice) || Number(item.price) || 0;
-};
-
-const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
+const PlaceOrder = ({ 
+  orderSummary, // ⭐ props থেকে নিন
+  onPlaceOrder, 
+  validateFields 
+}) => {
   const cart = useSelector((state) => state.cart);
   const { cartItems, shippingAddress, paymentMethod } = cart;
+
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [createOrder] = useCreateOrderMutation();
 
-  // ✅ সঠিক সাবটোটাল ক্যালকুলেশন
-  const subtotal = cartItems.reduce((acc, item) => {
-    const finalPrice = getItemFinalPrice(item);
-    return acc + finalPrice * item.qty;
-  }, 0);
+  // ✅ props থেকে সরাসরি নিন
+  const { subtotal, shippingCharge, totalPrice, totalSavings } = orderSummary;
 
-  // ✅ সঠিক সেভিংস ক্যালকুলেশন
-  const totalSavings = cartItems.reduce((acc, item) => {
-    const basePrice = getItemBasePrice(item);
-    const finalPrice = getItemFinalPrice(item);
-    return acc + (basePrice - finalPrice) * item.qty;
-  }, 0);
+  console.log("📦 PlaceOrder received orderSummary:", orderSummary);
 
-  const shippingCharge = Number(cart.shippingAddress?.shippingCharge) || 0;
-  
-  // ✅ সঠিক টোটাল প্রাইস
-  const totalPrice = subtotal + shippingCharge;
+  const effectivePaymentMethod =
+    paymentMethod ||
+    shippingAddress?.paymentMethod ||
+    "Cash on Delivery";
 
-  console.log("PlaceOrder Calculation:", {
-    cartItems: cartItems.map(i => ({
-      name: i.name,
-      basePrice: getItemBasePrice(i),
-      finalPrice: getItemFinalPrice(i),
-      qty: i.qty,
-      _finalPrice: i._finalPrice,
-      _effectivePrice: i._effectivePrice,
-      price: i.price
-    })),
-    subtotal,
-    totalSavings,
-    shippingCharge,
-    totalPrice
-  });
-
-  // Check if manual payment
-  const isManualPayment = ["bKash", "Nagad", "Rocket", "Bank"].includes(paymentMethod);
+  const isManualPayment = ["bKash", "Nagad", "Rocket", "Bank"].includes(
+    effectivePaymentMethod,
+  );
 
   const placeOrderHandler = async () => {
     if (!validateFields()) return;
 
-    // Save shipping address
     onPlaceOrder();
 
     try {
       setIsLoading(true);
 
-      // ✅ অর্ডার আইটেম প্রিপার করুন সঠিক প্রাইস দিয়ে
       const orderItemsWithVariants = cartItems.map((item) => {
         const finalPrice = getItemFinalPrice(item);
 
-        
         return {
           name: item.name,
           qty: Number(item.qty),
           image: item.image || (item.images && item.images[0]),
-          price: finalPrice, // ✅ চূড়ান্ত প্রাইস (ডিসকাউন্ট করা)
+          price: finalPrice,
           product: item._id || item.product,
           discountPercentage: Number(item.discountPercentage || 0),
           flashSale: item.flashSale || null,
-          _flashSaleActive: item._flashSaleActive || item.flashSaleActive || false,
+          _flashSaleActive:
+            item._flashSaleActive || item.flashSaleActive || false,
           weight: Number(item.weight || 0.5),
-          shippingDetails: item.shippingDetails,
+          shippingDetails: {
+            shippingType: item.shippingDetails?.shippingType || "weight-based",
+            insideDhakaCharge: item.shippingDetails?.insideDhakaCharge || 80,
+            outsideDhakaCharge: item.shippingDetails?.outsideDhakaCharge || 150,
+            fixedShippingCharge: item.shippingDetails?.fixedShippingCharge || 0,
+            isFreeShippingActive: item.shippingDetails?.isFreeShippingActive || false,
+            freeShippingThreshold: item.shippingDetails?.freeShippingThreshold || 0,
+          },
           variantInfo: item.variantInfo || {
             hasVariants: false,
             colorIndex: null,
@@ -105,25 +89,52 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
         };
       });
 
+      const safeShippingAddress = {
+        name: shippingAddress?.name || "",
+        address: shippingAddress?.address || "",
+        city: shippingAddress?.city || "",
+        postalCode: shippingAddress?.postalCode || "0000",
+        country: shippingAddress?.country || "Bangladesh",
+        phoneNumber: shippingAddress?.phoneNumber || "",
+      };
+
+      if (
+        !safeShippingAddress.postalCode ||
+        safeShippingAddress.postalCode === "0000"
+      ) {
+        toast.error("Please enter a valid postal code!");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!safeShippingAddress.country) {
+        toast.error("Please enter your country!");
+        setIsLoading(false);
+        return;
+      }
+
       if (isManualPayment) {
-        // Save order data for payment page
-        localStorage.setItem("pendingOrderData", JSON.stringify({
+        const pendingOrderData = {
           orderItems: orderItemsWithVariants,
-          shippingAddress: shippingAddress,
-          paymentMethod: paymentMethod,
+          shippingAddress: safeShippingAddress,
+          paymentMethod: effectivePaymentMethod,
           itemsPrice: subtotal.toFixed(2),
           shippingPrice: shippingCharge.toFixed(2),
           totalPrice: totalPrice.toFixed(2),
           totalSavings: totalSavings.toFixed(2),
-        }));
-        
+        };
+
+        localStorage.setItem(
+          "pendingOrderData",
+          JSON.stringify(pendingOrderData),
+        );
+
         navigate(`/payment/checkout`);
       } else {
-        // Direct order creation for COD
         const orderData = {
           orderItems: orderItemsWithVariants,
-          shippingAddress: shippingAddress,
-          paymentMethod: paymentMethod,
+          shippingAddress: safeShippingAddress,
+          paymentMethod: effectivePaymentMethod,
           itemsPrice: subtotal.toFixed(2),
           shippingPrice: shippingCharge.toFixed(2),
           totalPrice: totalPrice.toFixed(2),
@@ -131,12 +142,13 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
         };
 
         const res = await createOrder(orderData).unwrap();
-        
+
         toast.success("Order placed successfully! 📦");
         dispatch(clearCartItems());
+        localStorage.removeItem("shippingAddress");
+        localStorage.removeItem("pendingOrderData");
         navigate(`/order/${res._id}`);
       }
-      
     } catch (error) {
       toast.error(
         error?.data?.message || "Something went wrong while placing order.",
@@ -168,15 +180,14 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
             ৳{subtotal.toFixed(2)}
           </span>
         </div>
-        
-        {/* ✅ সেভিংস দেখান */}
+
         {totalSavings > 0 && (
           <div className="flex justify-between items-center text-sm font-mono text-green-600 font-bold uppercase bg-green-50 p-2 rounded-lg">
             <span className="flex items-center gap-2">💰 You Saved</span>
             <span className="font-black">- ৳{totalSavings.toFixed(2)}</span>
           </div>
         )}
-        
+
         <div className="flex justify-between items-center text-sm font-mono text-gray-500 font-bold uppercase">
           <span>Shipping Fee</span>
           <span
@@ -207,19 +218,17 @@ const PlaceOrder = ({ onPlaceOrder, validateFields }) => {
             : "bg-blue-600 text-white hover:bg-black shadow-lg shadow-blue-100"
         }`}
       >
-        {isLoading 
-          ? "Processing..." 
-          : isManualPayment 
-            ? "Proceed to Payment" 
-            : "Confirm My Order"
-        }
+        {isLoading
+          ? "Processing..."
+          : isManualPayment
+            ? "Proceed to Payment"
+            : "Confirm My Order"}
       </motion.button>
 
       <p className="text-center text-[9px] text-gray-400 mt-4 font-mono uppercase tracking-widest">
-        {isManualPayment 
-          ? "You will pay first, then order will be created" 
-          : "By clicking, you agree to our terms and conditions"
-        }
+        {isManualPayment
+          ? "You will pay first, then order will be created"
+          : "By clicking, you agree to our terms and conditions"}
       </p>
     </div>
   );

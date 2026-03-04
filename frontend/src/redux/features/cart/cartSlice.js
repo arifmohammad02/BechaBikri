@@ -8,6 +8,11 @@ const initialState = localStorage.getItem("cart")
       cartItems: [],
       shippingAddress: {},
       paymentMethod: "Cash on Delivery",
+      itemsPrice: 0,
+      shippingPrice: 0,
+      taxPrice: 0,
+      totalPrice: 0,
+      totalSavings: 0,
     };
 
 // Helper to check if two items are the same (including variants)
@@ -31,36 +36,62 @@ const isSameItem = (item1, item2) => {
   return false;
 };
 
+// Flash Sale check helper
+const isFlashSaleActive = (flashSale) => {
+  if (!flashSale || !flashSale.isActive) return false;
+  const now = new Date();
+  const startTime = new Date(flashSale.startTime);
+  const endTime = new Date(flashSale.endTime);
+  return now >= startTime && now <= endTime;
+};
+
+// ✅ FIXED: Remove calculatedCharges from shipping details
 const normalizeItemPrices = (item) => {
   if (!item) return null;
 
-  // ✅ সংখ্যায় কনভার্ট করুন এবং ডিফল্ট ভ্যালু সেট করুন
   const price = Number(item.price) || 0;
   const basePrice = Number(item.basePrice) || price || 0;
 
-  // ✅ _finalPrice পাওয়া না গেলে নিজে ক্যালকুলেট করুন
-  let finalPrice =
-    Number(item._finalPrice) ||
-    Number(item.finalPrice) ||
-    Number(item._effectivePrice);
+  const flashSaleIsActive =
+    isFlashSaleActive(item.flashSale) ||
+    item._flashSaleActive ||
+    item.flashSaleActive ||
+    false;
 
-  if (!finalPrice || isNaN(finalPrice)) {
-    // ✅ ফ্লাশ সেল চেক করে ক্যালকুলেট করুন
-    const hasFlashSale = item._flashSaleActive || item.flashSaleActive || false;
-    if (hasFlashSale && item.flashSale?.discountPercentage) {
-      finalPrice =
-        basePrice - (basePrice * item.flashSale.discountPercentage) / 100;
-    } else if (item.discountPercentage) {
-      finalPrice = basePrice - (basePrice * item.discountPercentage) / 100;
-    } else {
-      finalPrice = price || basePrice;
-    }
+  let finalPrice = basePrice;
+  let appliedDiscountPercent = 0;
+  let savings = 0;
+
+  if (flashSaleIsActive && item.flashSale?.discountPercentage) {
+    // ✅ Flash Sale থাকলে শুধু Flash Sale apply হবে, regular discount না
+    appliedDiscountPercent = Number(item.flashSale.discountPercentage) || 0;
+    finalPrice = basePrice - (basePrice * appliedDiscountPercent) / 100;
+    savings = (basePrice * appliedDiscountPercent) / 100;
+  } else if (item.discountPercentage) {
+    // ✅ Flash Sale না থাকলে regular discount
+    appliedDiscountPercent = Number(item.discountPercentage) || 0;
+    finalPrice = basePrice - (basePrice * appliedDiscountPercent) / 100;
+    savings = (basePrice * appliedDiscountPercent) / 100;
+  } else {
+    finalPrice = price || basePrice;
   }
 
-  const savings = basePrice - finalPrice;
-  const flashSaleActive =
-    item._flashSaleActive || item.flashSaleActive || false;
+  // ✅ FIXED: Remove calculatedCharges from shippingDetails
+  const { calculatedCharges, ...restShippingDetails } =
+    item.shippingDetails || {};
 
+  const shippingDetails = {
+    shippingType: restShippingDetails.shippingType || "weight-based",
+    insideDhakaCharge: Number(restShippingDetails.insideDhakaCharge) || 80,
+    outsideDhakaCharge: Number(restShippingDetails.outsideDhakaCharge) || 150,
+    fixedShippingCharge: Number(restShippingDetails.fixedShippingCharge) || 0,
+    isFreeShippingActive: restShippingDetails.isFreeShippingActive || false,
+    freeShippingThreshold:
+      Number(restShippingDetails.freeShippingThreshold) || 0,
+    // ❌ NO calculatedCharges here - calculated dynamically in components
+  };
+
+  const weight = Number(item.weight) || 0.5;
 
   return {
     ...item,
@@ -70,10 +101,15 @@ const normalizeItemPrices = (item) => {
     finalPrice: finalPrice,
     _effectivePrice: finalPrice,
     effectivePrice: finalPrice,
-    _flashSaleActive: flashSaleActive,
-    flashSaleActive: flashSaleActive,
+    _flashSaleActive: flashSaleIsActive,
+    flashSaleActive: flashSaleIsActive,
     _savings: savings,
     savings: savings,
+    // ✅ Only one discount percentage should be active
+    discountPercentage: flashSaleIsActive ? 0 : appliedDiscountPercent,
+    appliedDiscountPercent: appliedDiscountPercent,
+    shippingDetails: shippingDetails, // ✅ Clean shipping details
+    weight: weight,
   };
 };
 
@@ -89,28 +125,39 @@ const cartSlice = createSlice({
         return state;
       }
 
+      // Normalize item prices and shipping details (removes calculatedCharges)
+      const normalizedItem = normalizeItemPrices(item);
+
       // Find existing item with same ID and variant
       const existItemIndex = state.cartItems.findIndex((x) =>
-        isSameItem(x, item),
+        isSameItem(x, normalizedItem),
       );
 
       if (existItemIndex !== -1) {
         // Update existing item quantity
-        state.cartItems[existItemIndex].qty = item.qty;
-        // ✅ Update prices in case they changed
+        state.cartItems[existItemIndex].qty = normalizedItem.qty;
+        // Update all normalized fields
         state.cartItems[existItemIndex] = {
           ...state.cartItems[existItemIndex],
-          _finalPrice: item._finalPrice,
-          _effectivePrice: item._effectivePrice,
-          _flashSaleActive: item._flashSaleActive,
-          basePrice: item.basePrice,
-          _savings: item._savings,
+          _finalPrice: normalizedItem._finalPrice,
+          finalPrice: normalizedItem.finalPrice,
+          _effectivePrice: normalizedItem._effectivePrice,
+          effectivePrice: normalizedItem.effectivePrice,
+          _flashSaleActive: normalizedItem._flashSaleActive,
+          flashSaleActive: normalizedItem.flashSaleActive,
+          basePrice: normalizedItem.basePrice,
+          _savings: normalizedItem._savings,
+          savings: normalizedItem.savings,
+          flashSale: normalizedItem.flashSale,
+          discountPercentage: normalizedItem.discountPercentage,
+          // ✅ Update clean shipping details
+          shippingDetails: normalizedItem.shippingDetails,
+          weight: normalizedItem.weight,
         };
       } else {
-        // Add new item
-        state.cartItems.push(item);
+        // Add new item with all normalized data
+        state.cartItems.push(normalizedItem);
       }
-
 
       return updateCart(state, state.shippingAddress);
     },
@@ -123,35 +170,27 @@ const cartSlice = createSlice({
         return state;
       }
 
-      console.log("Removing item:", _id, "Variant:", variantInfo); // Debug log
+      console.log("Removing item:", _id, "Variant:", variantInfo);
 
-      // Remove item considering variant info
       state.cartItems = state.cartItems.filter((item) => {
-        // If _id doesn't match, keep the item
         if (item._id !== _id) return true;
 
-        // If variant info provided in payload, check for match
         if (variantInfo?.hasVariants) {
           const itemHasVariants = item.variantInfo?.hasVariants;
-
-          // If item doesn't have variants but payload does, keep it (different items)
           if (!itemHasVariants) return true;
 
-          // Check if variant indices match
           const colorMatch =
             item.variantInfo?.colorIndex === variantInfo.colorIndex;
           const sizeMatch =
             item.variantInfo?.sizeIndex === variantInfo.sizeIndex;
 
-          // Remove only if both indices match
           return !(colorMatch && sizeMatch);
         }
 
-        // No variant info in payload - remove all instances (backward compatibility)
         return false;
       });
 
-      console.log("Cart after removal:", state.cartItems); // Debug log
+      console.log("Cart after removal:", state.cartItems);
 
       return updateCart(state, state.shippingAddress);
     },
@@ -172,6 +211,7 @@ const cartSlice = createSlice({
       state.shippingPrice = 0;
       state.taxPrice = 0;
       state.totalPrice = 0;
+      state.totalSavings = 0;
       localStorage.setItem("cart", JSON.stringify(state));
     },
 

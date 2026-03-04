@@ -92,7 +92,7 @@ const productSchema = mongoose.Schema(
     shippingDetails: {
       shippingType: {
         type: String,
-        enum: ["weight-based", "fixed", "free"],
+        enum: ["weight-based", "fixed", "free", "inside-outside"],
         default: "weight-based",
       },
       fixedShippingCharge: { type: Number, default: 0 },
@@ -117,7 +117,7 @@ productSchema.pre("save", function (next) {
     this.variants.forEach((variant) => {
       if (variant.sizes && variant.sizes.length > 0) {
         variant.sizes.forEach((size) => {
-          totalStock += size.countInStock || 0;
+          totalStock += size.countInStock || 0; 
         });
       }
     });
@@ -183,6 +183,44 @@ productSchema.methods.getEffectivePrice = function () {
     return this.price - (this.price * this.discountPercentage) / 100;
   }
   return this.price;
+};
+
+
+productSchema.methods.getShippingCharge = function (
+  isInsideDhaka = true,
+  orderTotal = 0,
+) {
+  const shipping = this.shippingDetails;
+
+  // 👇 Free shipping threshold check - অর্ডার টোটাল চেক করা হচ্ছে
+  if (
+    shipping.freeShippingThreshold &&
+    orderTotal >= shipping.freeShippingThreshold
+  ) {
+    return 0;
+  }
+
+  // 👇 isFreeShippingActive ফ্ল্যাগ চেক
+  if (shipping.isFreeShippingActive) {
+    return 0;
+  }
+
+  switch (shipping.shippingType) {
+    case "free":
+      return 0;
+
+    case "fixed":
+      return shipping.fixedShippingCharge || 0;
+
+    case "inside-outside":
+      return isInsideDhaka
+        ? shipping.insideDhakaCharge || 80
+        : shipping.outsideDhakaCharge || 150;
+
+    case "weight-based":
+    default:
+      return this.weight * 10;
+  }
 };
 
 // Creating Product Model
