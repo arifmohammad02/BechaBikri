@@ -14,8 +14,9 @@ import {
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
 router.get("/methods", getPaymentMethods);
+router.get("/check-transaction/:transactionId", checkTransactionId); // ✅ Public access
 router.put("/submit/:orderId", authenticate, submitManualPayment);
-router.get("/check-transaction/:transactionId", checkTransactionId);
+
 router.get("/stats", authenticate, authorizeAdmin, getPaymentStats);
 router.post(
   "/methods",

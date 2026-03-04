@@ -41,34 +41,36 @@ const createOrUpdatePaymentMethod = asyncHandler(async (req, res) => {
 });
 
 
-// paymentController.js এ যোগ করুন
 
-// @desc    Check if transaction ID exists
-// @route   GET /api/payments/check-transaction/:transactionId
-// @access  Public
 const checkTransactionId = asyncHandler(async (req, res) => {
   const { transactionId } = req.params;
 
   if (!transactionId || transactionId.length < 8) {
-    return res.status(400).json({ error: "Invalid transaction ID" });
+    return res.status(400).json({
+      exists: false,
+      error: "Invalid transaction ID",
+    });
   }
 
-  const existingOrder = await Order.findOne({
-    "manualPaymentDetails.transactionId": transactionId.toUpperCase(),
-  });
+  try {
+    const existingOrder = await Order.findOne({
+      "manualPaymentDetails.transactionId": transactionId.toUpperCase(),
+    });
 
-  res.json({
-    exists: !!existingOrder,
-    orderId: existingOrder ? existingOrder.orderId : null,
-  });
+    res.json({
+      exists: !!existingOrder,
+      orderId: existingOrder ? existingOrder.orderId : null,
+    });
+  } catch (error) {
+    console.error("Check transaction error:", error);
+    res.status(500).json({
+      exists: false,
+      error: "Server error while checking transaction",
+    });
+  }
 });
 
-// Route এ যোগ করুন
-// router.get('/check-transaction/:transactionId', checkTransactionId);
 
-// @desc    Delete payment method
-// @route   DELETE /api/payments/methods/:type
-// @access  Admin
 const deletePaymentMethod = asyncHandler(async (req, res) => {
   const method = await PaymentMethod.findOne({ type: req.params.type });
 

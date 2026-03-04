@@ -14,10 +14,11 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
     }),
 
     checkTransactionId: builder.query({
-      query: (transactionId) =>
-        `${PAYMENTS_URL}/check-transaction/${transactionId}`,
-      skip: (transactionId) => !transactionId || transactionId.length < 8,
- 
+      query: (transactionId) => ({
+        url: `${PAYMENTS_URL}/check-transaction/${transactionId}`,
+        method: "GET",
+      }),
+      providesTags: ["Payment"],
       keepUnusedDataFor: 1,
     }),
 
@@ -43,6 +44,9 @@ export const paymentApiSlice = apiSlice.injectEndpoints({
         url: `${PAYMENTS_URL}/submit/${orderId}`,
         method: "PUT",
         body: data,
+        headers: {
+          "Content-Type": "application/json", // ⭐ Explicitly set JSON
+        },
       }),
       invalidatesTags: (result, error, { orderId }) => [
         { type: "Order", id: orderId },

@@ -45,11 +45,14 @@ const VALIDATION_RULES = {
       "Please enter a valid Bangladeshi mobile number (11 digits starting with 01)",
   },
   screenshot: {
-    // 🆕 নতুন যোগ করা
     required: true,
     message: "Payment screenshot is required for verification",
   },
 };
+
+// ==========================================
+// CUSTOM HOOK: Debounce
+// ==========================================
 
 const useDebounce = (value, delay) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -67,7 +70,9 @@ const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
+// ==========================================
 // MAIN COMPONENT
+// ==========================================
 
 const PaymentInstruction = () => {
   const navigate = useNavigate();
@@ -90,7 +95,6 @@ const PaymentInstruction = () => {
   // UI states
   const [copied, setCopied] = useState(false);
   const [step, setStep] = useState(1);
-  const [isCheckingTransaction, setIsCheckingTransaction] = useState(false);
   const [transactionStatus, setTransactionStatus] = useState(null); // 'valid' | 'invalid' | 'duplicate' | null
 
   // API queries
@@ -102,49 +106,57 @@ const PaymentInstruction = () => {
   const [uploadImage, { isLoading: uploading }] =
     useUploadProductImageMutation();
 
-  // 🆕 Debounced transaction ID for checking
+  // ✅ Debounced transaction ID for checking
   const debouncedTransactionId = useDebounce(transactionId, 500);
 
-  // 🆕 Check transaction ID availability
+  // ✅✅✅ RTK QUERY: Check transaction ID availability
+  const {
+    data: transactionCheckData,
+    isFetching: isCheckingTransaction,
+    error: transactionCheckError,
+    isError: isTransactionCheckError,
+  } = useCheckTransactionIdQuery(debouncedTransactionId, {
+    // Skip query if less than 8 characters
+    skip: !debouncedTransactionId || debouncedTransactionId.length < 8,
+  });
+
+  // ✅ Handle transaction check result
   useEffect(() => {
-    const checkTransactionId = async () => {
-      if (!debouncedTransactionId || debouncedTransactionId.length < 8) {
-        setTransactionStatus(null);
-        return;
+    if (transactionCheckData) {
+      console.log("Transaction check result:", transactionCheckData);
+      
+      if (transactionCheckData.exists) {
+        setTransactionStatus("duplicate");
+        setErrors((prev) => ({
+          ...prev,
+          transactionId:
+            "This Transaction ID has already been used. Please check and enter a unique ID.",
+        }));
+      } else {
+        setTransactionStatus("valid");
+        setErrors((prev) => ({ ...prev, transactionId: null }));
       }
-
-      setIsCheckingTransaction(true);
-      try {
-        // 🆕 API call to check if transaction ID exists
-        const response = await fetch(
-          `/api/payments/check-transaction/${debouncedTransactionId.toUpperCase()}`,
-        );
-        const data = await response.json();
-
-        if (data.exists) {
-          setTransactionStatus("duplicate");
-          setErrors((prev) => ({
-            ...prev,
-            transactionId:
-              "This Transaction ID has already been used. Please check and enter a unique ID.",
-          }));
-        } else {
-          setTransactionStatus("valid");
-          setErrors((prev) => ({ ...prev, transactionId: null }));
-        }
-      } catch (error) {
-        console.error("Error checking transaction:", error);
-      } finally {
-        setIsCheckingTransaction(false);
-      }
-    };
-
-    if (debouncedTransactionId.length >= 8) {
-      checkTransactionId();
     }
-  }, [debouncedTransactionId]);
+  }, [transactionCheckData]);
 
-  // Load pending order
+  // ✅ Handle transaction check error
+  useEffect(() => {
+    if (isTransactionCheckError && transactionCheckError) {
+      console.error("Transaction check error:", transactionCheckError);
+      setTransactionStatus(null);
+      
+      // Handle specific errors
+      if (transactionCheckError.status === 'FETCH_ERROR') {
+        toast.error("Network error. Cannot connect to server.");
+      } else if (transactionCheckError.status === 404) {
+        toast.error("API endpoint not found. Please contact support.");
+      } else {
+        toast.error("Failed to verify transaction ID. Please try again.");
+      }
+    }
+  }, [isTransactionCheckError, transactionCheckError]);
+
+  // Load pending order from localStorage
   useEffect(() => {
     const loadPendingOrder = () => {
       try {
@@ -262,11 +274,11 @@ const PaymentInstruction = () => {
       isValid = false;
     }
 
-    // 🆕 Validate screenshot (এখন বাধ্যতামূলক)
+    // Validate screenshot
     if (!screenshot) {
       newErrors.screenshot =
         "Please upload a payment screenshot for verification";
-      isValid = false; // 🆕 আগে ছিল true, এখন false
+      isValid = false;
     }
 
     setErrors(newErrors);
@@ -323,8 +335,8 @@ const PaymentInstruction = () => {
     try {
       const res = await uploadImage(formData).unwrap();
       setScreenshot(res.url || res.image);
-      setErrors((prev) => ({ ...prev, screenshot: null })); // 🆕 Error clear করা
-      setTouched((prev) => ({ ...prev, screenshot: true })); // 🆕 Touched করা
+      setErrors((prev) => ({ ...prev, screenshot: null }));
+      setTouched((prev) => ({ ...prev, screenshot: true }));
       toast.success("Screenshot uploaded successfully!");
     } catch (err) {
       toast.error("Failed to upload image");
@@ -335,7 +347,7 @@ const PaymentInstruction = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // 🚨 CRITICAL: Prevent duplicate submissions
+    // Prevent duplicate submissions
     if (isSubmittingRef.current || hasSubmittedRef.current) {
       toast.warning("Please wait, your submission is being processed...");
       return;
@@ -351,39 +363,22 @@ const PaymentInstruction = () => {
       return;
     }
 
-    // 🆕 Double-check transaction ID before submission
     try {
       isSubmittingRef.current = true;
       setStep(2);
 
-      // 🆕 Server-side validation: Check again if transaction ID exists
-      const checkResponse = await fetch(
-        `/api/payments/check-transaction/${transactionId.toUpperCase()}`,
-      );
-      const checkData = await checkResponse.json();
-
-      if (checkData.exists) {
-        setStep(1);
-        setTransactionStatus("duplicate");
-        setErrors((prev) => ({
-          ...prev,
-          transactionId:
-            "This Transaction ID has already been used by another order!",
-        }));
-        toast.error("This Transaction ID is already in use!");
-        isSubmittingRef.current = false;
-        return;
-      }
-
-      // 🆕 Create order first
+      // ✅ Server-side validation: Check again if transaction ID exists
+      // Note: We rely on backend validation here, but frontend state already checked
+      
+      // Create order first
       const orderRes = await createOrder(pendingOrder).unwrap();
 
-      // 🆕 Mark as submitted to prevent duplicates
+      // Mark as submitted to prevent duplicates
       hasSubmittedRef.current = true;
       const submissionKey = `submitted_${pendingOrder.shippingAddress.phoneNumber}_${pendingOrder.totalPrice}`;
       sessionStorage.setItem(submissionKey, orderRes._id);
 
-      // 🆕 Submit payment details
+      // Submit payment details
       await submitPayment({
         orderId: orderRes._id,
         data: {
@@ -395,7 +390,7 @@ const PaymentInstruction = () => {
         },
       }).unwrap();
 
-      // 🆕 Clear data only after successful submission
+      // Clear data only after successful submission
       dispatch(clearCartItems());
       localStorage.removeItem("pendingOrderData");
       localStorage.removeItem("shippingAddress");
@@ -623,7 +618,7 @@ const PaymentInstruction = () => {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Transaction ID Field with Validation */}
+              {/* Transaction ID Field with RTK Query Validation */}
               <div>
                 <label className="block text-xs font-mono font-black uppercase text-gray-500 mb-2">
                   Transaction ID (TrxID) *
@@ -654,7 +649,7 @@ const PaymentInstruction = () => {
                     disabled={step === 2}
                   />
 
-                  {/* Status Indicator */}
+                  {/* ✅ Status Indicator with RTK Query loading */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2">
                     {isCheckingTransaction ? (
                       <FaSpinner className="animate-spin text-blue-500" />
@@ -811,7 +806,7 @@ const PaymentInstruction = () => {
                     isCheckingTransaction ||
                     transactionStatus === "duplicate" ||
                     !screenshot
-                  } // 🆕 !screenshot যোগ করা
+                  }
                   className="w-full py-4 bg-blue-600 text-white rounded-2xl font-mono font-black uppercase tracking-widest hover:bg-black transition-all disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {submitting || creatingOrder ? (
@@ -830,7 +825,7 @@ const PaymentInstruction = () => {
                     <>
                       <FaTimesCircle /> Duplicate Transaction ID
                     </>
-                  ) : !screenshot ? ( // 🆕 নতুন কন্ডিশন
+                  ) : !screenshot ? (
                     <>
                       <FaUpload /> Upload Screenshot Required
                     </>

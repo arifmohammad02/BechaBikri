@@ -39,7 +39,11 @@ const app = express();
 // ⭐ CORS MUST BE FIRST - সবার আগে আসতে হবে
 // ==========================================
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: [
+    "https://becha-bikri-9ygt.vercel.app", // আপনার Vercel frontend
+    "http://localhost:5173", // Local development
+    "http://localhost:3000",
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
