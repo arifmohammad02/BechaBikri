@@ -35,8 +35,6 @@ const PlaceOrder = ({
   // ✅ props থেকে সরাসরি নিন
   const { subtotal, shippingCharge, totalPrice, totalSavings } = orderSummary;
 
-  console.log("📦 PlaceOrder received orderSummary:", orderSummary);
-
   const effectivePaymentMethod =
     paymentMethod ||
     shippingAddress?.paymentMethod ||

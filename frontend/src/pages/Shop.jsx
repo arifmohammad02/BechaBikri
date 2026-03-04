@@ -75,6 +75,7 @@ const PriceRangeSlider = ({ min, max, value, onChange, currency = "৳" }) => {
           values={localValue}
           onChange={(vals) => setLocalValue(vals)}
           onFinalChange={(vals) => handleFinalChange(vals)}
+          
           renderTrack={({ props, children }) => (
             <div
               {...props}

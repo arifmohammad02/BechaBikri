@@ -123,8 +123,6 @@ const PaymentInstruction = () => {
   // ✅ Handle transaction check result
   useEffect(() => {
     if (transactionCheckData) {
-      console.log("Transaction check result:", transactionCheckData);
-      
       if (transactionCheckData.exists) {
         setTransactionStatus("duplicate");
         setErrors((prev) => ({

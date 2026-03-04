@@ -234,7 +234,6 @@ const ProductDetails = () => {
     error,
   } = useGetProductDetailsQuery(productId);
 
-  console.log(product);
 
   // 🆕 Fetch Related Products
   const {

@@ -8,13 +8,13 @@ import {
   RouterProvider,
   createRoutesFromElements,
   createBrowserRouter,
-  ScrollRestoration,
 } from "react-router-dom";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import React, { Suspense, lazy } from "react";
 import Loader from "./components/Loader";
 import AllNotifications from "./components/AllNotifications";
+import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy Loading Components
 const About = lazy(() => import("./pages/About"));
@@ -53,6 +53,24 @@ const PaymentSettings = lazy(() => import("./pages/Admin/PaymentSettings"));
 const BannerList = lazy(() => import("./pages/Admin/BannerList"));
 const BannerCreate = lazy(() => import("./pages/Admin/BannerCreate"));
 const BannerUpdate = lazy(() => import("./pages/Admin/BannerUpdate"));
+
+const NotFound = () => (
+  <div className="flex flex-col items-center justify-center min-h-screen px-4">
+    <h1 className="text-6xl font-bold text-gray-800 mb-4">404</h1>
+    <h2 className="text-2xl font-semibold text-gray-600 mb-4">
+      Page Not Found
+    </h2>
+    <p className="text-gray-500 mb-8 text-center max-w-md">
+      The page youre looking for doesnt exist or has been moved.
+    </p>
+    <a
+      href="/"
+      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+    >
+      Return to Home
+    </a>
+  </div>
+);
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -340,6 +358,7 @@ const router = createBrowserRouter(
           }
         />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Route>,
   ),
   {
@@ -355,8 +374,41 @@ const router = createBrowserRouter(
   },
 );
 
+const preconnectDomains = [
+  "https://fonts.googleapis.com",
+  "https://fonts.gstatic.com",
+  "https://arixgear.com",
+];
+
+preconnectDomains.forEach((domain) => {
+  const link = document.createElement("link");
+  link.rel = "preconnect";
+  link.href = domain;
+  link.crossOrigin = "anonymous";
+  document.head.appendChild(link);
+});
+
+
+const preloadCriticalResources = () => {
+  // Preload logo or critical images
+  const criticalImages = ["/logo.png", "/hero-banner.jpg"];
+
+  preloadCriticalResources();
+  
+  criticalImages.forEach((src) => {
+    const link = document.createElement("link");
+    link.rel = "preload";
+    link.as = "image";
+    link.href = src;
+    document.head.appendChild(link);
+  });
+};
+
+
 createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <RouterProvider router={router} />
-  </Provider>,
+   <HelmetProvider>
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  </HelmetProvider>
 );

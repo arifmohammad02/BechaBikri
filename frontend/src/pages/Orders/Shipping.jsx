@@ -99,16 +99,17 @@ const Shipping = () => {
       try {
         const parsed = JSON.parse(savedCart);
         let needsUpdate = false;
-        
-        parsed.cartItems = parsed.cartItems.map(item => {
+
+        parsed.cartItems = parsed.cartItems.map((item) => {
           if (item.shippingDetails?.calculatedCharges) {
             needsUpdate = true;
-            const { calculatedCharges: _, ...restShippingDetails } = item.shippingDetails;
+            const { calculatedCharges: _, ...restShippingDetails } =
+              item.shippingDetails;
             return { ...item, shippingDetails: restShippingDetails };
           }
           return item;
         });
-        
+
         if (needsUpdate) {
           localStorage.setItem("cart", JSON.stringify(parsed));
           window.location.reload();
@@ -314,38 +315,26 @@ const Shipping = () => {
   // ✅ FIXED: Dynamic shipping calculation
   const calculateShippingCharge = (selectedCity) => {
     if (cartItems.length === 0) {
-      console.log("❌ No cart items, returning 0");
       return 0;
     }
 
-    console.log("========================================");
-    console.log("🚚 SHIPPING CALCULATION STARTED");
-    console.log("========================================");
-    console.log("📍 Selected City:", selectedCity);
-    
     const isInsideDhaka = selectedCity?.toLowerCase().includes("dhaka");
-    console.log("🏙️ Is Inside Dhaka:", isInsideDhaka);
-    
+
     const itemsPrice = calculateTotals();
-    console.log("💰 Total Items Price:", itemsPrice);
 
     const freeThresholds = cartItems
-      .filter(i => i.shippingDetails?.isFreeShippingActive)
-      .map(i => Number(i.shippingDetails?.freeShippingThreshold))
-      .filter(t => t > 0);
+      .filter((i) => i.shippingDetails?.isFreeShippingActive)
+      .map((i) => Number(i.shippingDetails?.freeShippingThreshold))
+      .filter((t) => t > 0);
 
-    console.log("🎁 Free Shipping Thresholds:", freeThresholds);
+    const minFreeThreshold =
+      freeThresholds.length > 0 ? Math.min(...freeThresholds) : Infinity;
 
-    const minFreeThreshold = freeThresholds.length > 0 ? Math.min(...freeThresholds) : Infinity;
-    console.log("🎯 Min Free Threshold:", minFreeThreshold);
-    
     if (itemsPrice >= minFreeThreshold) {
-      console.log("✅ FREE SHIPPING APPLIED! Returning 0");
       return 0;
     }
 
     let charges = [];
-    console.log("\n📦 Processing", cartItems.length, "items:\n");
 
     cartItems.forEach((item, index) => {
       const s = item.shippingDetails || {};
@@ -353,80 +342,60 @@ const Shipping = () => {
       const qty = Number(item.qty) || 1;
       const weight = Number(item.weight) || 0.5;
 
-      console.log(`--- Item ${index + 1}: ${item.name} ---`);
-      console.log("  📋 shippingType:", type);
-      console.log("  🔢 qty:", qty);
-      console.log("  ⚖️ weight:", weight);
-      console.log("  💵 insideDhakaCharge:", s.insideDhakaCharge);
-      console.log("  💵 outsideDhakaCharge:", s.outsideDhakaCharge);
-      console.log("  💵 fixedShippingCharge:", s.fixedShippingCharge);
-
       const getBaseRate = () => {
-        const rate = isInsideDhaka 
-          ? (Number(s.insideDhakaCharge) || 80) 
-          : (Number(s.outsideDhakaCharge) || 150);
-        console.log("  📊 getBaseRate() =", rate, "(isInsideDhaka:", isInsideDhaka + ")");
+        const rate = isInsideDhaka
+          ? Number(s.insideDhakaCharge) || 80
+          : Number(s.outsideDhakaCharge) || 150;
+
         return rate;
       };
 
       let itemCharge = 0;
 
-      switch(type) {
+      switch (type) {
         case "free": {
           itemCharge = 0;
-          console.log("  🆓 Type: FREE → Charge:", itemCharge);
+
           break;
         }
-        
+
         case "fixed": {
           const fixedCharge = Number(s.fixedShippingCharge);
-          console.log("  🔧 Type: FIXED, fixedCharge:", fixedCharge);
+
           if (fixedCharge > 0) {
             itemCharge = fixedCharge;
-            console.log("  ✅ Using fixedShippingCharge:", itemCharge);
           } else {
             itemCharge = getBaseRate();
-            console.log("  ⚠️ No fixed charge, using base rate:", itemCharge);
           }
           break;
         }
-        
+
         case "inside-outside": {
           itemCharge = getBaseRate();
-          console.log("  🌐 Type: INSIDE-OUTSIDE → Charge:", itemCharge);
+
           break;
         }
-        
+
         case "weight-based":
         default: {
           const totalWeight = weight * qty;
           const baseRate = getBaseRate();
-          
+
           if (totalWeight <= 1) {
             itemCharge = baseRate;
           } else {
             const extra = Math.ceil(totalWeight - 1);
-            itemCharge = baseRate + (extra * 20);
+            itemCharge = baseRate + extra * 20;
           }
-          
-          console.log("  ⚖️ Type: WEIGHT-BASED");
-          console.log("     totalWeight (weight × qty):", totalWeight);
-          console.log("     baseRate:", baseRate);
-          console.log("     final charge:", itemCharge);
+
           break;
         }
       }
 
       charges.push(itemCharge);
-      console.log("  💰 Item final charge:", itemCharge);
-      console.log("");
     });
 
     const maxCharge = Math.max(...charges, 0);
-    console.log("========================================");
-    console.log("📊 All item charges:", charges);
-    console.log("🚀 FINAL SHIPPING CHARGE:", maxCharge);
-    console.log("========================================\n");
 
     return maxCharge;
   };
@@ -440,15 +409,8 @@ const Shipping = () => {
       const finalPrice = getItemFinalPrice(item);
       return acc + (basePrice - finalPrice) * (Number(item.qty) || 1);
     }, 0);
-    
+
     setOrderSummary({
-      subtotal,
-      shippingCharge: shipping,
-      totalPrice: subtotal + shipping,
-      totalSavings: savings,
-    });
-    
-    console.log("🔄 Order Summary Updated:", {
       subtotal,
       shippingCharge: shipping,
       totalPrice: subtotal + shipping,
@@ -817,11 +779,12 @@ const Shipping = () => {
                     </p>
                     {paymentMethod === "Cash on Delivery" ? (
                       <p className="text-[11px] text-gray-500 font-mono mt-1">
-                        You will pay ৳{orderSummary.totalPrice.toFixed(2)} when the product
-                        is delivered.
+                        You will pay ৳{orderSummary.totalPrice.toFixed(2)} when
+                        the product is delivered.
                         {orderSummary.totalSavings > 0 && (
                           <span className="text-green-600 block mt-1">
-                            💰 You saved ৳{orderSummary.totalSavings.toFixed(2)}!
+                            💰 You saved ৳{orderSummary.totalSavings.toFixed(2)}
+                            !
                           </span>
                         )}
                       </p>
@@ -831,8 +794,8 @@ const Shipping = () => {
                         placing the order.
                         {orderSummary.totalSavings > 0 && (
                           <span className="text-green-600 block mt-1">
-                            💰 Pay ৳{orderSummary.totalPrice.toFixed(2)} (Saved ৳
-                            {orderSummary.totalSavings.toFixed(2)}!)
+                            💰 Pay ৳{orderSummary.totalPrice.toFixed(2)} (Saved
+                            ৳{orderSummary.totalSavings.toFixed(2)}!)
                           </span>
                         )}
                       </p>
