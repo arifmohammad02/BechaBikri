@@ -21,6 +21,7 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
+const VerifyOtp = lazy (() => import("./components/VerifyOtp"))
 const Profile = lazy(() => import("./pages/User/Profile"));
 const PrivateRoute = lazy(() => import("./components/PrivateRoute"));
 const AdminRoute = lazy(() => import("./pages/Admin/AdminRoute"));
@@ -90,6 +91,7 @@ const router = createBrowserRouter(
           </Suspense>
         }
       />
+      <Route path="/verify-otp" element={ <Suspense fallback={<Loader />}> <VerifyOtp /> </Suspense> } /> 
       <Route
         path="/forgot-password"
         element={
