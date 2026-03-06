@@ -20,7 +20,7 @@ export const userApiSlice = apiSlice.injectEndpoints({
 
     verifyEmail: builder.mutation({
       query: (data) => ({
-        url: `${USERS_URL}/verify-email`, // আপনার ব্যাকেন্ড এন্ডপয়েন্ট
+        url: `${USERS_URL}/verify-email`,
         method: "POST",
         body: data,
       }),
@@ -66,8 +66,8 @@ export const userApiSlice = apiSlice.injectEndpoints({
       }),
     }),
     getUsers: builder.query({
-      query: () => ({
-        url: USERS_URL,
+      query: ({ page = 1, pageSize = 10 } = {}) => ({
+        url: `${USERS_URL}?page=${page}&pageSize=${pageSize}`,
       }),
       providesTags: ["User"],
       keepUnusedDataFor: 5,

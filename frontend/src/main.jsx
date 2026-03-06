@@ -18,7 +18,6 @@ import { HelmetProvider } from 'react-helmet-async';
 
 // Lazy Loading Components
 const About = lazy(() => import("./pages/About"));
-const VerifyOtp = lazy(() => import("./components/VerifyOtp"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Register = lazy(() => import("./pages/Auth/Register"));
@@ -88,14 +87,6 @@ const router = createBrowserRouter(
         element={
           <Suspense fallback={<Loader />}>
             <Register />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/verify-otp"
-        element={
-          <Suspense fallback={<Loader />}>
-            <VerifyOtp />
           </Suspense>
         }
       />

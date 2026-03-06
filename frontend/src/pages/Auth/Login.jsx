@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useLoginMutation } from "@redux/api/usersApiSlice";
@@ -10,29 +10,39 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [login, { isLoading }] = useLoginMutation();
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    // ভ্যালিডেশন
     if (!email.trim()) return toast.error("Email is required");
     if (!/\S+@\S+\.\S+/.test(email)) return toast.error("Enter a valid email");
     if (!password) return toast.error("Password is required");
 
     try {
-      // unwrap() সরাসরি এরর বা রেসপন্স হ্যান্ডেল করতে সাহায্য করে
       const res = await login({ email, password }).unwrap();
-      
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
       dispatch(setCredentials({ ...res }));
       toast.success("Welcome back! Login successful.");
       navigate("/");
     } catch (err) {
-      // টোস্ট মেসেজ ফিক্স
       const errorMessage = err?.data?.message || err?.error || "Login failed";
       toast.error(errorMessage);
     }
@@ -85,7 +95,10 @@ const Login = () => {
                   <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                     Password
                   </label>
-                  <Link to="/forgot-password" className="text-[11px] font-bold text-[#007EFC] hover:underline uppercase tracking-tighter">
+                  <Link
+                    to="/forgot-password"
+                    className="text-[11px] font-bold text-[#007EFC] hover:underline uppercase tracking-tighter"
+                  >
                     Forgot?
                   </Link>
                 </div>
@@ -105,7 +118,11 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                    {showPassword ? (
+                      <FaEyeSlash size={16} />
+                    ) : (
+                      <FaEye size={16} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -115,9 +132,14 @@ const Login = () => {
                 <input
                   type="checkbox"
                   id="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 text-[#007EFC] border-gray-300 rounded focus:ring-[#007EFC] cursor-pointer"
                 />
-                <label htmlFor="remember" className="text-xs font-semibold text-gray-500 cursor-pointer select-none">
+                <label
+                  htmlFor="remember"
+                  className="text-xs font-semibold text-gray-500 cursor-pointer select-none"
+                >
                   Keep me signed in
                 </label>
               </div>
@@ -140,7 +162,10 @@ const Login = () => {
             <div className="mt-8 text-center">
               <p className="text-gray-500 text-sm font-medium">
                 Don&apos;t have an account?
-                <Link to="/register" className="text-[#007EFC] font-bold hover:underline underline-offset-4">
+                <Link
+                  to="/register"
+                  className="text-[#007EFC] font-bold hover:underline underline-offset-4"
+                >
                   Register Now
                 </Link>
               </p>

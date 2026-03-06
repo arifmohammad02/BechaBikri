@@ -44,6 +44,11 @@ const usersSchema = mongoose.Schema(
     otpExpires: {
       type: Date,
     },
+
+    otpAttempts: {
+      type: Number,
+      default: 0,
+    },
     // Password reset OTP
     resetPasswordOTP: {
       type: String,
@@ -55,7 +60,23 @@ const usersSchema = mongoose.Schema(
     verificationToken: {
       type: String,
     },
+    tempResetToken: {
+      type: String,
+    },
     verificationTokenExpires: {
+      type: Date,
+    },
+    tempResetTokenExpires: {
+      type: Date,
+    },
+    lastOtpRequest: {
+      type: Date,
+    },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
       type: Date,
     },
   },
@@ -66,47 +87,32 @@ const usersSchema = mongoose.Schema(
   },
 );
 
-// ⭐ Index creation for faster queries
 usersSchema.index({ email: 1 });
 usersSchema.index({ username: 1 });
 
-// ⭐ Password match method (Login-এ ব্যবহার হয়)
 usersSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// ⭐ Password reset OTP create method
 usersSchema.methods.createPasswordResetOTP = function () {
-  // 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // Hash OTP for security
   this.resetPasswordOTP = crypto.createHash("sha256").update(otp).digest("hex");
-
-  // 10 minutes expiry
-  this.resetPasswordExpires = Date.now() + 10 * 60 * 1000;
-
-  return otp; // Return plain OTP for email
-};
-
-// ⭐ Email verification OTP create method
-usersSchema.methods.createEmailVerificationOTP = function () {
-  // 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  this.otp = otp; // Plain OTP (আপনার আগের logic অনুযায়ী)
-  this.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-
+  this.resetPasswordExpires = Date.now() + 2 * 60 * 1000;
   return otp;
 };
 
-// ⭐ Verify password reset OTP method
+usersSchema.methods.createEmailVerificationOTP = function () {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  this.otp = otp;
+  this.otpExpires = Date.now() + 2 * 60 * 1000;
+  return otp;
+};
+
 usersSchema.methods.verifyPasswordResetOTP = function (enteredOTP) {
   const hashedOTP = crypto
     .createHash("sha256")
     .update(enteredOTP)
     .digest("hex");
-
   return (
     this.resetPasswordOTP === hashedOTP &&
     this.resetPasswordExpires > Date.now()

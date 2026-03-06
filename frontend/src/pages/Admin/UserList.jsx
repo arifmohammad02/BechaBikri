@@ -9,48 +9,71 @@ import {
   FaCheck,
   FaSearch,
   FaTimesCircle,
+  FaCheckCircle,
+  FaTimes,
 } from "react-icons/fa";
 import {
   useDeleteUserMutation,
   useGetUsersQuery,
   useUpdateUserMutation,
-} from "@redux/api/usersApiSlice";
+} from "../../redux/api/usersApiSlice"; // আপনার সঠিক পাথ অনুযায়ী চেক করে নিবেন
 import { toast } from "react-toastify";
 import AdminMenu from "./AdminMenu";
 
 const UserList = () => {
-  const { data: users, refetch } = useGetUsersQuery();
+  const { data, refetch } = useGetUsersQuery();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "username",
     direction: "asc",
   });
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [editableUserId, setEditableUserId] = useState(null);
-  const [editableUser, setEditableUser] = useState({ username: "", email: "" });
-  const [filters, setFilters] = useState({ role: "all" });
+  
+  // 🎯 Update: Edit state-এ isAdmin এবং isVerified যুক্ত করা হয়েছে
+  const [editableUser, setEditableUser] = useState({ 
+    username: "", 
+    email: "", 
+    isAdmin: false, 
+    isVerified: false 
+  });
+  
+  // 🎯 Update: Filter state-এ verification status যুক্ত করা হয়েছে
+  const [filters, setFilters] = useState({ role: "all", status: "all" });
 
   const [deleteUser] = useDeleteUserMutation();
   const [updateUser] = useUpdateUserMutation();
 
-  // Sorting logic (অক্ষত)
-  const sortedUsers = [...(users || [])].sort((a, b) => {
+  const usersList = Array.isArray(data) ? data : data?.users || [];
+
+  // Sorting logic
+const sortedUsers = [...usersList].sort((a, b) => {
     if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === "asc" ? -1 : 1;
     if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === "asc" ? 1 : -1;
     return 0;
   });
 
-  // Filtering logic (অক্ষত)
+  // Filtering logic 🎯 Updated with status filter
   const filteredUsers = sortedUsers.filter((user) => {
     const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filters.role === "all" || (filters.role === "admin" && user.isAdmin) || (filters.role === "user" && !user.isAdmin);
-    return matchesSearch && matchesRole;
+    
+    const matchesRole = filters.role === "all" || 
+                       (filters.role === "admin" && user.isAdmin) || 
+                       (filters.role === "user" && !user.isAdmin);
+                       
+    const matchesStatus = filters.status === "all" || 
+                         (filters.status === "verified" && user.isVerified) || 
+                         (filters.status === "unverified" && !user.isVerified);
+                         
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
-  // Pagination (অক্ষত)
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
@@ -70,44 +93,58 @@ const UserList = () => {
     setSelectedUsers((prev) => prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]);
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Delete ${selectedUsers.length} users?`)) {
+const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedUsers.length} users?`)) {
       try {
-        await Promise.all(selectedUsers.map((id) => deleteUser(id)));
+        // 🎯 আপডেট: Promise.all এর বদলে for...of লুপ (সার্ভারে প্রেশার কম পড়বে)
+        for (const id of selectedUsers) {
+          await deleteUser(id).unwrap(); // unwrap() ব্যবহার করা জরুরি এরর ধরার জন্য
+        }
         refetch();
         setSelectedUsers([]);
-        toast.success(`${selectedUsers.length} users deleted`);
-      } catch (err) { toast.error("Error deleting users"); }
+        toast.success(`${selectedUsers.length} users deleted successfully`);
+      } catch (err) { 
+        toast.error(err?.data?.message || "Error deleting users"); 
+      }
     }
   };
-
   const deleteHandler = async (id) => {
-    if (window.confirm("Are you sure?")) {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         await deleteUser(id);
         refetch();
-        toast.success("User deleted");
-      } catch (err) { toast.error("Delete failed"); }
+        toast.success("User deleted successfully");
+      } catch (err) { 
+        toast.error(err?.data?.message || "Delete failed"); 
+      }
     }
   };
 
+  // 🎯 Updated startEdit
   const startEdit = (user) => {
     setEditableUserId(user._id);
-    setEditableUser({ username: user.username, email: user.email });
+    setEditableUser({ 
+      username: user.username, 
+      email: user.email,
+      isAdmin: user.isAdmin,
+      isVerified: user.isVerified
+    });
   };
 
   const cancelEdit = () => {
     setEditableUserId(null);
-    setEditableUser({ username: "", email: "" });
+    setEditableUser({ username: "", email: "", isAdmin: false, isVerified: false });
   };
 
   const saveEdit = async () => {
     try {
-      await updateUser({ userId: editableUserId, ...editableUser });
+      await updateUser({ userId: editableUserId, ...editableUser }).unwrap();
       refetch();
       cancelEdit();
-      toast.success("User updated");
-    } catch (err) { toast.error(err?.data?.message || "Update failed"); }
+      toast.success("User updated successfully");
+    } catch (err) { 
+      toast.error(err?.data?.message || "Update failed"); 
+    }
   };
 
   return (
@@ -131,7 +168,7 @@ const UserList = () => {
                 <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="SEARCH_BY_IDENTITY..."
+                  placeholder="SEARCH_BY_USERNAME_OR_EMAIL..."
                   className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 focus:border-red-600 focus:ring-0 outline-none transition-all duration-300 placeholder:text-gray-300 text-sm font-bold tracking-widest"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -139,6 +176,17 @@ const UserList = () => {
               </div>
 
               <div className="flex flex-wrap gap-4 items-center w-full xl:w-auto">
+                {/* 🎯 Added Verification Status Filter */}
+                <select
+                  className="px-6 py-3 bg-white border border-gray-200 text-[12px] font-black uppercase tracking-widest text-black focus:border-red-600 outline-none cursor-pointer"
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <option value="all">ALL_STATUS</option>
+                  <option value="verified">VERIFIED_ONLY</option>
+                  <option value="unverified">UNVERIFIED_ONLY</option>
+                </select>
+
                 <select
                   className="px-6 py-3 bg-white border border-gray-200 text-[12px] font-black uppercase tracking-widest text-black focus:border-red-600 outline-none cursor-pointer"
                   value={filters.role}
@@ -162,7 +210,7 @@ const UserList = () => {
 
             {/* Table Container */}
             <div className="bg-white border border-gray-100 shadow-xl overflow-x-auto relative group">
-              <table className="w-full min-w-[900px]">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="bg-black text-white">
                     <th className="px-6 py-5 w-12 text-center">
@@ -177,6 +225,7 @@ const UserList = () => {
                       { key: "username", label: "NAME_ID" },
                       { key: "email", label: "EMAIL_ADDR" },
                       { key: "isAdmin", label: "ACCESS_LEVEL" },
+                      { key: "isVerified", label: "STATUS" }, // 🎯 Added Status Header
                       { key: "createdAt", label: "REG_DATE" },
                     ].map(({ key, label }) => (
                       <th
@@ -221,7 +270,7 @@ const UserList = () => {
                           <input
                             value={editableUser.username}
                             onChange={(e) => setEditableUser({ ...editableUser, username: e.target.value })}
-                            className="w-full px-3 py-2 border-b-2 border-red-600 outline-none text-sm font-bold bg-transparent"
+                            className="w-full px-3 py-2 border-b-2 border-red-600 outline-none text-sm font-bold bg-white"
                           />
                         ) : (
                           <span className="text-sm font-bold text-black group-hover:text-red-600 transition-colors">
@@ -236,7 +285,7 @@ const UserList = () => {
                           <input
                             value={editableUser.email}
                             onChange={(e) => setEditableUser({ ...editableUser, email: e.target.value })}
-                            className="w-full px-3 py-2 border-b-2 border-red-600 outline-none text-sm font-bold bg-transparent"
+                            className="w-full px-3 py-2 border-b-2 border-red-600 outline-none text-sm font-bold bg-white"
                           />
                         ) : (
                           <span className="tracking-tight">{user.email}</span>
@@ -245,13 +294,45 @@ const UserList = () => {
 
                       {/* Role Column */}
                       <td className="px-6 py-4">
-                        <span className={`px-4 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full border ${
-                          user.isAdmin 
-                            ? "bg-black text-white border-black" 
-                            : "bg-white text-gray-400 border-gray-200"
-                        }`}>
-                          {user.isAdmin ? "SUPER_USER" : "CLIENT_ID"}
-                        </span>
+                        {editableUserId === user._id ? (
+                           <label className="flex items-center gap-2 cursor-pointer">
+                             <input 
+                               type="checkbox" 
+                               checked={editableUser.isAdmin}
+                               onChange={(e) => setEditableUser({...editableUser, isAdmin: e.target.checked})}
+                               className="accent-red-600"
+                             />
+                             <span className="text-xs font-bold uppercase">Admin Access</span>
+                           </label>
+                        ) : (
+                          <span className={`px-4 py-1.5 text-[10px] font-black tracking-widest uppercase rounded-full border ${
+                            user.isAdmin 
+                              ? "bg-black text-white border-black" 
+                              : "bg-white text-gray-400 border-gray-200"
+                          }`}>
+                            {user.isAdmin ? "SUPER_USER" : "CLIENT_ID"}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 🎯 Status (isVerified) Column */}
+                      <td className="px-6 py-4">
+                        {editableUserId === user._id ? (
+                           <label className="flex items-center gap-2 cursor-pointer">
+                             <input 
+                               type="checkbox" 
+                               checked={editableUser.isVerified}
+                               onChange={(e) => setEditableUser({...editableUser, isVerified: e.target.checked})}
+                               className="accent-green-600"
+                             />
+                             <span className="text-xs font-bold uppercase">Verified</span>
+                           </label>
+                        ) : (
+                          <div className={`flex items-center gap-2 text-xs font-bold uppercase ${user.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+                            {user.isVerified ? <FaCheckCircle /> : <FaTimesCircle />}
+                            <span>{user.isVerified ? 'VERIFIED' : 'PENDING'}</span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Joined Column */}
@@ -264,14 +345,14 @@ const UserList = () => {
                         <div className="flex justify-end gap-1 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                           {editableUserId === user._id ? (
                             <>
-                              <button onClick={saveEdit} className="p-2 text-green-600 hover:scale-125 transition-transform"><FaCheck /></button>
-                              <button onClick={cancelEdit} className="p-2 text-red-600 hover:scale-125 transition-transform"><FaTimesCircle /></button>
+                              <button onClick={saveEdit} className="p-2 text-green-600 hover:scale-125 transition-transform" title="Save"><FaCheck /></button>
+                              <button onClick={cancelEdit} className="p-2 text-red-600 hover:scale-125 transition-transform" title="Cancel"><FaTimes /></button>
                             </>
                           ) : (
                             !user.isAdmin && (
                               <>
-                                <button onClick={() => startEdit(user)} className="p-2 text-black hover:text-red-600 hover:scale-120 transition-all"><FaEdit /></button>
-                                <button onClick={() => deleteHandler(user._id)} className="p-2 text-black hover:text-red-600 hover:scale-120 transition-all"><FaTrash /></button>
+                                <button onClick={() => startEdit(user)} className="p-2 text-black hover:text-red-600 hover:scale-110 transition-all" title="Edit"><FaEdit /></button>
+                                <button onClick={() => deleteHandler(user._id)} className="p-2 text-black hover:text-red-600 hover:scale-110 transition-all" title="Delete"><FaTrash /></button>
                               </>
                             )
                           )}
@@ -279,42 +360,52 @@ const UserList = () => {
                       </td>
                     </tr>
                   ))}
+                  
+                  {currentUsers.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="px-6 py-8 text-center text-gray-400 font-bold uppercase tracking-widest">
+                        NO_USERS_FOUND_MATCHING_CRITERIA
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
 
               {/* Pagination Section */}
-              <div className="flex flex-col md:flex-row items-center justify-between px-8 py-6 bg-gray-50 border-t border-gray-100">
-                <div className="flex items-center gap-6 mb-4 md:mb-0">
-                  <span className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">
-                    DATA_SLICE: {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)} / {filteredUsers.length}
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer text-red-600"
-                  >
-                    {[5, 10, 20, 50].map((size) => (
-                      <option key={size} value={size}>SHOW_{size}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-8 h-8 flex items-center justify-center text-[10px] font-black transition-all duration-300 border ${
-                        currentPage === i + 1
-                          ? "bg-black text-white border-black scale-110 shadow-lg"
-                          : "bg-white text-gray-400 border-gray-100 hover:border-red-600 hover:text-red-600"
-                      }`}
+              {totalPages > 0 && (
+                <div className="flex flex-col md:flex-row items-center justify-between px-8 py-6 bg-gray-50 border-t border-gray-100">
+                  <div className="flex items-center gap-6 mb-4 md:mb-0">
+                    <span className="text-[10px] font-black tracking-[0.2em] text-gray-400 uppercase">
+                      DATA_SLICE: {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredUsers.length)} / {filteredUsers.length}
+                    </span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="bg-transparent border-none text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer text-red-600"
                     >
-                      {String(i + 1).padStart(2, '0')}
-                    </button>
-                  ))}
+                      {[5, 10, 20, 50].map((size) => (
+                        <option key={size} value={size}>SHOW_{size}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap justify-center">
+                    {Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`w-8 h-8 flex items-center justify-center text-[10px] font-black transition-all duration-300 border ${
+                          currentPage === i + 1
+                            ? "bg-black text-white border-black scale-110 shadow-lg"
+                            : "bg-white text-gray-400 border-gray-100 hover:border-red-600 hover:text-red-600"
+                        }`}
+                      >
+                        {String(i + 1).padStart(2, '0')}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
