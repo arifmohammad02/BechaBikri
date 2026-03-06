@@ -282,18 +282,19 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const normalizedEmail = email.toLowerCase().trim();
   const user = await User.findOne({ email: normalizedEmail });
 
-  if (!user) {
-    return res.status(200).json({
-      message: "If your email is registered, you will receive an OTP shortly.",
-    });
+   if (!user) {
+    res.status(404);
+    throw new Error("User not found");
   }
 
+  // ২. ইউজার আছে কিন্তু ভেরিফাইড না - verifyResetOTP তে যেতে দিবো না
   if (!user.isVerified) {
     res.status(400);
     throw new Error(
       "Your account is not verified. Please verify your email first.",
     );
   }
+
 
   if (user.lastOtpRequest && Date.now() - user.lastOtpRequest < 60 * 1000) {
     const waitSeconds = Math.ceil(
