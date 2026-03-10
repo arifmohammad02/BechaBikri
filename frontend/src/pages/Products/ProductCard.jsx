@@ -242,7 +242,7 @@ const ProductCard = ({ p, viewMode }) => {
       <div className="relative h-fit bg-gray-50 overflow-hidden flex-shrink-0">
         <Link to={productPath} className="block w-full h-full">
           <img 
-            className="w-full h-full object-cover p-2 group-hover:scale-105 transition-transform duration-500" 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
             src={mainImage} 
             alt={p?.name}
             loading="lazy"

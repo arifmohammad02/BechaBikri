@@ -7,7 +7,7 @@ import {
   FaLongArrowAltRight,
   FaFire,
   FaClock,
-  FaTrophy,
+
   FaTshirt,
   FaStar,
 } from "react-icons/fa";
@@ -130,47 +130,13 @@ const BestSellers = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const rankBadge = (index) => {
-    const badges = [
-      {
-        bg: "bg-yellow-400",
-        text: "text-yellow-900",
-        icon: FaTrophy,
-        label: "Rank 1 Best Seller",
-      },
-      {
-        bg: "bg-gray-300",
-        text: "text-gray-800",
-        num: "2",
-        label: "Rank 2 Best Seller",
-      },
-      {
-        bg: "bg-orange-400",
-        text: "text-white",
-        num: "3",
-        label: "Rank 3 Best Seller",
-      },
-    ];
 
-    if (index > 2) return null;
-    const badge = badges[index];
-
-    return (
-      <div
-        className={`absolute -top-2 -left-2 w-8 h-8 ${badge.bg} ${badge.text} rounded-full flex items-center justify-center text-xs font-bold shadow-md z-10`}
-        title={badge.label}
-        aria-label={badge.label}
-      >
-        {badge.icon ? <badge.icon size={14} aria-hidden="true" /> : badge.num}
-      </div>
-    );
-  };
 
   // 🎯 Skeleton Loading State
   if (isLoading) {
     return (
       <section
-        className="py-12 bg-gray-50"
+        className="py-10 bg-gray-50"
         style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
       >
         <div className="container mx-auto px-4">
@@ -198,7 +164,7 @@ const BestSellers = () => {
 
   return (
     <section
-      className="py-12 bg-gray-50"
+      className="py-10 bg-gray-100"
       style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
       aria-labelledby="bestsellers-heading"
     >
@@ -239,31 +205,24 @@ const BestSellers = () => {
           </Message>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 items-stretch">
-              {products?.slice(0, 10).map((product, index) => (
-                <motion.div
-                  key={product._id}
-                  className="relative flex flex-col"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  {rankBadge(index)}
-                  <div className="flex-grow">
-                    <Product product={product} />
-                  </div>
-                </motion.div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {products?.slice(0, 10).map((product) => (
+                <Product key={product._id} product={product} />
               ))}
             </div>
 
             <div className="flex justify-center mt-10">
               <Link to="/shop?sort=bestselling">
                 <button
-                  className="flex items-center gap-2 bg-orange-500 text-white px-8 py-3 rounded-lg font-bold hover:bg-orange-600 transition-colors shadow-md hover:shadow-lg transform hover:-translate-y-0.5 "
+                  style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
+                  className="group flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-gray-800 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-900 hover:border-gray-900 hover:text-white hover:shadow transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:ring-offset-[#F9FAFB]"
                   aria-label="View all best selling products"
                 >
-                  View All Best Sellers{" "}
-                  <FaLongArrowAltRight ria-hidden="true" />
+                  View All Best Sellers
+                  <FaLongArrowAltRight
+                    className="transform group-hover:translate-x-1 transition-transform duration-300"
+                    aria-hidden="true"
+                  />
                 </button>
               </Link>
             </div>

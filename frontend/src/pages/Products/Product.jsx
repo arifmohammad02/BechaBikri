@@ -11,7 +11,7 @@ const Product = ({ product }) => {
   const dispatch = useDispatch();
   const [timeLeft, setTimeLeft] = useState({ months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 });
 
-  // ✅ ADDED: Local helpers (since ProductLogistics removed)
+  // ✅ Local helpers
   const isFlashSaleActive = (product) => {
     if (!product?.flashSale || !product.flashSale.isActive) return false;
     const now = new Date();
@@ -169,65 +169,71 @@ const Product = ({ product }) => {
   };
 
   const formatNum = (n) => String(n).padStart(2, '0');
-
   const showMonths = timeLeft.months > 0;
   const showDays = timeLeft.days > 0 || timeLeft.months > 0;
 
-  return (
-    <div 
-      className="group bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-[500px]"
+   return (
+    <article 
+      itemScope 
+      itemType="https://schema.org/Product"
+      className="group bg-white rounded-lg border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col h-full"
       style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
     >
-      {/* Image - Fixed Height */}
-      <div className="relative h-fit bg-gray-50 overflow-hidden flex-shrink-0">
-        <Link to={productPath} className="block w-full h-full">
+      {/* Meta tags for invisible SEO data */}
+      <meta itemProp="brand" content={product?.brand || "AriX GeaR"} />
+
+      {/* Image Container - Using aspect-square to keep height uniform dynamically */}
+      <div className="relative aspect-square bg-gray-50 overflow-hidden shrink-0">
+        <Link to={productPath} title={`View details of ${product.name}`} className="block w-full h-full">
           <img 
-            className="w-full h-full object-cover p-3 group-hover:scale-105 transition-transform duration-500" 
+            itemProp="image"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
             src={mainImage} 
-            alt={product.name}
+            alt={`Buy ${product.name} online`}
             loading="lazy"
           />
         </Link>
 
-        {/* Discount Badge */}
         {displayDiscountPercent > 0 && (
           <div className={`absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1 shadow-sm ${hasFlashSale ? 'bg-red-500' : 'bg-gray-800'}`}>
-            {hasFlashSale && <FaBolt className="text-[8px]" />}
+            {hasFlashSale && <FaBolt className="text-[8px]" aria-hidden="true" />}
             -{displayDiscountPercent}%
           </div>
         )}
 
-        {/* Heart Icon */}
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
           <HeartIcon product={product} />
         </div>
 
-        {/* Quick Add Button */}
         <button
           onClick={addToCartHandler}
-          className="absolute bottom-0 left-0 right-0 bg-gray-900 text-white text-xs font-bold py-2.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+          aria-label={`Add ${product.name} to cart`}
+          className="absolute bottom-0 left-0 w-full bg-gray-900 text-white text-xs font-bold py-2.5 flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300 focus:outline-none focus:translate-y-0"
         >
-          <FaShoppingCart size={12} />
+          <FaShoppingCart size={12} aria-hidden="true" />
           Add to Cart
         </button>
       </div>
 
-      {/* Content - Flexible with Fixed Areas */}
-      <div className="p-3 flex flex-col flex-grow">
-        {/* Brand */}
-        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1 h-4 flex-shrink-0">
+      {/* Content Area - Uses flex-grow to take remaining space */}
+      <div className="p-3 flex flex-col grow">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">
           {product?.brand || "AriX GeaR"}
         </p>
 
-        {/* Title - Fixed 2 Lines */}
-        <Link to={productPath} className="block h-[36px] mb-2 flex-shrink-0">
-          <h3 className="text-[13px] font-bold text-gray-800 line-clamp-2 hover:text-red-500 transition-colors leading-tight">
+        {/* Title - Truncated to 1 line */}
+        <Link to={productPath} title={product.name} className="block mb-1">
+          <h3 itemProp="name" className="text-sm font-bold text-gray-800 truncate hover:text-red-500 transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        {/* Price */}
-        <div className="flex items-baseline gap-2 h-6 mb-2 flex-shrink-0">
+        {/* Price Area - Structured with Microdata */}
+        <div itemProp="offers" itemScope itemType="https://schema.org/Offer" className="flex items-center gap-2 mb-3">
+          <meta itemProp="priceCurrency" content="BDT" />
+          <meta itemProp="price" content={finalPrice} />
+          <meta itemProp="availability" content={product.countInStock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"} />
+          
           <span className={`text-base font-bold ${hasFlashSale ? 'text-red-500' : 'text-gray-900'}`}>
             ৳{Math.round(finalPrice).toLocaleString("en-BD")}
           </span>
@@ -238,12 +244,13 @@ const Product = ({ product }) => {
           )}
         </div>
 
-        {/* Countdown Area - Fixed Height 70px */}
-        <div className="h-[70px] mb-2 flex-shrink-0">
-          {hasFlashSale ? (
-            <div className="bg-gray-900 text-white rounded-lg p-2 h-full flex flex-col justify-center">
+        {/* Bottom Elements pushed down using mt-auto */}
+        <div className="mt-auto">
+          {/* Countdown Area */}
+          {hasFlashSale && (
+            <div className="bg-gray-900 text-white rounded-lg p-2 flex flex-col justify-center mb-2">
               <div className="flex items-center justify-center gap-1 text-[9px] font-bold mb-1 text-red-400">
-                <FaClock className="animate-pulse" />
+                <FaClock className="animate-pulse" aria-hidden="true" />
                 <span>ENDS IN</span>
               </div>
               
@@ -251,9 +258,7 @@ const Product = ({ product }) => {
                 {showMonths && (
                   <>
                     <div className="flex flex-col items-center">
-                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
-                        {formatNum(timeLeft.months)}
-                      </div>
+                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">{formatNum(timeLeft.months)}</div>
                       <span className="text-[7px] text-gray-400 uppercase">mo</span>
                     </div>
                     <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
@@ -263,9 +268,7 @@ const Product = ({ product }) => {
                 {showDays && (
                   <>
                     <div className="flex flex-col items-center">
-                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
-                        {formatNum(timeLeft.days)}
-                      </div>
+                      <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">{formatNum(timeLeft.days)}</div>
                       <span className="text-[7px] text-gray-400 uppercase">d</span>
                     </div>
                     <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
@@ -273,39 +276,27 @@ const Product = ({ product }) => {
                 )}
                 
                 <div className="flex flex-col items-center">
-                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
-                    {formatNum(timeLeft.hours)}
-                  </div>
+                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">{formatNum(timeLeft.hours)}</div>
                   <span className="text-[7px] text-gray-400 uppercase">h</span>
                 </div>
-                
                 <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
                 
                 <div className="flex flex-col items-center">
-                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">
-                    {formatNum(timeLeft.minutes)}
-                  </div>
+                  <div className="bg-white/10 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px]">{formatNum(timeLeft.minutes)}</div>
                   <span className="text-[7px] text-gray-400 uppercase">m</span>
                 </div>
-                
                 <span className="text-xs font-bold text-gray-500 self-start mt-0.5">:</span>
                 
                 <div className="flex flex-col items-center">
-                  <div className="bg-red-500 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px] animate-pulse">
-                    {formatNum(timeLeft.seconds)}
-                  </div>
+                  <div className="bg-red-500 rounded w-6 h-6 flex items-center justify-center font-bold text-[11px] animate-pulse">{formatNum(timeLeft.seconds)}</div>
                   <span className="text-[7px] text-red-300 uppercase">s</span>
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="h-full" />
           )}
-        </div>
 
-        {/* Progress Bar Area - Fixed Height 30px */}
-        <div className="h-[30px] flex-shrink-0 mt-auto">
-          {hasFlashSale && product.flashSale?.soldCount !== undefined && product.flashSale?.totalCount ? (
+          {/* Progress Bar Area */}
+          {hasFlashSale && product.flashSale?.soldCount !== undefined && product.flashSale?.totalCount && (
             <div>
               <div className="flex justify-between text-[9px] text-gray-500 mb-1 font-medium">
                 <span>{Math.round((product.flashSale.soldCount / product.flashSale.totalCount) * 100)}% Sold</span>
@@ -318,12 +309,11 @@ const Product = ({ product }) => {
                 />
               </div>
             </div>
-          ) : (
-            <div className="h-full" />
           )}
         </div>
+
       </div>
-    </div>
+    </article>
   );
 };
 

@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 import { useGetFlashSaleProductsQuery } from "../../redux/api/productApiSlice";
 import Product from "../../pages/Products/Product";
 import Message from "../Message";
-import { 
-  FaLongArrowAltRight, 
+import {
+  FaLongArrowAltRight,
   FaFire,
   FaBolt,
   FaClock,
-  FaPercentage
+  FaPercentage,
 } from "react-icons/fa";
-import { motion } from "framer-motion";
+
 
 // 🎯 Product Skeleton Component
 const ProductSkeleton = () => {
@@ -37,7 +37,7 @@ const ProductSkeleton = () => {
         <div className="absolute inset-0 flex items-center justify-center">
           <FaBolt className="text-red-200 text-4xl" />
         </div>
-        
+
         {/* Big Discount Badge */}
         <div className="absolute bottom-2 left-2 w-14 h-6 bg-red-500 rounded-lg animate-pulse flex items-center justify-center">
           <FaPercentage className="text-red-300 text-xs" />
@@ -48,14 +48,17 @@ const ProductSkeleton = () => {
       <div className="p-3 flex flex-col flex-grow space-y-2">
         {/* Brand */}
         <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
-        
+
         {/* Title */}
         <div className="w-full h-4 bg-gray-300 rounded animate-pulse" />
         <div className="w-2/3 h-4 bg-gray-300 rounded animate-pulse" />
-        
+
         {/* Flash Progress Bar */}
         <div className="w-full h-2 bg-red-100 rounded-full mt-1 overflow-hidden">
-          <div className="h-full bg-red-300 rounded-full animate-pulse" style={{ width: '60%' }} />
+          <div
+            className="h-full bg-red-300 rounded-full animate-pulse"
+            style={{ width: "60%" }}
+          />
         </div>
         <div className="w-20 h-2 bg-red-100 rounded animate-pulse" />
 
@@ -92,45 +95,39 @@ const HeaderSkeleton = () => (
       <div className="w-20 h-4 bg-red-200 rounded animate-pulse" />
       <div className="w-4 h-4 bg-red-200 rounded-full animate-pulse" />
     </div>
-    
+
     <div className="w-40 h-7 bg-gray-300 rounded-lg mb-2 animate-pulse" />
-    
+
     <div className="w-12 h-1 bg-red-200 rounded-full mb-4 animate-pulse" />
-    
+
     <CountdownSkeleton />
   </div>
 );
 
-// 🎯 View All Button Skeleton
 const ButtonSkeleton = () => (
-  <div className="flex justify-center mt-6">
-    <div className="w-36 h-10 bg-gradient-to-r from-red-200 to-orange-200 rounded-lg animate-pulse" />
+  <div className="flex justify-center mt-10">
+    <div className="w-52 h-12 bg-gray-300 rounded-lg animate-pulse border-2 border-gray-200" />
   </div>
 );
 
 const FlashSale = () => {
-  const { data: products, isLoading, isError } = useGetFlashSaleProductsQuery(10);
+  const {
+    data: products,
+    isLoading,
+    isError,
+  } = useGetFlashSaleProductsQuery(10);
 
   // 🎯 Skeleton Loading State
   if (isLoading) {
     return (
-      <section className="py-12 bg-gray-50" style={{ fontFamily: '"Trebuchet MS", sans-serif' }}>
+      <section className="py-10 bg-gray-50" aria-busy="true" aria-live="polite">
         <div className="container mx-auto px-4">
           <HeaderSkeleton />
-          
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.03 }}
-              >
-                <ProductSkeleton />
-              </motion.div>
+            {[...Array(10)].map((_, index) => (
+              <ProductSkeleton key={index} />
             ))}
           </div>
-
           <ButtonSkeleton />
         </div>
       </section>
@@ -138,56 +135,69 @@ const FlashSale = () => {
   }
 
   return (
-    <section className="py-12 bg-gray-50" style={{ fontFamily: '"Trebuchet MS", sans-serif' }}>
+    <section
+      className="py-10 bg-gray-50"
+      style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
+      aria-labelledby="flash-sale-heading"
+    >
       <div className="container mx-auto px-4">
-        
-        {/* Header - Compact */}
-        <div className="flex flex-col items-center mb-6">
+        {/* SEO Header Section */}
+        <header className="flex flex-col items-center mb-6 text-center">
           <div className="flex items-center gap-2 mb-2">
-            <FaFire className="text-red-500 animate-pulse" />
+            <FaFire className="text-red-500 animate-pulse" aria-hidden="true" />
             <span className="text-red-500 font-bold text-xs uppercase tracking-wider bg-red-100 px-3 py-1 rounded-full">
-              Flash Sale
+              Limited Time Offer
             </span>
-            <FaFire className="text-red-500 animate-pulse" />
+            <FaFire className="text-red-500 animate-pulse" aria-hidden="true" />
           </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Deals of the Day
+
+          {/* Main SEO Heading */}
+          <h2
+            id="flash-sale-heading"
+            className="text-2xl md:text-3xl font-bold text-gray-900 mb-2"
+          >
+            Best Flash Sale Deals of the Day
           </h2>
-          
+          <p className="text-gray-600 text-sm mb-4 max-w-md">
+            Grab our exclusive discounts on top-rated products before the clock
+            runs out!
+          </p>
+
           <div className="w-12 h-1 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mb-4" />
-        </div>
+        </header>
 
         {/* Products Grid */}
         {isError ? (
           <Message variant="danger">
-            {isError?.data?.message || isError.error}
+            {isError?.data?.message ||
+              "Something went wrong. Please try again later."}
           </Message>
         ) : (
-          <>
+          <article>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {products?.slice(0, 10).map((product, index) => (
-                <motion.div
-                  key={product._id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.03 }}
-                >
-                  <Product product={product} />
-                </motion.div>
+              {products?.slice(0, 10).map((product) => (
+                <Product key={product._id} product={product} />
               ))}
             </div>
 
-            {/* View All Button */}
-            <div className="flex justify-center mt-6">
-              <Link to="/shop?flashsale=true">
-                <button className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-2.5 rounded-lg font-bold text-sm hover:from-gray-900 hover:to-gray-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                  View All Deals
-                  <FaLongArrowAltRight />
+            {/* CTA - Call to Action with SEO friendly title */}
+            <div className="flex justify-center mt-8">
+              <Link
+                to="/shop?flashsale=true"
+                title="View all flash sale discounted products"
+                className="no-underline"
+              >
+                <button
+                  style={{ fontFamily: '"Trebuchet MS", sans-serif' }}
+                  className="flex items-center gap-2 px-6 py-2.5 border border-gray-900 rounded-full text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
+                  aria-label="View all best selling products"
+                >
+                  Shop All Deals
+                  <FaLongArrowAltRight aria-hidden="true" />
                 </button>
               </Link>
             </div>
-          </>
+          </article>
         )}
       </div>
     </section>
